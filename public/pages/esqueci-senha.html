@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex | Recuperar Senha</title>
+
+    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+
+    <!-- MENSAGEM -->
+    <div id="mensagem"></div>
+
+    <!-- BOTÃO VOLTAR -->
+    <a href="/pages/login.html" class="btn-voltar-topo">
+        ← Voltar ao Login
+    </a>
+
+    <main class="login-container">
+
+        <section class="login-card">
+
+            <h1>Motor<span>Flex</span></h1>
+
+            <p>
+                Digite seu e-mail para receber as instruções de recuperação de senha.
+            </p>
+
+            <form id="formRecuperarSenha">
+
+                <div class="campo">
+                    <label for="email">E-mail</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Digite seu e-mail"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn-login">
+                    Enviar Link de Recuperação
+                </button>
+
+                <p class="cadastro">
+                    Lembrou sua senha?
+                    <a href="/pages/login.html">
+                        Fazer Login
+                    </a>
+                </p>
+
+            </form>
+
+        </section>
+
+    </main>
+
+    <script src="/js/esqueci-senha.js"></script>
+</body>
+</html>

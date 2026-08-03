@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex </title>
+
+    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+
+<header class="header">
+    <nav class="navbar">
+
+        <h1 class="logo">
+            <a href="/pages/index.html">Motor<span>Flex</span></a>
+        </h1>
+
+        <ul class="menu" id="menu">
+
+            <li>
+                <a href="/pages/catalogo.html">Catálogo</a>
+            </li>
+
+            <li id="menuNaoLogado">
+                <a href="/pages/login.html">Login</a>
+                <a href="/pages/cadastro.html" class="btn-menu">Cadastrar</a>
+            </li>
+
+            <li id="menuLogado" style="display: none;">
+                <span id="nomeUsuario"></span>
+                <a href="#" class="btn-menu" id="irPainel">Meu Painel</a>
+            </li>
+
+        </ul>
+
+        <button class="btn-mobile" id="btnMobile">☰</button>
+
+    </nav>
+</header>
+
+<main>
+
+    <section class="hero">
+
+        <div class="hero-texto">
+            <p class="tag">Compra e venda de veículos</p>
+
+            <h2>
+                Encontre o carro ideal com segurança e sofisticação.
+            </h2>
+
+            <p>
+                A MotorFlex conecta clientes e vendedores em uma plataforma moderna,
+                rápida e confiável.
+            </p>
+
+            <div class="botoes">
+                <a href="/pages/catalogo.html" class="btn-primary">Ver veículos</a>
+                <a href="/pages/anunciar.html" class="btn-secondary">Anunciar carro</a>
+            </div>
+        </div>
+
+        <div class="hero-card">
+            <h3>BMW 320i Sport</h3>
+            <p>Ano 2022 • Automático • Flex</p>
+            <strong>R$ 189.900,00</strong>
+        </div>
+
+    </section>
+
+    <section class="busca">
+        <input type="text" placeholder="Marca do veículo">
+        <input type="text" placeholder="Modelo">
+        <input type="number" placeholder="Ano">
+        <button type="button">Buscar</button>
+    </section>
+
+    <section class="destaques">
+        <h2>Veículos em destaque</h2>
+
+        <div class="cards">
+
+            <div class="card">
+                <div class="img-card"></div>
+                <h3>Honda Civic</h3>
+                <p>2021 • Automático</p>
+                <strong>R$ 142.000,00</strong>
+                <a href="#">Ver detalhes</a>
+            </div>
+
+            <div class="card">
+                <div class="img-card"></div>
+                <h3>Toyota Corolla</h3>
+                <p>2022 • Flex</p>
+                <strong>R$ 158.000,00</strong>
+                <a href="#">Ver detalhes</a>
+            </div>
+
+            <div class="card">
+                <div class="img-card"></div>
+                <h3>Jeep Compass</h3>
+                <p>2023 • Turbo</p>
+                <strong>R$ 179.000,00</strong>
+                <a href="#">Ver detalhes</a>
+            </div>
+
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>© 2026 MotorFlex - Sistema Web de Compra e Venda de Veículos</p>
+</footer>
+
+<script src="/js/index.js"></script>
+</body>
+</html>

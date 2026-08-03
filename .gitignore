@@ -1,0 +1,34 @@
+# =========================================
+# SEGURANÇA
+# Arquivos privados e sensíveis
+# =========================================
+
+# Variáveis privadas:
+# senha do banco, api keys, secrets, portas
+.env
+
+# Bibliotecas instaladas pelo npm:
+# pasta muito pesada que não deve subir
+node_modules/
+
+# Uploads enviados pelos usuários:
+# imagens, arquivos e mídias
+uploads/
+public/uploads/
+
+# Sessões/autenticação:
+# dados temporários de login
+sessions/
+
+# Logs:
+# podem conter erros e informações sensíveis
+logs/
+*.log
+
+# Configurações locais do VS Code:
+# evita subir configurações pessoais
+.vscode/
+
+# Cache do npm:
+# arquivos temporários do npm
+.npm/

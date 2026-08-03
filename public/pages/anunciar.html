@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anunciar Veículo | MotorFlex</title>
+
+    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="/css/anunciar.css">
+</head>
+<body>
+
+<header class="header">
+    <nav class="navbar">
+        <h1 class="logo">
+            <a href="/pages/index.html">Motor<span>Flex</span></a>
+        </h1>
+
+        <a href="#" class="btn-voltar" id="btnPainel">Meu Painel</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card-anuncio">
+
+        <div class="topo">
+            <h2>Anunciar veículo</h2>
+            <p>Preencha os dados abaixo para cadastrar seu carro.</p>
+        </div>
+
+        <form id="formAnuncio" enctype="multipart/form-data">
+
+            <div class="form-grid">
+
+                <div class="grupo">
+                    <label for="marca">Marca</label>
+                    <input type="text" id="marca" placeholder="Ex: Honda">
+                    <small id="erroMarca"></small>
+                </div>
+
+                <div class="grupo">
+                    <label for="modelo">Modelo</label>
+                    <input type="text" id="modelo" placeholder="Ex: Civic">
+                    <small id="erroModelo"></small>
+                </div>
+
+                <div class="grupo">
+                    <label for="versao">Versão</label>
+                    <input type="text" id="versao" placeholder="Ex: EXL 2.0">
+                </div>
+
+                <div class="grupo">
+                    <label for="anoFabricacao">Ano fabricação</label>
+                    <input type="number" id="anoFabricacao" placeholder="Ex: 2021">
+                    <small id="erroAnoFabricacao"></small>
+                </div>
+
+                <div class="grupo">
+                    <label for="anoModelo">Ano modelo</label>
+                    <input type="number" id="anoModelo" placeholder="Ex: 2022">
+                    <small id="erroAnoModelo"></small>
+                </div>
+
+                <div class="grupo">
+                    <label for="preco">Preço</label>
+                    <input type="number" id="preco" placeholder="Ex: 98000">
+                    <small id="erroPreco"></small>
+                </div>
+
+                <div class="grupo">
+                    <label for="quilometragem">Quilometragem</label>
+                    <input type="number" id="quilometragem" placeholder="Ex: 45000">
+                </div>
+
+                <div class="grupo">
+                    <label for="combustivel">Combustível</label>
+                    <select id="combustivel">
+                        <option value="flex">Flex</option>
+                        <option value="gasolina">Gasolina</option>
+                        <option value="etanol">Etanol</option>
+                        <option value="diesel">Diesel</option>
+                        <option value="eletrico">Elétrico</option>
+                        <option value="hibrido">Híbrido</option>
+                    </select>
+                </div>
+
+                <div class="grupo">
+                    <label for="cambio">Câmbio</label>
+                    <select id="cambio">
+                        <option value="manual">Manual</option>
+                        <option value="automatico">Automático</option>
+                        <option value="automatizado">Automatizado</option>
+                    </select>
+                </div>
+
+                <div class="grupo">
+                    <label for="cor">Cor</label>
+                    <input type="text" id="cor" placeholder="Ex: Preto">
+                </div>
+
+                <div class="grupo">
+                    <label for="portas">Portas</label>
+                    <input type="number" id="portas" placeholder="Ex: 4">
+                </div>
+
+                <div class="grupo">
+                    <label for="carroceria">Carroceria</label>
+                    <input type="text" id="carroceria" placeholder="Ex: Sedan">
+                </div>
+
+                <div class="grupo grupo-full">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" placeholder="Descreva detalhes do veículo"></textarea>
+                </div>
+
+                <div class="grupo grupo-full">
+                    <label for="imagem">Imagem do veículo</label>
+                    <input type="file" id="imagem" name="imagem" accept="image/*">
+                    <small>Por enquanto será usado apenas no front-end.</small>
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn-anunciar" id="btnAnunciar">
+                Publicar anúncio
+            </button>
+
+        </form>
+
+    </section>
+</main>
+
+<script src="/js/anunciar.js"></script>
+</body>
+</html>

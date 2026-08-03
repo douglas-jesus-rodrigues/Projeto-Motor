@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Empresa | MotorFlex</title>
+
+    <link rel="icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="/css/painel-empresa.css">
+</head>
+<body>
+
+<div class="painel">
+
+    <aside class="sidebar">
+        <h1 class="logo">
+    <a href="/pages/index.html">
+        Motor<span>Flex</span>
+    </a>
+</h1>
+
+        <nav class="menu">
+    <a href="#" class="ativo" data-section="painel">Painel</a>
+    <a href="/pages/anunciar.html">Cadastrar veículo</a>
+    <a href="#" data-section="veiculos">Meus veículos</a>
+    <a href="#" data-section="propostas">Propostas</a>
+    <a href="#" data-section="conversas">Conversas</a>
+    <a href="#" data-section="agendamentos">Agendamentos</a>
+    <a href="#" data-section="empresa">Dados da empresa</a>
+    <a href="#" id="btnSair">Sair</a>
+</nav>
+    </aside>
+
+    <main class="conteudo">
+
+        <section id="painelSection" class="secao ativa">
+            <header class="topo">
+                <div>
+                    <h2>Painel da Empresa</h2>
+                    <p>Gerencie seus anúncios, propostas e conversas.</p>
+                </div>
+            </header>
+
+            <section class="empresa-card">
+                <div>
+                    <h3 id="nomeEmpresa">Minha Empresa</h3>
+                    
+                </div>
+
+                <span class="status">Conta ativa</span>
+            </section>
+
+            <section class="cards-resumo">
+                <div class="card">
+                    <h3>Veículos anunciados</h3>
+                    <strong id="totalVeiculos">0</strong>
+                </div>
+
+                <div class="card">
+                    <h3>Propostas recebidas</h3>
+                    <strong id="totalPropostas">0</strong>
+                </div>
+
+                <div class="card">
+                    <h3>Conversas</h3>
+                    <strong id="totalConversas">0</strong>
+                </div>
+
+                <div class="card">
+                    <h3>Visualizações</h3>
+                    <strong id="totalVisualizacoes">0</strong>
+                </div>
+            </section>
+        </section>
+
+        <section id="cadastrarSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Cadastrar veículo</h2>
+                    <p>Adicione um novo veículo ao catálogo da empresa.</p>
+                </div>
+            </header>
+
+            <a href="/pages/anunciar.html" class="btn-anunciar">
+                Ir para cadastro de veículo
+            </a>
+        </section>
+
+        <section id="veiculosSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Meus veículos</h2>
+                    <p>Veja, edite ou remova seus anúncios.</p>
+                </div>
+            </header>
+
+            <div class="box">
+                <div class="box-topo">
+                    <h3>Últimos veículos</h3>
+                </div>
+
+                <div class="lista-veiculos" id="listaVeiculos">
+                    <p class="vazio">Nenhum veículo cadastrado ainda.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="propostasSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Propostas</h2>
+                    <p>Propostas recebidas nos seus veículos.</p>
+                </div>
+            </header>
+
+            <div class="box">
+                <p class="vazio">Nenhuma proposta recebida.</p>
+            </div>
+        </section>
+
+        <section id="conversasSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Conversas</h2>
+                    <p>Mensagens entre você e clientes interessados.</p>
+                </div>
+            </header>
+
+            <div class="box">
+                <p class="vazio">Nenhuma conversa iniciada.</p>
+            </div>
+        </section>
+
+        <section id="agendamentosSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Agendamentos</h2>
+                    <p>Test drives e visitas agendadas.</p>
+                </div>
+            </header>
+
+            <div class="box">
+                <p class="vazio">Nenhum agendamento encontrado.</p>
+            </div>
+        </section>
+
+        <section id="empresaSection" class="secao">
+            <header class="topo">
+                <div>
+                    <h2>Dados da empresa</h2>
+                    <p>Informações da conta e da empresa cadastrada.</p>
+                </div>
+            </header>
+
+            <div class="box">
+                <div class="box-topo">
+                    <h3>Dados pessoais</h3>
+                </div>
+
+                <div class="dados-conta">
+                    <p><strong>Nome:</strong> <span id="dadoNome"></span></p>
+                    <p><strong>Sobrenome:</strong> <span id="dadoSobrenome"></span></p>
+                    <p><strong>E-mail:</strong> <span id="dadoEmail"></span></p>
+                    <p><strong>Telefone:</strong> <span id="dadoTelefone"></span></p>
+                    <p><strong>CPF:</strong> <span id="dadoCpf"></span></p>
+                    <p><strong>Tipo:</strong> <span id="dadoTipo"></span></p>
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="box-topo">
+                    <h3>Dados da empresa</h3>
+                </div>
+
+                <div class="dados-conta">
+                    <p><strong>Empresa:</strong> <span id="dadoEmpresa"></span></p>
+                    <p><strong>CNPJ:</strong> <span id="dadoCnpj"></span></p>
+                    <p><strong>Razão social:</strong> <span id="dadoRazaoSocial"></span></p>
+                    <p><strong>Inscrição estadual:</strong> <span id="dadoInscricao"></span></p>
+                    <p><strong>Site:</strong> <span id="dadoSite"></span></p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<script src="/js/painel-empresa.js"></script>
+</body>
+</html>

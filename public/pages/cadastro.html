@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Cadastro | MotorFlex
+    </title>
+
+    <link
+        rel="icon"
+        href="/imagens/favicon.ico"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/css/cadastro.css"
+    >
+
+</head>
+<body>
+
+<main class="container">
+
+    <section class="card-cadastro">
+
+        <div class="topo">
+
+            <h1>
+                Motor<span>Flex</span>
+            </h1>
+
+            <p>
+                Crie sua conta para acessar a plataforma
+            </p>
+
+        </div>
+
+        <form id="formCadastro">
+
+            <!-- GRID -->
+            <div class="form-grid">
+
+                <!-- NOME -->
+                <div class="grupo">
+
+                    <label for="nome">
+                        Nome
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nome"
+                        placeholder="Digite seu nome"
+                    >
+
+                    <small id="erroNome"></small>
+
+                </div>
+
+                <!-- SOBRENOME -->
+                <div class="grupo">
+
+                    <label for="sobrenome">
+                        Sobrenome
+                    </label>
+
+                    <input
+                        type="text"
+                        id="sobrenome"
+                        placeholder="Digite seu sobrenome"
+                    >
+
+                    <small id="erroSobrenome"></small>
+
+                </div>
+
+                <!-- EMAIL -->
+                <div class="grupo">
+
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Digite seu e-mail"
+                    >
+
+                    <small id="erroEmail"></small>
+
+                </div>
+
+                <!-- TELEFONE -->
+                <div class="grupo">
+
+                    <label for="telefone">
+                        Telefone
+                    </label>
+
+                    <input
+                        type="text"
+                        id="telefone"
+                        placeholder="(00) 00000-0000"
+                    >
+
+                    <small id="erroTelefone"></small>
+
+                </div>
+
+                <!-- TIPO -->
+                <div class="grupo">
+
+                    <label for="tipo">
+                        Tipo de conta
+                    </label>
+
+                    <select id="tipo">
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="individual">
+                            Individual
+                        </option>
+
+                        <option value="empresa">
+                            Empresa
+                        </option>
+
+                    </select>
+
+                    <small id="erroTipo"></small>
+
+                </div>
+
+                <!-- CPF -->
+                <div class="grupo">
+
+                    <label for="cpf">
+                        CPF
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cpf"
+                        placeholder="Digite seu CPF"
+                    >
+
+                    <small id="erroCpf"></small>
+
+                </div>
+
+                <!-- CAMPOS EMPRESA -->
+                <div
+                    class="grupo empresa-campos"
+                    id="camposEmpresa"
+                    style="display: none;"
+                >
+
+                    <label for="nomeEmpresa">
+                        Nome da empresa
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nomeEmpresa"
+                        placeholder="Digite o nome da empresa"
+                    >
+
+                    <small id="erroEmpresa"></small>
+
+                </div>
+
+                <div
+                    class="grupo empresa-campos"
+                    id="grupoCnpj"
+                    style="display: none;"
+                >
+
+                    <label for="cnpj">
+                        CNPJ
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cnpj"
+                        placeholder="Digite o CNPJ"
+                    >
+
+                    <small id="erroCnpj"></small>
+
+                </div>
+
+                <div
+                    class="grupo empresa-campos"
+                    id="grupoRazaoSocial"
+                    style="display: none;"
+                >
+
+                    <label for="razaoSocial">
+                        Razão social
+                    </label>
+
+                    <input
+                        type="text"
+                        id="razaoSocial"
+                        placeholder="Digite a razão social"
+                    >
+
+                </div>
+
+                <div
+                    class="grupo empresa-campos"
+                    id="grupoInscricao"
+                    style="display: none;"
+                >
+
+                    <label for="inscricaoEstadual">
+                        Inscrição estadual
+                    </label>
+
+                    <input
+                        type="text"
+                        id="inscricaoEstadual"
+                        placeholder="Digite a inscrição estadual"
+                    >
+
+                </div>
+
+                <div
+                    class="grupo empresa-campos"
+                    id="grupoSite"
+                    style="display: none;"
+                >
+
+                    <label for="site">
+                        Site
+                    </label>
+
+                    <input
+                        type="text"
+                        id="site"
+                        placeholder="https://empresa.com"
+                    >
+
+                </div>
+
+                <!-- SENHA -->
+                <div class="grupo">
+
+                    <label for="senha">
+                        Senha
+                    </label>
+
+                    <div class="senha-area">
+
+                        <input
+                            type="password"
+                            id="senha"
+                            placeholder="Digite sua senha"
+                        >
+
+                        <button
+                            type="button"
+                            id="btnSenha"
+                        >
+                            Ver
+                        </button>
+
+                    </div>
+
+                    <small id="erroSenha"></small>
+
+                </div>
+
+                <!-- CONFIRMAR -->
+                <div class="grupo">
+
+                    <label for="confirmarSenha">
+                        Confirmar senha
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmarSenha"
+                        placeholder="Confirme sua senha"
+                    >
+
+                    <small id="erroConfirmar"></small>
+
+                </div>
+
+            </div>
+
+            <!-- BOTÃO -->
+            <button
+                type="submit"
+                class="btn-cadastrar"
+                id="btnCadastrar"
+            >
+                Cadastrar
+            </button>
+
+            <!-- LOGIN -->
+            <p class="login-link">
+
+                Já tem conta?
+
+                <a href="/pages/login.html">
+                    Entrar agora
+                </a>
+
+            </p>
+
+        </form>
+
+    </section>
+
+</main>
+
+<script src="/js/cadastro.js"></script>
+
+</body>
+</html>

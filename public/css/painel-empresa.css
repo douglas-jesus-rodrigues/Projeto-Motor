@@ -1,0 +1,457 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html{
+    scroll-behavior: smooth;
+}
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0b0b0b;
+    color: white;
+}
+
+a{
+    text-decoration: none;
+    color: inherit;
+}
+
+button{
+    border: none;
+    cursor: pointer;
+}
+
+/* =========================================
+PAINEL
+========================================= */
+
+.painel{
+    display: flex;
+    min-height: 100vh;
+}
+
+/* =========================================
+SIDEBAR
+========================================= */
+
+.sidebar{
+    width: 260px;
+    background: #111;
+    border-right: 1px solid #222;
+    padding: 25px;
+
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.logo{
+    font-size: 1.9rem;
+    margin-bottom: 35px;
+}
+
+.logo span{
+    color: #e50914;
+}
+
+.menu{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu a{
+    padding: 14px 15px;
+    border-radius: 10px;
+    color: #ccc;
+    transition: 0.3s;
+    font-size: 0.96rem;
+}
+
+.menu a:hover,
+.menu a.ativo{
+    background: #e50914;
+    color: white;
+}
+
+/* =========================================
+CONTEÚDO
+========================================= */
+
+.conteudo{
+    flex: 1;
+    padding: 30px;
+}
+
+/* =========================================
+SECTIONS
+========================================= */
+
+.secao{
+    display: none;
+}
+
+.secao.ativa{
+    display: block;
+}
+
+/* =========================================
+TOPO
+========================================= */
+
+.topo{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 25px;
+}
+
+.topo h2{
+    font-size: 2rem;
+    margin-bottom: 6px;
+}
+
+.topo p{
+    color: #aaa;
+}
+
+/* =========================================
+BOTÕES
+========================================= */
+
+.btn-anunciar{
+    display: inline-block;
+
+    background: #e50914;
+    color: white;
+
+    padding: 13px 18px;
+
+    border-radius: 10px;
+
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.btn-anunciar:hover{
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* =========================================
+CARD EMPRESA
+========================================= */
+
+.empresa-card{
+    background: #151515;
+    border: 1px solid #252525;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    margin-bottom: 25px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.empresa-card p{
+    color: #aaa;
+    margin-top: 5px;
+}
+
+.status{
+    background: rgba(0, 200, 83, 0.15);
+
+    color: #00c853;
+
+    padding: 8px 14px;
+
+    border-radius: 20px;
+
+    font-weight: bold;
+}
+
+/* =========================================
+CARDS RESUMO
+========================================= */
+
+.cards-resumo{
+    display: grid;
+
+    grid-template-columns:
+    repeat(4, 1fr);
+
+    gap: 18px;
+}
+
+.card{
+    background: #151515;
+
+    border: 1px solid #252525;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    transition: 0.3s;
+}
+
+.card:hover{
+    transform: translateY(-4px);
+}
+
+.card h3{
+    color: #bbb;
+    font-size: 0.95rem;
+
+    margin-bottom: 12px;
+}
+
+.card strong{
+    font-size: 2rem;
+    color: #e50914;
+}
+
+/* =========================================
+BOX
+========================================= */
+
+.box{
+    background: #151515;
+
+    border: 1px solid #252525;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    margin-bottom: 20px;
+}
+
+.box-topo{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+.box-topo h3{
+    font-size: 1.1rem;
+}
+
+.box-topo a{
+    color: #e50914;
+    font-weight: bold;
+}
+
+/* =========================================
+DADOS
+========================================= */
+
+.dados-conta{
+    display: grid;
+    gap: 14px;
+}
+
+.dados-conta p{
+    color: #bbb;
+    line-height: 1.5;
+}
+
+.dados-conta strong{
+    color: white;
+}
+
+/* =========================================
+VEÍCULOS
+========================================= */
+
+.lista-veiculos{
+    display: grid;
+    gap: 18px;
+}
+
+.card-veiculo{
+    background: #1b1b1b;
+
+    border: 1px solid #2a2a2a;
+
+    border-radius: 14px;
+
+    padding: 15px;
+
+    display: flex;
+    gap: 15px;
+    align-items: center;
+
+    transition: 0.3s;
+}
+
+.card-veiculo:hover{
+    transform: translateY(-3px);
+}
+
+.imagem-veiculo img{
+    width: 140px;
+    height: 95px;
+
+    object-fit: cover;
+
+    border-radius: 10px;
+}
+
+.info-veiculo{
+    flex: 1;
+}
+
+.info-veiculo h4{
+    margin-bottom: 8px;
+}
+
+.ano{
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.preco{
+    color: #e50914;
+    font-size: 1.2rem;
+}
+
+.acoes{
+    display: flex;
+    gap: 10px;
+}
+
+.btn-editar,
+.btn-excluir{
+    padding: 10px 14px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.btn-editar{
+    background: #2563eb;
+    color: white;
+}
+
+.btn-excluir{
+    background: #dc2626;
+    color: white;
+}
+
+.btn-editar:hover,
+.btn-excluir:hover{
+    opacity: 0.9;
+}
+
+/* =========================================
+MENSAGEM VAZIA
+========================================= */
+
+.vazio{
+    color: #888;
+    padding: 10px 0;
+}
+
+/* =========================================
+RESPONSIVO
+========================================= */
+
+@media(max-width: 1100px){
+
+    .cards-resumo{
+        grid-template-columns:
+        repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 900px){
+
+    .painel{
+        flex-direction: column;
+    }
+
+    .sidebar{
+        width: 100%;
+        height: auto;
+
+        position: relative;
+
+        border-right: none;
+        border-bottom: 1px solid #222;
+    }
+
+    .menu{
+        display: grid;
+
+        grid-template-columns:
+        repeat(2, 1fr);
+    }
+
+    .topo{
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+    .empresa-card{
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+    .card-veiculo{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .imagem-veiculo img{
+        width: 100%;
+        height: 180px;
+    }
+}
+
+@media(max-width: 600px){
+
+    .conteudo{
+        padding: 20px;
+    }
+
+    .menu{
+        grid-template-columns: 1fr;
+    }
+
+    .cards-resumo{
+        grid-template-columns: 1fr;
+    }
+
+    .acoes{
+        width: 100%;
+    }
+
+    .btn-editar,
+    .btn-excluir{
+        flex: 1;
+    }
+
+    .btn-anunciar{
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -1,0 +1,140 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:20px;
+
+    background:
+    linear-gradient(
+        135deg,
+        #050505,
+        #111111
+    );
+
+    font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+    color:white;
+}
+
+.card{
+
+    width:100%;
+    max-width:520px;
+
+    background:#181818;
+
+    border:
+    1px solid #2a2a2a;
+
+    border-radius:24px;
+
+    padding:45px;
+
+    text-align:center;
+
+    box-shadow:
+    0 0 40px
+    rgba(229,9,20,0.18);
+}
+
+.logo{
+
+    font-size:38px;
+
+    margin-bottom:10px;
+}
+
+.logo span{
+    color:#e50914;
+}
+
+.icone{
+
+    width:100px;
+    height:100px;
+
+    margin:
+    25px auto;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    border-radius:50%;
+
+    background:
+    rgba(0,200,83,0.15);
+
+    border:
+    2px solid #00c853;
+
+    font-size:45px;
+}
+
+h2{
+
+    font-size:28px;
+
+    margin-bottom:18px;
+}
+
+.texto{
+
+    color:#c2c2c2;
+
+    line-height:30px;
+
+    margin-bottom:35px;
+
+    font-size:16px;
+}
+
+.btn-login{
+
+    display:inline-block;
+
+    padding:
+    15px 28px;
+
+    background:#e50914;
+
+    color:white;
+
+    text-decoration:none;
+
+    border-radius:14px;
+
+    font-weight:bold;
+
+    transition:.3s;
+}
+
+.btn-login:hover{
+
+    background:#b80710;
+
+    transform:
+    translateY(-2px);
+}
+
+.rodape{
+
+    margin-top:35px;
+
+    color:#666;
+
+    font-size:13px;
+}

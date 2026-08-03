@@ -1,0 +1,196 @@
+/* RESET */
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* BODY */
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #080808, #161616, #242424);
+    color: white;
+}
+
+/* CONTAINER */
+.container{
+    width: 100%;
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* CARD */
+.card-cadastro{
+    width: 100%;
+    max-width: 850px;
+    background: #141414;
+    border-radius: 22px;
+    padding: 35px;
+    border: 1px solid #262626;
+    box-shadow: 0 0 35px rgba(229, 9, 20, 0.25);
+}
+
+/* TOPO */
+.topo{
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.topo h1{
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.topo span{
+    color: #e50914;
+}
+
+.topo p{
+    color: #c7c7c7;
+}
+
+/* GRID */
+.form-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 20px;
+}
+
+/* GRUPOS */
+.grupo{
+    display: flex;
+    flex-direction: column;
+}
+
+.grupo label{
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+/* INPUTS */
+.grupo input,
+.grupo select{
+    height: 45px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #0d0d0d;
+    color: white;
+    outline: none;
+    transition: 0.2s;
+}
+
+.grupo input:focus,
+.grupo select:focus{
+    border-color: #e50914;
+    box-shadow: 0 0 5px rgba(229, 9, 20, 0.4);
+}
+
+/* ERROS */
+.grupo small{
+    margin-top: 4px;
+    color: #ff4d4d;
+    font-size: 0.75rem;
+    min-height: 14px;
+}
+
+/* SENHA */
+.senha-area{
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.senha-area input{
+    flex: 1;
+    min-width: 0;
+}
+
+.senha-area button{
+    width: 85px;
+    min-width: 85px;
+    height: 45px;
+    border: none;
+    border-radius: 10px;
+    background: #e50914;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.senha-area button:hover{
+    background: #b80710;
+}
+
+/* EMPRESA (CORRIGIDO) */
+.empresa-campos{
+    display: none;
+    grid-column: 1 / -1; /* ocupa toda linha */
+}
+
+/* BOTÃO */
+.btn-cadastrar{
+    width: 100%;
+    height: 48px;
+    margin-top: 25px;
+    border: none;
+    border-radius: 12px;
+    background: #e50914;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-cadastrar:hover{
+    background: #b80710;
+    transform: translateY(-2px);
+}
+
+/* LINK LOGIN */
+.login-link{
+    margin-top: 20px;
+    text-align: center;
+    color: #cfcfcf;
+}
+
+.login-link a{
+    color: #e50914;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-link a:hover{
+    text-decoration: underline;
+}
+
+/* RESPONSIVO */
+@media(max-width: 700px){
+
+    .card-cadastro{
+        max-width: 500px;
+        padding: 25px 20px;
+    }
+
+    .form-grid{
+        grid-template-columns: 1fr; /* vira 1 coluna */
+    }
+
+    .empresa-campos{
+        grid-column: 1;
+    }
+
+    .senha-area{
+        flex-direction: row; /* mantém alinhado */
+    }
+
+    .senha-area button{
+        width: 85px;
+    }
+}
