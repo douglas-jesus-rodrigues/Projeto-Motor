@@ -25,7 +25,7 @@
 
         <div class="topo">
             <h2>Anunciar veículo</h2>
-            <p>Preencha os dados abaixo para cadastrar seu carro.</p>
+            <p>Preencha os dados abaixo para cadastrar seu carro no sistema.</p>
         </div>
 
         <form id="formAnuncio" enctype="multipart/form-data">
@@ -33,48 +33,48 @@
             <div class="form-grid">
 
                 <div class="grupo">
-                    <label for="marca">Marca</label>
-                    <input type="text" id="marca" placeholder="Ex: Honda">
-                    <small id="erroMarca"></small>
+                    <label for="marca">Marca *</label>
+                    <input type="text" id="marca" name="marca" placeholder="Ex: Honda" required>
+                    <small id="erroMarca" class="erro-texto"></small>
                 </div>
 
                 <div class="grupo">
-                    <label for="modelo">Modelo</label>
-                    <input type="text" id="modelo" placeholder="Ex: Civic">
-                    <small id="erroModelo"></small>
+                    <label for="modelo">Modelo *</label>
+                    <input type="text" id="modelo" name="modelo" placeholder="Ex: Civic" required>
+                    <small id="erroModelo" class="erro-texto"></small>
                 </div>
 
                 <div class="grupo">
                     <label for="versao">Versão</label>
-                    <input type="text" id="versao" placeholder="Ex: EXL 2.0">
+                    <input type="text" id="versao" name="versao" placeholder="Ex: EXL 2.0">
                 </div>
 
                 <div class="grupo">
-                    <label for="anoFabricacao">Ano fabricação</label>
-                    <input type="number" id="anoFabricacao" placeholder="Ex: 2021">
-                    <small id="erroAnoFabricacao"></small>
+                    <label for="anoFabricacao">Ano fabricação *</label>
+                    <input type="number" id="anoFabricacao" name="ano_fabricacao" placeholder="Ex: 2021" min="1900" max="2030" required>
+                    <small id="erroAnoFabricacao" class="erro-texto"></small>
                 </div>
 
                 <div class="grupo">
-                    <label for="anoModelo">Ano modelo</label>
-                    <input type="number" id="anoModelo" placeholder="Ex: 2022">
-                    <small id="erroAnoModelo"></small>
+                    <label for="anoModelo">Ano modelo *</label>
+                    <input type="number" id="anoModelo" name="ano_modelo" placeholder="Ex: 2022" min="1900" max="2030" required>
+                    <small id="erroAnoModelo" class="erro-texto"></small>
                 </div>
 
                 <div class="grupo">
-                    <label for="preco">Preço</label>
-                    <input type="number" id="preco" placeholder="Ex: 98000">
-                    <small id="erroPreco"></small>
+                    <label for="preco">Preço (R$) *</label>
+                    <input type="number" id="preco" name="preco" placeholder="Ex: 98000" step="0.01" min="0" required>
+                    <small id="erroPreco" class="erro-texto"></small>
                 </div>
 
                 <div class="grupo">
-                    <label for="quilometragem">Quilometragem</label>
-                    <input type="number" id="quilometragem" placeholder="Ex: 45000">
+                    <label for="quilometragem">Quilometragem (Km)</label>
+                    <input type="number" id="quilometragem" name="quilometragem" placeholder="Ex: 45000" min="0">
                 </div>
 
                 <div class="grupo">
                     <label for="combustivel">Combustível</label>
-                    <select id="combustivel">
+                    <select id="combustivel" name="combustivel">
                         <option value="flex">Flex</option>
                         <option value="gasolina">Gasolina</option>
                         <option value="etanol">Etanol</option>
@@ -86,37 +86,37 @@
 
                 <div class="grupo">
                     <label for="cambio">Câmbio</label>
-                    <select id="cambio">
+                    <select id="cambio" name="cambio">
                         <option value="manual">Manual</option>
                         <option value="automatico">Automático</option>
                         <option value="automatizado">Automatizado</option>
+                        <option value="cvt">CVT</option>
                     </select>
                 </div>
 
                 <div class="grupo">
                     <label for="cor">Cor</label>
-                    <input type="text" id="cor" placeholder="Ex: Preto">
+                    <input type="text" id="cor" name="cor" placeholder="Ex: Preto">
                 </div>
 
                 <div class="grupo">
                     <label for="portas">Portas</label>
-                    <input type="number" id="portas" placeholder="Ex: 4">
+                    <input type="number" id="portas" name="portas" placeholder="Ex: 4" min="2" max="6">
                 </div>
 
                 <div class="grupo">
                     <label for="carroceria">Carroceria</label>
-                    <input type="text" id="carroceria" placeholder="Ex: Sedan">
+                    <input type="text" id="carroceria" name="carroceria" placeholder="Ex: Sedan">
                 </div>
 
                 <div class="grupo grupo-full">
                     <label for="descricao">Descrição</label>
-                    <textarea id="descricao" placeholder="Descreva detalhes do veículo"></textarea>
+                    <textarea id="descricao" name="descricao" rows="4" placeholder="Descreva detalhes importantes do veículo, opcionais e estado de conservação..."></textarea>
                 </div>
 
                 <div class="grupo grupo-full">
-                    <label for="imagem">Imagem do veículo</label>
+                    <label for="imagem">Foto Principal do Veículo</label>
                     <input type="file" id="imagem" name="imagem" accept="image/*">
-                    <small>Por enquanto será usado apenas no front-end.</small>
                 </div>
 
             </div>
