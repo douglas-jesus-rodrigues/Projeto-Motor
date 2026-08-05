@@ -1,10 +1,12 @@
+// Seleciona o formulário principal da página usando o ID "formCadastro"
 const formCadastro = document.getElementById("formCadastro");
 
+// --- SEÇÃO DE SELEÇÃO DE CAMPOS DE ENTRADA (INPUTS) ---
 const nome = document.getElementById("nome");
 const sobrenome = document.getElementById("sobrenome");
 const email = document.getElementById("email");
 const telefone = document.getElementById("telefone");
-const tipo = document.getElementById("tipo");
+const tipo = document.getElementById("tipo"); 
 const cpf = document.getElementById("cpf");
 
 const nomeEmpresa = document.getElementById("nomeEmpresa");
@@ -16,9 +18,10 @@ const site = document.getElementById("site");
 const senha = document.getElementById("senha");
 const confirmarSenha = document.getElementById("confirmarSenha");
 
-const btnSenha = document.getElementById("btnSenha");
-const btnCadastrar = document.getElementById("btnCadastrar");
+const btnSenha = document.getElementById("btnSenha"); 
+const btnCadastrar = document.getElementById("btnCadastrar"); 
 
+// --- SEÇÃO DE SELEÇÃO DE MENSAGENS DE ERRO ---
 const erroNome = document.getElementById("erroNome");
 const erroSobrenome = document.getElementById("erroSobrenome");
 const erroEmail = document.getElementById("erroEmail");
@@ -32,6 +35,7 @@ const erroConfirmar = document.getElementById("erroConfirmar");
 
 const camposEmpresa = document.querySelectorAll(".empresa-campos");
 
+// --- FORMATAÇÃO EM TEMPO REAL (MÁSCARAS SIMPLES) ---
 cpf.addEventListener("input", () => {
     cpf.value = cpf.value.replace(/\D/g, "").slice(0, 11);
 });
@@ -44,6 +48,7 @@ cnpj.addEventListener("input", () => {
     cnpj.value = cnpj.value.replace(/\D/g, "").slice(0, 14);
 });
 
+// --- LÓGICA DE MOSTRAR/ESCONDER CAMPOS DE EMPRESA ---
 tipo.addEventListener("change", () => {
     if (tipo.value === "empresa") {
         camposEmpresa.forEach(campo => campo.style.display = "flex");
@@ -57,19 +62,20 @@ tipo.addEventListener("change", () => {
     }
 });
 
+// --- LÓGICA DE MOSTRAR/OCULTAR SENHA ---
 btnSenha.addEventListener("click", () => {
     if (senha.type === "password") {
-        senha.type = "text";
-        btnSenha.textContent = "Ocultar";
+        senha.type = "text"; 
+        btnSenha.textContent = "Ocultar"; 
     } else {
         senha.type = "password";
-        btnSenha.textContent = "Ver";
+        btnSenha.textContent = "Ver"; 
     }
 });
 
+// --- LÓGICA DE ENVIO DO FORMULÁRIO (VALIDAÇÃO E API) ---
 formCadastro.addEventListener("submit", async (event) => {
     event.preventDefault();
-
     limparErros();
 
     let valido = true;
@@ -142,52 +148,79 @@ formCadastro.addEventListener("submit", async (event) => {
     }
 
     if (!valido) return;
-
+    
     btnCadastrar.textContent = "Cadastrando...";
     btnCadastrar.disabled = true;
 
     const dados = {
         nome: nome.value.trim(),
         sobrenome: sobrenome.value.trim(),
-        email: email.value.trim().toLowerCase(),
+        email: email.value.trim().toLowerCase(), 
         telefone: telefone.value.trim(),
         cpf: cpf.value.trim(),
         tipo: tipo.value,
         senha: senha.value,
-
-        cnpj: cnpj.value.trim(),
-        nome_empresa: nomeEmpresa.value.trim(),
-        razao_social: razaoSocial.value.trim(),
-        inscricao_estadual: inscricaoEstadual.value.trim(),
-        site: site.value.trim()
+        cnpj: tipo.value === "empresa" ? cnpj.value.trim() : null,
+        nome_empresa: tipo.value === "empresa" ? nomeEmpresa.value.trim() : null,
+        razao_social: tipo.value === "empresa" ? razaoSocial.value.trim() : null,
+        inscricao_estadual: tipo.value === "empresa" ? inscricaoEstadual.value.trim() : null,
+        site: tipo.value === "empresa" ? site.value.trim() : null
     };
 
     try {
         const resposta = await fetch("/api/usuarios/cadastro", {
-            method: "POST",
+            method: "POST", 
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json" 
             },
-            body: JSON.stringify(dados)
+            body: JSON.stringify(dados) 
         });
 
         const data = await resposta.json();
 
-        alert(data.mensagem);
-
-        if (data.sucesso) {
-            window.location.href = "/pages/login.html";
+        // Se o servidor retornar erro (ex: e-mail já cadastrado)
+        if (!data.sucesso) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Atenção',
+                text: data.mensagem,
+                background: '#141414',
+                color: '#ffffff',
+                confirmButtonColor: '#e50914',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            // Se deu tudo certo no cadastro
+            Swal.fire({
+                icon: 'success',
+                title: 'Sucesso!',
+                text: data.mensagem,
+                background: '#141414',
+                color: '#ffffff',
+                confirmButtonColor: '#e50914',
+                confirmButtonText: 'Entrar'
+            }).then(() => {
+                window.location.href = "/pages/login.html";
+            });
         }
 
     } catch (erro) {
         console.error("Erro:", erro);
-        alert("Erro ao conectar com o servidor.");
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro de Conexão',
+            text: 'Erro ao conectar com o servidor.',
+            background: '#141414',
+            color: '#ffffff',
+            confirmButtonColor: '#e50914'
+        });
     } finally {
         btnCadastrar.textContent = "Cadastrar";
         btnCadastrar.disabled = false;
     }
 });
 
+// --- FUNÇÕES AUXILIARES ---
 function limparErros() {
     erroNome.textContent = "";
     erroSobrenome.textContent = "";

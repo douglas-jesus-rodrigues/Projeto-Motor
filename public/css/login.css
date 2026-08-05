@@ -1,371 +1,353 @@
 /* ==========================================
-   RESET
+   VARIÁVEIS (CUSTOM PROPERTIES)
+   Facilita a manutenção e temas futuros
 ========================================== */
-*{
+:root {
+    --primary-color: #e50914;
+    --primary-hover: #b80710;
+    --bg-dark-1: #050505;
+    --bg-dark-2: #151515;
+    --card-bg: #111111;
+    --input-bg: #1d1d1d;
+    --text-light: #ffffff;
+    --text-muted: #bbbbbb;
+    --border-color: #252525;
+    
+    --success-color: #00c853;
+    --error-color: #ff3d00;
+    
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    
+    --border-radius-sm: 8px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 20px;
+}
+
+/* ==========================================
+   RESET & CONFIGURAÇÕES GERAIS
+========================================== */
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* ==========================================
-   BODY
-========================================== */
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(135deg, #050505, #151515);
-    color: white;
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    /* Fontes de sistema: mais rápidas e nativas para cada dispositivo */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg-dark-1), var(--bg-dark-2));
+    color: var(--text-light);
     min-height: 100vh;
     overflow-x: hidden;
+    line-height: 1.5;
 }
 
 /* ==========================================
    CONTAINER
 ========================================== */
-
-.login-container{
+.login-container {
     min-height: 100vh;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     padding: 20px;
 }
-.btn-voltar-topo{
-    position: fixed;
 
+.btn-voltar-topo {
+    position: fixed;
     top: 20px;
     left: 20px;
-
     background: #1a1a1a;
-    color: white;
-
+    color: var(--text-light);
     padding: 10px 16px;
-
-    border-radius: 8px;
-
+    border-radius: var(--border-radius-sm);
     text-decoration: none;
-
     border: 1px solid #333;
-
-    transition: 0.3s;
-
+    transition: all var(--transition-normal);
     z-index: 1000;
+    font-weight: 500;
 }
 
-.btn-voltar-topo:hover{
-    background: #e50914;
-    border-color: #e50914;
+.btn-voltar-topo:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.btn-voltar-topo:active {
+    transform: translateY(0);
 }
 
 /* ==========================================
    CARD LOGIN
 ========================================== */
-.login-card{
+.login-card {
     width: 100%;
     max-width: 420px;
-
-    background: #111;
-
-    padding: 35px;
-
-    border-radius: 20px;
-
-    border: 1px solid #252525;
-
-    box-shadow: 0 0 35px rgba(229, 9, 20, 0.25);
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+    /* Sombra mais difusa e elegante */
+    box-shadow: 0 10px 40px rgba(229, 9, 20, 0.15);
 }
 
 /* ==========================================
-   TÍTULO
+   TÍTULO & SUBTÍTULO
 ========================================== */
-.login-card h1{
+.login-card h1 {
     text-align: center;
-    font-size: 2rem;
+    /* Tipografia fluida: ajusta automaticamente entre 1.8rem e 2.2rem */
+    font-size: clamp(1.8rem, 5vw, 2.2rem);
     margin-bottom: 8px;
+    font-weight: 700;
 }
 
-.login-card h1 span{
-    color: #e50914;
+.login-card h1 span {
+    color: var(--primary-color);
 }
 
-/* ==========================================
-   SUBTÍTULO
-========================================== */
-.login-card > p{
+.login-card > p {
     text-align: center;
-    color: #bbb;
+    color: var(--text-muted);
     margin-bottom: 30px;
+    font-size: 0.95rem;
 }
 
 /* ==========================================
-   CAMPOS
+   CAMPOS DO FORMULÁRIO
 ========================================== */
-.campo{
+.campo {
     margin-bottom: 20px;
 }
 
-.campo label{
+.campo label {
     display: block;
     margin-bottom: 8px;
-    color: #ddd;
-    font-weight: bold;
+    color: #dddddd;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
-.campo input{
+.campo input {
     width: 100%;
-
     padding: 14px;
-
-    border: none;
-    border-radius: 10px;
-
-    outline: none;
-
-    background: #1d1d1d;
-    color: white;
-
-    transition: 0.3s;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+    background: var(--input-bg);
+    color: var(--text-light);
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+    font-family: inherit;
 }
 
-.campo input:focus{
-    border: 1px solid #e50914;
-    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+/* Estado de foco acessível e bonito */
+.campo input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+    background: #242424;
 }
 
 /* ==========================================
    ESQUECI MINHA SENHA
 ========================================== */
-
-.esqueci-senha{
+.esqueci-senha {
     text-align: left;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
-.esqueci-senha a{
-    color: #bdbdbd;
+.esqueci-senha a {
+    color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     position: relative;
-    transition: all 0.3s ease;
+    transition: color var(--transition-normal);
 }
 
-.esqueci-senha a::after{
+.esqueci-senha a::after {
     content: "";
     position: absolute;
     left: 0;
-    bottom: -3px;
+    bottom: -4px;
     width: 0;
     height: 2px;
-    background: #e50914;
-    transition: width 0.3s ease;
+    background: var(--primary-color);
+    transition: width var(--transition-normal);
 }
 
-.esqueci-senha a:hover{
-    color: #ffffff;
+.esqueci-senha a:hover {
+    color: var(--text-light);
 }
 
-.esqueci-senha a:hover::after{
+.esqueci-senha a:hover::after {
     width: 100%;
 }
 
 /* ==========================================
-   ÁREA SENHA
+   ÁREA SENHA (COM BOTÃO)
 ========================================== */
-.senha-area{
+.senha-area {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
-.senha-area input{
+.senha-area input {
     flex: 1;
 }
 
-.senha-area button{
-    height: 48px;
-
-    padding: 0 16px;
-
+.senha-area button {
+    height: 50px; /* Igualar melhor ao tamanho do input */
+    padding: 0 20px;
     border: none;
-    border-radius: 10px;
-
-    background: #e50914;
-
-    color: white;
-
+    border-radius: var(--border-radius-md);
+    background: var(--primary-color);
+    color: var(--text-light);
     cursor: pointer;
-
     font-weight: bold;
-
-    transition: 0.3s;
+    transition: all var(--transition-fast);
 }
 
-.senha-area button:hover{
-    background: #b80710;
+.senha-area button:hover,
+.btn-login:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+}
+
+/* Efeito de clique (active) para melhor UX */
+.senha-area button:active,
+.btn-login:active {
+    transform: translateY(0) scale(0.98);
 }
 
 /* ==========================================
-   BOTÃO LOGIN
+   BOTÃO LOGIN PRINCIPAL
 ========================================== */
-.btn-login{
+.btn-login {
     width: 100%;
-
     padding: 14px;
-
     border: none;
-    border-radius: 10px;
-
-    background: #e50914;
-
-    color: white;
-
+    border-radius: var(--border-radius-md);
+    background: var(--primary-color);
+    color: var(--text-light);
     font-weight: bold;
     font-size: 1rem;
-
     cursor: pointer;
-
-    margin-top: 10px;
-
-    transition: 0.3s;
-}
-
-.btn-login:hover{
-    background: #b80710;
-    transform: translateY(-2px);
+    margin-top: 15px;
+    transition: all var(--transition-fast);
 }
 
 /* ==========================================
    CADASTRO
 ========================================== */
-.cadastro{
+.cadastro {
     text-align: center;
-    margin-top: 20px;
-    color: #bbb;
+    margin-top: 25px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-.cadastro a{
-    color: #e50914;
+.cadastro a {
+    color: var(--primary-color);
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
+    transition: color var(--transition-fast);
 }
 
-.cadastro a:hover{
+.cadastro a:hover {
+    color: var(--primary-hover);
     text-decoration: underline;
 }
 
 /* ==========================================
-   MENSAGEM MODERNA
+   MENSAGEM MODERNA (TOAST)
 ========================================== */
-#mensagem{
+#mensagem {
     position: fixed;
-
     top: 20px;
     right: 20px;
-
     max-width: 320px;
-
-    background: #111;
-    color: white;
-
-    padding: 15px 20px;
-
-    border-left: 5px solid #e50914;
-
-    border-radius: 10px;
-
-    font-weight: bold;
-
+    background: var(--card-bg);
+    color: var(--text-light);
+    padding: 16px 20px;
+    border-left: 5px solid var(--primary-color);
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    font-size: 0.95rem;
+    
+    /* Configurações de visibilidade */
     opacity: 0;
-
-    pointer-events: none;
-
+    visibility: hidden; /* Evita cliques acidentais quando invisível */
     transform: translateX(100px);
-
-    transition: 0.4s;
-
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Animação elástica */
+    
     z-index: 9999;
-
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* MOSTRAR */
-#mensagem.mostrar{
+#mensagem.mostrar {
     opacity: 1;
+    visibility: visible;
     transform: translateX(0);
 }
 
-/* SUCESSO */
-#mensagem.sucesso{
-    border-color: #00c853;
+#mensagem.sucesso {
+    border-color: var(--success-color);
 }
 
-/* ERRO */
-#mensagem.erro{
-    border-color: #ff3d00;
+#mensagem.erro {
+    border-color: var(--error-color);
 }
 
 /* ==========================================
    RESPONSIVO TABLET
 ========================================== */
-@media(max-width: 768px){
-
-    .login-card{
+@media (max-width: 768px) {
+    .login-card {
         padding: 30px;
-    }
-
-    .login-card h1{
-        font-size: 1.8rem;
     }
 }
 
 /* ==========================================
    RESPONSIVO MOBILE
 ========================================== */
-@media(max-width: 500px){
-
-    .login-container{
+@media (max-width: 500px) {
+    .login-container {
         padding: 15px;
     }
 
-    .login-card{
-        padding: 25px 20px;
+    .login-card {
+        padding: 30px 20px;
         border-radius: 16px;
     }
 
-    .login-card h1{
-        font-size: 1.7rem;
-    }
-
-    .campo input{
-        padding: 13px;
-    }
-
-    .senha-area{
+    .senha-area {
         flex-direction: column;
+        gap: 15px;
     }
 
-    .senha-area button{
+    .senha-area button {
         width: 100%;
     }
 
-    .btn-login{
-        padding: 13px;
-    }
-
-    /* MENSAGEM MOBILE */
-    #mensagem{
+    /* MENSAGEM MOBILE (Ajuste para aparecer no topo) */
+    #mensagem {
         top: 15px;
         left: 15px;
         right: 15px;
-
         max-width: none;
-
-        transform: translateY(-80px);
+        transform: translateY(-100px);
     }
 
-    #mensagem.mostrar{
+    #mensagem.mostrar {
         transform: translateY(0);
     }
 }

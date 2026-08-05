@@ -1,20 +1,57 @@
-/* RESET */
-*{
+/* ==========================================
+   VARIÁVEIS GERAIS (Fácil Manutenção)
+========================================== */
+:root {
+    --primary: #e50914;
+    --primary-hover: #b80710;
+    
+    --bg-grad-1: #080808;
+    --bg-grad-2: #161616;
+    --bg-grad-3: #242424;
+    --card-bg: #141414;
+    --input-bg: #0d0d0d;
+    
+    --border-color: #333333;
+    --border-focus-ring: rgba(229, 9, 20, 0.2);
+    
+    --text-main: #ffffff;
+    --text-muted: #c7c7c7;
+    --error-color: #ff4d4d;
+    
+    --radius-sm: 10px;
+    --radius-lg: 22px;
+    
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   RESET & CONFIGURAÇÕES GERAIS
+========================================== */
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* BODY */
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #080808, #161616, #242424);
-    color: white;
+html {
+    /* Força barras de rolagem e elementos nativos (como o <select>) a ficarem escuros */
+    color-scheme: dark; 
 }
 
-/* CONTAINER */
-.container{
+body {
+    /* Fontes nativas para maior performance */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+/* ==========================================
+   CONTAINER
+========================================== */
+.container {
     width: 100%;
     min-height: 100vh;
     padding: 40px 20px;
@@ -23,174 +60,278 @@ body{
     align-items: center;
 }
 
-/* CARD */
-.card-cadastro{
+/* ==========================================
+   CARD CADASTRO
+========================================== */
+.card-cadastro {
     width: 100%;
     max-width: 850px;
-    background: #141414;
-    border-radius: 22px;
-    padding: 35px;
-    border: 1px solid #262626;
-    box-shadow: 0 0 35px rgba(229, 9, 20, 0.25);
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Borda mais sutil */
+    /* Sombra mais elegante e difusa */
+    box-shadow: 0 15px 50px rgba(229, 9, 20, 0.12);
 }
 
-/* TOPO */
-.topo{
+/* ==========================================
+   TOPO
+========================================== */
+.topo {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
 }
 
-.topo h1{
-    font-size: 2.2rem;
+.topo h1 {
+    /* Tipografia fluida: ajusta o tamanho dependendo da tela */
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
     margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-.topo span{
-    color: #e50914;
+.topo span {
+    color: var(--primary);
 }
 
-.topo p{
-    color: #c7c7c7;
+.topo p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-/* GRID */
-.form-grid{
+/* ==========================================
+   GRID DO FORMULÁRIO
+========================================== */
+.form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 24px;
 }
 
-/* GRUPOS */
-.grupo{
+/* ==========================================
+   GRUPOS DE INPUT
+========================================== */
+.grupo {
     display: flex;
     flex-direction: column;
 }
 
-.grupo label{
-    margin-bottom: 6px;
+.grupo label {
+    margin-bottom: 8px;
     font-size: 0.9rem;
+    font-weight: 500;
+    color: #e0e0e0;
 }
 
-/* INPUTS */
+/* INPUTS & SELECTS */
 .grupo input,
-.grupo select{
-    height: 45px;
-    padding: 0 12px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    background: #0d0d0d;
-    color: white;
+.grupo select {
+    height: 48px; /* Ligeiramente mais alto para melhor toque no celular */
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-main);
+    font-size: 1rem;
     outline: none;
-    transition: 0.2s;
+    transition: all var(--transition-fast);
+    font-family: inherit;
 }
 
+/* Foco Acessível e Moderno */
 .grupo input:focus,
-.grupo select:focus{
-    border-color: #e50914;
-    box-shadow: 0 0 5px rgba(229, 9, 20, 0.4);
+.grupo select:focus {
+    border-color: var(--primary);
+    background: #1a1a1a;
+    box-shadow: 0 0 0 3px var(--border-focus-ring);
 }
 
 /* ERROS */
-.grupo small{
-    margin-top: 4px;
-    color: #ff4d4d;
-    font-size: 0.75rem;
-    min-height: 14px;
+.grupo small {
+    margin-top: 6px;
+    color: var(--error-color);
+    font-size: 0.8rem;
+    min-height: 16px;
+    font-weight: 500;
 }
 
-/* SENHA */
-.senha-area{
+/* ==========================================
+   ÁREA DA SENHA
+========================================== */
+.senha-area {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
 }
 
-.senha-area input{
+.senha-area input {
     flex: 1;
-    min-width: 0;
+    min-width: 0; /* Evita quebra de layout no flexbox */
 }
 
-.senha-area button{
+.senha-area button {
     width: 85px;
     min-width: 85px;
-    height: 45px;
-    border: none;
-    border-radius: 10px;
-    background: #e50914;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.senha-area button:hover{
-    background: #b80710;
-}
-
-/* EMPRESA (CORRIGIDO) */
-.empresa-campos{
-    display: none;
-    grid-column: 1 / -1; /* ocupa toda linha */
-}
-
-/* BOTÃO */
-.btn-cadastrar{
-    width: 100%;
     height: 48px;
-    margin-top: 25px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: var(--text-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.senha-area button:hover {
+    background: var(--primary-hover);
+}
+
+.senha-area button:active {
+    transform: scale(0.95); /* Efeito de clique */
+}
+
+/* ==========================================
+   EMPRESA
+========================================== */
+.empresa-campos {
+    display: none;
+    grid-column: 1 / -1; /* Ocupa toda a linha no grid */
+}
+
+/* ==========================================
+   BOTÃO CADASTRAR
+========================================== */
+.btn-cadastrar {
+    width: 100%;
+    height: 52px;
+    margin-top: 30px;
     border: none;
     border-radius: 12px;
-    background: #e50914;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
+    background: var(--primary);
+    color: var(--text-main);
+    font-size: 1.05rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all var(--transition-normal);
 }
 
-.btn-cadastrar:hover{
-    background: #b80710;
+.btn-cadastrar:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3);
 }
 
-/* LINK LOGIN */
-.login-link{
-    margin-top: 20px;
+.btn-cadastrar:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ==========================================
+   LINK LOGIN
+========================================== */
+.login-link {
+    margin-top: 25px;
     text-align: center;
-    color: #cfcfcf;
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-.login-link a{
-    color: #e50914;
+.login-link a {
+    color: var(--primary);
     text-decoration: none;
-    font-weight: bold;
+    font-weight: 600;
+    transition: color var(--transition-fast);
 }
 
-.login-link a:hover{
+.login-link a:hover {
+    color: var(--primary-hover);
     text-decoration: underline;
 }
 
-/* RESPONSIVO */
-@media(max-width: 700px){
-
-    .card-cadastro{
-        max-width: 500px;
-        padding: 25px 20px;
+/* ==========================================
+   RESPONSIVO
+========================================== */
+@media (max-width: 768px) {
+    .card-cadastro {
+        max-width: 550px;
+        padding: 35px 25px;
     }
 
-    .form-grid{
-        grid-template-columns: 1fr; /* vira 1 coluna */
+    .form-grid {
+        grid-template-columns: 1fr; /* Colapsa para 1 coluna */
+        gap: 16px;
     }
 
-    .empresa-campos{
-        grid-column: 1;
+    .empresa-campos {
+        grid-column: 1; /* Ajuste seguro para 1 coluna */
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 15px;
     }
 
-    .senha-area{
-        flex-direction: row; /* mantém alinhado */
+    .card-cadastro {
+        padding: 30px 20px;
     }
+}
 
-    .senha-area button{
-        width: 85px;
+/* ==========================================
+   BOTÃO VOLTAR
+========================================== */
+.btn-voltar-topo {
+    position: fixed; /* Fixa no canto da tela */
+    top: 20px;
+    left: 20px;
+    
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    
+    background: #1a1a1a;
+    color: var(--text-main, #ffffff);
+    
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    
+    transition: all 0.3s ease;
+    z-index: 1000; /* Garante que fique por cima de tudo */
+}
+
+.btn-voltar-topo:hover {
+    background: var(--primary, #e50914);
+    border-color: var(--primary, #e50914);
+    transform: translateX(-4px); /* Animação sutil de voltar */
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+}
+
+.btn-voltar-topo:active {
+    transform: translateX(0) scale(0.95);
+}
+
+/* Esconder o botão em telas muito pequenas (opcional) */
+@media (max-width: 480px) {
+    .btn-voltar-topo {
+        top: 15px;
+        left: 15px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
+}
+
+#erroEmail {
+    color: #e50914; /* Cor vermelha do seu tema */
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Opcional para destacar a borda do input */
+.input-erro {
+    border-color: #e50914 !important;
 }
