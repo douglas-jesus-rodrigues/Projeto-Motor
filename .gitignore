@@ -13,8 +13,7 @@ node_modules/
 
 # Uploads enviados pelos usuários:
 # imagens, arquivos e mídias
-uploads/
-public/uploads/
+
 
 # Sessões/autenticação:
 # dados temporários de login
