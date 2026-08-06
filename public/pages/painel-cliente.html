@@ -6,45 +6,63 @@
     <title>Painel do Cliente | MotorFlex</title>
 
     <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Importação do Font Awesome para ícones profissionais -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/painel-cliente.css">
-    
 </head>
 <body>
 
     <header class="header">
-        <h1>Motor<span>Flex</span></h1>
+        <div class="logo">
+            <h1>Motor<span>Flex</span></h1>
+        </div>
 
-        <nav>
-            <a href="/pages/index.html">Home</a>
-            <a href="/pages/catalogo.html">Catálogo</a>
-            <a href="/pages/anunciar.html">Anunciar Carro</a>
-            <a href="#" id="btnSair" class="sair">Sair</a>
+        <nav class="nav-menu">
+            <a href="/pages/index.html"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="/pages/catalogo.html"><i class="fa-solid fa-car"></i> Catálogo</a>
+            <a href="/pages/anunciar.html"><i class="fa-solid fa-plus-circle"></i> Anunciar Carro</a>
+            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
         </nav>
     </header>
 
     <main class="container">
         <section class="boas-vindas">
-            <h2 id="nomeUsuario">Bem-vindo ao seu painel</h2>
-            <p>Acompanhe seus favoritos, anúncios e mensagens.</p>
+            <h2 id="nomeUsuario"><i class="fa-solid fa-user-circle"></i> Bem-vindo ao seu painel</h2>
+            <p>Acompanhe seus favoritos, gerencie seus anúncios e confira suas mensagens em um só lugar.</p>
         </section>
 
         <section class="cards">
             <div class="card">
-                <h3>Meus Favoritos</h3>
-                <p>Veja os carros que você salvou.</p>
-                <a href="/pages/favoritos.html">Ver favoritos</a>
+                <div class="card-icon">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Meus Favoritos</h3>
+                    <p>Veja os carros que você salvou para conferir depois.</p>
+                    <a href="/pages/favoritos.html" class="btn-card">Ver favoritos <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
 
             <div class="card">
-                <h3>Meus Anúncios</h3>
-                <p>Gerencie os veículos que você anunciou.</p>
-                <a href="/pages/meus-anuncios.html">Ver anúncios</a>
+                <div class="card-icon">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Meus Anúncios</h3>
+                    <p>Gerencie, edite ou remova os veículos que você anunciou.</p>
+                    <a href="/pages/meus-anuncios.html" class="btn-card">Ver anúncios <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
 
             <div class="card">
-                <h3>Mensagens</h3>
-                <p>Confira contatos de vendedores e compradores.</p>
-                <a href="/pages/mensagens.html">Ver mensagens</a>
+                <div class="card-icon">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Mensagens</h3>
+                    <p>Confira contatos de vendedores e compradores interessados.</p>
+                    <a href="/pages/mensagens.html" class="btn-card">Ver mensagens <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
         </section>
     </main>

@@ -1,11 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Meus Anúncios | MotorFlex</title>
+
+    <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Importação do Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/meus-anuncios.css">
 </head>
 <body>
-    <h1>Meus Anuncios</h1>
+
+    <header class="header">
+        <div class="logo">
+            <h1>Motor<span>Flex</span></h1>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/pages/painel-cliente.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Painel</a>
+            <a href="/pages/anunciar.html" class="btn-novo"><i class="fa-solid fa-plus"></i> Novo Anúncio</a>
+            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="titulo-secao">
+            <h2><i class="fa-solid fa-car-side"></i> Meus Veículos Anunciados</h2>
+            <p>Gerencie todos os carros que você colocou à venda no MotorFlex.</p>
+        </section>
+
+        <!-- Tabela ou Grid de Anúncios -->
+        <section class="tabela-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Modelo</th>
+                        <th>Ano</th>
+                        <th>Preço</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaMeusAnuncios">
+                    <!-- Os anúncios serão injetados dinamicamente via JavaScript -->
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #888;">Carregando seus anúncios...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="/js/meus-anuncios.js"></script>
 </body>
 </html>

@@ -183,3 +183,41 @@ router.get("/", async (req, res) => {
 });
 
 module.exports = router;
+
+// LISTAR APENAS OS VEÍCULOS DE UM USUÁRIO ESPECÍFICO
+router.get("/usuario/:usuarioId", async (req, res) => {
+    const { usuarioId } = req.params;
+
+    try {
+        const [veiculos] = await db.query(
+            `
+            SELECT 
+                veiculos.*,
+                marca.nome AS marca,
+                modelo.nome AS modelo,
+                fotos_veiculos.imagem AS imagem
+            FROM veiculos
+            LEFT JOIN marca ON marca.id = veiculos.marca_id
+            LEFT JOIN modelo ON modelo.id = veiculos.modelo_id
+            LEFT JOIN fotos_veiculos
+            ON fotos_veiculos.veiculo_id = veiculos.id
+            AND fotos_veiculos.principal = true
+            WHERE veiculos.usuario_id = ?
+            ORDER BY veiculos.id DESC
+            `,
+            [usuarioId]
+        );
+
+        return res.status(200).json({
+            sucesso: true,
+            veiculos
+        });
+
+    } catch (erro) {
+        console.error("Erro ao buscar veículos do usuário:", erro);
+        return res.status(500).json({
+            sucesso: false,
+            mensagem: "Erro ao buscar os anúncios do usuário."
+        });
+    }
+});
