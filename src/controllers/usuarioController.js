@@ -273,25 +273,15 @@ exports.loginUsuario = async (req, res) => {
             });
         }
 
-            // ATUALIZA ÚLTIMO LOGIN
-await db.query(
-    `
-    UPDATE usuarios
-    SET ultimo_login = NOW()
-    WHERE id = ?
-    `,
-    [usuario.id]
-);
-
-const [usuarioAtualizado] = await db.query(
-    `
-    SELECT *
-    FROM usuarios
-    WHERE id = ?
-    `,
-    [usuario.id]
-);
-        
+        // ATUALIZA ÚLTIMO LOGIN
+        await db.query(
+            `
+            UPDATE usuarios
+            SET ultimo_login = NOW()
+            WHERE id = ?
+            `,
+            [usuario.id]
+        );
 
         let empresa = null;
 
@@ -368,16 +358,62 @@ exports.verificarEmail = async (req, res) => {
 };
 
 // ==========================================
-// VALIDAR EMAIL
+// PAINEL ADMINISTRATIVO (NOVAS FUNÇÕES)
+// ==========================================
+
+// 1. Listar todos os usuários para a tabela do painel
+exports.listarUsuarios = async (req, res) => {
+    try {
+        const [usuarios] = await db.query("SELECT id, nome, email, tipo, status FROM usuarios");
+        return res.status(200).json(usuarios);
+    } catch (erro) {
+        console.error("Erro ao listar usuários:", erro);
+        return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar usuários." });
+    }
+};
+
+// 2. Estatísticas para os cards do topo do painel
+exports.obterEstatisticasAdmin = async (req, res) => {
+    try {
+        const [usuarios] = await db.query("SELECT COUNT(*) AS total FROM usuarios");
+        const [empresas] = await db.query("SELECT COUNT(*) AS total FROM empresas");
+        const [veiculos] = await db.query("SELECT COUNT(*) AS total FROM veiculos");
+        
+        // Caso possua uma tabela ou status de veículos vendidos, ajuste conforme sua base
+        const [vendidos] = await db.query("SELECT COUNT(*) AS total FROM veiculos WHERE status = 'vendido'").catch(() => [[{ total: 0 }]]);
+
+        return res.status(200).json({
+            totalUsuarios: usuarios[0].total,
+            totalEmpresas: empresas[0].total,
+            totalVeiculos: veiculos[0].total,
+            totalVendidos: vendidos[0].total || 0
+        });
+    } catch (erro) {
+        console.error("Erro ao buscar estatísticas:", erro);
+        return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar estatísticas." });
+    }
+};
+
+// 3. Deletar usuário pelo ID (botão de lixeira na tabela)
+exports.deletarUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.query("DELETE FROM usuarios WHERE id = ?", [id]);
+        return res.status(200).json({ sucesso: true, mensagem: "Usuário excluído com sucesso!" });
+    } catch (erro) {
+        console.error("Erro ao excluir usuário:", erro);
+        return res.status(500).json({ sucesso: false, mensagem: "Erro ao excluir usuário." });
+    }
+};
+
+// ==========================================
+// FUNÇÕES AUXILIARES DE E-MAIL
 // ==========================================
 function validarEmail(email) {
     const regex = /^[^\s@]+@[^\s@]+\.(com|com\.br|net|org|edu|gov|br)$/i;
     return regex.test(email);
 }
 
-// ==========================================
-// ENVIAR EMAIL DE CONFIRMAÇÃO
-// ==========================================
 async function enviarEmailConfirmacao(email, nome, token) {
     const link = `${process.env.PROD}/api/usuarios/verificar-email/${token}`;
 
@@ -400,9 +436,6 @@ async function enviarEmailConfirmacao(email, nome, token) {
     });
 }
 
-// ==========================================
-// ENVIAR EMAIL DE SUCESSO
-// ==========================================
 async function enviarEmailCadastroSucesso(email, nome) {
     await resend.emails.send({
         from: "onboarding@resend.dev",
@@ -417,3 +450,32 @@ async function enviarEmailCadastroSucesso(email, nome) {
         `
     });
 }
+
+// Retorna a quantidade de cadastros por mês para o gráfico
+exports.obterCadastrosPorMes = async (req, res) => {
+    try {
+        // Consulta que agrupa os usuários pelo mês da data de criação (ex: campo criado_em ou data_cadastro)
+        // Substitua 'criado_em' pelo nome real da coluna de data na sua tabela 'usuarios'
+        const [resultado] = await db.query(`
+            SELECT MONTH(criado_em) AS mes, COUNT(*) AS total 
+            FROM usuarios 
+            WHERE YEAR(criado_em) = YEAR(CURDATE()) 
+            GROUP BY MONTH(criado_em)
+            ORDER BY mes ASC
+        `);
+
+        // Cria um array com 12 posições (de Jan a Dez) zeradas
+        const mesesContagem = Array(12).fill(0);
+
+        // Preenche com os valores reais vindos do banco
+        resultado.forEach(row => {
+            const indiceMes = row.mes - 1; // Meses em JS vão de 0 a 11
+            mesesContagem[indiceMes] = row.total;
+        });
+
+        return res.status(200).json(mesesContagem);
+    } catch (erro) {
+        console.error("Erro ao buscar cadastros por mês:", erro);
+        return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar dados do gráfico." });
+    }
+};

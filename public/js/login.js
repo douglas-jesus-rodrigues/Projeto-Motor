@@ -48,10 +48,11 @@ formLogin.addEventListener("submit", async function (event) {
             localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
             setTimeout(() => {
+                // Redirecionamento corrigido para apontar para "painel-admin.html"
                 if (data.usuario.tipo === "empresa") {
                     window.location.href = "/pages/painel-empresa.html";
-                } else if (data.usuario.tipo === "admin") {
-                    window.location.href = "/pages/admin.html";
+                } else if (data.usuario.tipo === "admin" || data.usuario.cargo === "admin" || data.usuario.cargo === "super_admin") {
+                    window.location.href = "/pages/painel-admin.html";
                 } else {
                     window.location.href = "/pages/painel-cliente.html";
                 }
