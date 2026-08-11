@@ -1,0 +1,162 @@
+/* Estilos Específicos da Página de Usuários */
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header h2 {
+    color: #222;
+    font-size: 1.4rem;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-header h2 i {
+    color: #e50914; /* Vermelho padrão MotorFlex */
+}
+
+.page-header p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Tabela Responsiva */
+.table-responsive {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    overflow-x: auto;
+    border: 1px solid #eaeaea;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.users-table th, 
+.users-table td {
+    padding: 14px 15px;
+    border-bottom: 1px solid #eaeaea;
+    font-size: 0.95rem;
+}
+
+.users-table th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 600;
+}
+
+.users-table tr:hover {
+    background-color: #fdfdfd;
+}
+
+/* Badges de Tipo de Acesso */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.badge.admin {
+    background-color: #e50914;
+    color: #fff;
+}
+
+.badge.cliente {
+    background-color: #e1e8ed;
+    color: #444;
+}
+
+/* Botões de Ação na Tabela */
+.btn-acao {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-acao:active {
+    transform: scale(0.97);
+}
+
+.btn-mudar {
+    background-color: #007bff;
+    color: #fff;
+    margin-right: 5px;
+}
+
+.btn-mudar:hover {
+    background-color: #0056b3;
+}
+
+.btn-excluir {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.btn-excluir:hover {
+    background-color: #bd2130;
+}
+
+/* Responsividade para Dispositivos Móveis */
+@media (max-width: 768px) {
+    .users-table th, 
+    .users-table td {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+
+    .btn-acao {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Barra de Pesquisa */
+.search-container {
+    margin-bottom: 20px;
+}
+
+.search-box {
+    position: relative;
+    max-width: 400px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: #fff;
+}
+
+.search-box input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}

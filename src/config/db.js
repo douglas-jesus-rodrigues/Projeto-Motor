@@ -96,3 +96,4 @@ db.getConnection((erro, connection) => {
 // .promise() permite usar async/await
 // ==========================================
 module.exports = db.promise();
+

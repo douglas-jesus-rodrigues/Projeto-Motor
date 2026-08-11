@@ -47,6 +47,10 @@ app.use("/api/usuarios", usuarioRoutes);
 const veiculoRoutes = require("./src/routes/veiculoRoutes");
 app.use("/api/veiculos", veiculoRoutes);
 
+// NOVA ROTA ADMINISTRATIVA (Painel e Gestão de Usuários)
+const adminRoutes = require("./src/routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
 // TESTE
 app.get("/teste", (req, res) => {
     res.json({

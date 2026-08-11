@@ -1,246 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex | Painel Administrativo</title>
+    <title>Painel Administrativo | MotorFlex</title>
 
-    <link rel="stylesheet" href="../css/painel-admin.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Importação do Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/painel-admin.css?v=2">
 </head>
-
 <body>
 
-    <!-- MENU LATERAL -->
-    <aside class="sidebar">
-
+    <header class="header">
         <div class="logo">
-            <h2>Motor<span>Flex</span></h2>
+            <h1>Motor<span>Flex</span> <small style="color: #888; font-size: 0.9rem;">| Admin</small></h1>
         </div>
 
-        <nav>
-
-            <ul>
-
-                <li class="active">
-                    <a href="#">
-                        <i class="fa-solid fa-chart-line"></i>
-                        Dashboard
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-users"></i>
-                        Usuários
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-building"></i>
-                        Empresas
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-car"></i>
-                        Veículos
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-heart"></i>
-                        Favoritos
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-comments"></i>
-                        Mensagens
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        Denúncias
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-chart-column"></i>
-                        Relatórios
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-gear"></i>
-                        Configurações
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        Sair
-                    </a>
-                </li>
-
-            </ul>
-
+        <nav class="nav-menu">
+            <a href="/pages/admin/usuarios.html"><i class="fa-solid fa-users"></i> Usuários</a>
+            <a href="/pages/admin/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
+            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
         </nav>
+    </header>
 
-    </aside>
+    <main class="container">
+        <section class="boas-vindas">
+            <h2 id="nomeAdmin"><i class="fa-solid fa-shield-halved"></i> Painel Administrativo</h2>
+            <p>Gerenciamento estratégico da plataforma, controle de usuários e moderação de anúncios.</p>
+        </section>
 
-    <!-- CONTEÚDO -->
-    <main class="content">
-
-        <!-- CABEÇALHO -->
-        <header class="topbar">
-
-            <div>
-
-                <h1>Painel Administrativo</h1>
-                <p>Bem-vindo ao gerenciamento do MotorFlex</p>
-
-            </div>
-
-            <div class="admin">
-
-                <img src="../imagens/admin.png" alt="Administrador">
-
-                <div>
-
-                    <strong>Administrador</strong>
-                    <p>Online</p>
-
-                </div>
-
-            </div>
-
-        </header>
-
-        <!-- CARDS -->
         <section class="cards">
-
             <div class="card">
-                <i class="fa-solid fa-users"></i>
-                <h3>Usuários</h3>
-                <span id="usuarios">0</span>
+                <div class="card-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Usuários Cadastrados</h3>
+                    <p id="totalUsuarios">Carregando...</p>
+                    <a href="/pages/usuarios.html" class="btn-card">Gerenciar usuários <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
 
             <div class="card">
-                <i class="fa-solid fa-building"></i>
-                <h3>Empresas</h3>
-                <span id="empresas">0</span>
+                <div class="card-icon">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Moderação de Anúncios</h3>
+                    <p id="totalAnuncios">Carregando...</p>
+                    <a href="/pages/moderacao.html" class="btn-card">Ver anúncios <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
-
-            <div class="card">
-                <i class="fa-solid fa-car"></i>
-                <h3>Veículos</h3>
-                <span id="veiculos">0</span>
-            </div>
-
-            <div class="card">
-                <i class="fa-solid fa-dollar-sign"></i>
-                <h3>Vendidos</h3>
-                <span id="vendidos">0</span>
-            </div>
-
         </section>
-
-        <!-- TABELA -->
-        <section class="tabela">
-
-            <div class="titulo">
-
-                <h2>Últimos Usuários</h2>
-
-                <button>Novo Usuário</button>
-
-            </div>
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="tabelaUsuarios">
-
-                    <tr>
-
-                        <td>1</td>
-                        <td>Douglas</td>
-                        <td>douglas@email.com</td>
-                        <td>Administrador</td>
-                        <td>Ativo</td>
-
-                        <td>
-
-                            <button class="editar">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-
-                            <button class="excluir">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </section>
-
-        <!-- GRÁFICOS -->
-        <section class="graficos">
-
-            <div class="grafico">
-
-                <h2>Cadastros por mês</h2>
-
-                <canvas id="graficoCadastros"></canvas>
-
-            </div>
-
-            <div class="grafico">
-
-                <h2>Veículos por Marca</h2>
-
-                <canvas id="graficoMarcas"></canvas>
-
-            </div>
-
-        </section>
-
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../js/painel-admin.js"></script>
-
+    <script src="/js/painel-admin.js"></script>
 </body>
-
 </html>

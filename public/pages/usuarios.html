@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários | MotorFlex Admin</title>
+
+    <link rel="icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/painel-admin.css">
+    <link rel="stylesheet" href="/css/usuarios.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo">
+            <h1>Motor<span>Flex</span> <small style="color: #888; font-size: 0.9rem;">| Admin - Usuários</small></h1>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/pages/painel-admin.html"><i class="fa-solid fa-house"></i> Início</a>
+            <a href="/pages/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
+            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2><i class="fa-solid fa-users"></i> Lista de Usuários Cadastrados</h2>
+            <p>Gerencie os perfis e tipos de acesso (Cliente ou Admin) dos usuários do sistema.</p>
+        </div>
+
+        <!-- Barra de pesquisa compatível com o JavaScript (id="inputBusca") -->
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="inputBusca" placeholder="Pesquisar por CPF, E-mail ou Nome...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Tipo de Acesso</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaUsuarios">
+                    <tr>
+                        <td colspan="5" style="text-align: center;">Carregando usuários do banco de dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Script principal da página -->
+    <script src="../js/usuarios.js"></script>
+</body>
+</html>
