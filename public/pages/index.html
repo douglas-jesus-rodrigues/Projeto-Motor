@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex </title>
+    <title>MotorFlex | Compra e Venda de Veículos</title>
 
     <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
     <link rel="stylesheet" href="/css/index.css">
@@ -18,21 +18,32 @@
         </h1>
 
         <ul class="menu" id="menu">
-
             <li>
                 <a href="/pages/catalogo.html">Catálogo</a>
             </li>
 
+            <!-- MENU RESTRITO: EXIBIDO APENAS PARA USUÁRIOS NÃO LOGADOS -->
             <li id="menuNaoLogado">
                 <a href="/pages/login.html">Login</a>
                 <a href="/pages/cadastro.html" class="btn-menu">Cadastrar</a>
             </li>
 
-            <li id="menuLogado" style="display: none;">
-                <span id="nomeUsuario"></span>
-                <a href="#" class="btn-menu" id="irPainel">Meu Painel</a>
+            <!-- MENU RESTRITO: COMPONENTE DROPDOWN PREMIUM DO USUÁRIO LOGADO -->
+            <li id="menuLogado" style="display: none;" class="nav-item-dropdown">
+                <!-- Botão de Configurações transformado em Avatar Interativo -->
+                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true" title="Minha Conta">
+                    <!-- Avatar Circular do Usuário Nativo em SVG -->
+                    <svg class="avatar-usuario" xmlns="http://w3.org" viewBox="0 0 448 512" width="18" height="18" fill="currentColor">
+                        <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 363.8 0 459.4C0 488.4 23.6 512 52.6 512l342.8 0c29 0 52.6-23.6 52.6-52.6c0-95.6-79.8-155.4-178.3-155.4l-91.4 0z"/>
+                    </svg>
+                    <!-- Nome do usuário inserido dinamicamente via JS -->
+                    <span id="nomeUsuario"></span>
+                </button>
+                <div class="dropdown-menu" id="menuConfig">
+                    <a href="#" id="irPainel">Meu Painel</a>
+                    <a href="/pages/perfil.html">Ver Perfil</a>
+                </div>
             </li>
-
         </ul>
 
         <button class="btn-mobile" id="btnMobile">☰</button>
@@ -42,8 +53,8 @@
 
 <main>
 
+    <!-- Seção Banner Hero -->
     <section class="hero">
-
         <div class="hero-texto">
             <p class="tag">Compra e venda de veículos</p>
 
@@ -67,9 +78,9 @@
             <p>Ano 2022 • Automático • Flex</p>
             <strong>R$ 189.900,00</strong>
         </div>
-
     </section>
 
+    <!-- Filtros de Busca Rápica -->
     <section class="busca">
         <input type="text" placeholder="Marca do veículo">
         <input type="text" placeholder="Modelo">
@@ -77,11 +88,11 @@
         <button type="button">Buscar</button>
     </section>
 
+    <!-- Grid de Carros em Destaque -->
     <section class="destaques">
         <h2>Veículos em destaque</h2>
 
         <div class="cards">
-
             <div class="card">
                 <div class="img-card"></div>
                 <h3>Honda Civic</h3>
@@ -105,7 +116,6 @@
                 <strong>R$ 179.000,00</strong>
                 <a href="#">Ver detalhes</a>
             </div>
-
         </div>
     </section>
 
@@ -115,6 +125,7 @@
     <p>© 2026 MotorFlex - Sistema Web de Compra e Venda de Veículos</p>
 </footer>
 
+<!-- Script controlador da Home -->
 <script src="/js/index.js"></script>
 </body>
 </html>

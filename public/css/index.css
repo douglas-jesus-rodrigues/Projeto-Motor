@@ -1,5 +1,5 @@
 /* ==========================================
-   RESET
+   RESET E DESIGN SYSTEM
 ========================================== */
 *{
     margin: 0;
@@ -7,14 +7,12 @@
     box-sizing: border-box;
 }
 
-/* ==========================================
-   BODY
-========================================== */
 body{
     font-family: Arial, Helvetica, sans-serif;
     background: #0b0b0b;
     color: white;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* ==========================================
@@ -26,26 +24,24 @@ a{
 }
 
 /* ==========================================
-   HEADER
+   HEADER & NAVBAR
 ========================================== */
 .header{
     width: 100%;
-    background: #0b0b0b;
+    background: rgba(11, 11, 11, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid #222;
     position: sticky;
     top: 0;
     z-index: 999;
 }
 
-/* ==========================================
-   NAVBAR
-========================================== */
 .navbar{
     width: 100%;
     max-width: 1400px;
     margin: auto;
     padding: 18px 25px;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,12 +60,12 @@ a{
 }
 
 /* ==========================================
-   MENU
+   MENU NAVEGAÇÃO
 ========================================== */
 .menu{
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     list-style: none;
 }
 
@@ -80,38 +76,126 @@ a{
 
 .menu a{
     color: #ddd;
-    transition: 0.3s;
+    font-weight: 500;
+    transition: color 0.25s ease;
 }
 
 .menu a:hover{
-    color: white;
+    color: #e50914;
 }
 
 /* ==========================================
-   LOGIN / PAINEL
+   ESTADOS DE AUTENTICAÇÃO (LOGIN / REGISTRO)
 ========================================== */
-#menuNaoLogado,
-#menuLogado{
+#menuNaoLogado{
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-#nomeUsuario{
-    color: white;
+/* COMPONENTE DE USUÁRIO FLUTUANTE (DROPDOWN) */
+.nav-item-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-config {
+    cursor: pointer;
+    background: #141414;
+    border: 1px solid #222;
+    color: #ffffff;
+    font-size: 0.9rem;
     font-weight: bold;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+}
+
+.btn-config:hover {
+    border-color: #e50914;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.2);
+}
+
+/* Rotação Elástica da Engrenagem Interna */
+.btn-config svg {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #e50914;
+}
+
+.btn-config[aria-expanded="true"] svg {
+    transform: rotate(90deg);
+}
+
+.btn-config[aria-expanded="true"] {
+    background-color: rgba(229, 9, 20, 0.08);
+    border-color: #e50914;
+}
+
+/* CAIXINHA DE VIDRO FLUTUANTE (GLASSMORPHISM) */
+.dropdown-menu {
+    display: block !important; 
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: rgba(20, 24, 28, 0.85); 
+    backdrop-filter: blur(14px); 
+    -webkit-backdrop-filter: blur(14px);
+    min-width: 200px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 6px;
+    z-index: 1000;
+    margin-top: 14px;
+
+    /* ESTADO INICIAL OCULTO */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-15px) scale(0.93);
+    transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* ESTADO VISÍVEL (FADE + SLIDE + NEON GLOW) */
+.dropdown-menu.mostrar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 
+                0 0 20px rgba(229, 9, 20, 0.12); 
+    border-color: rgba(229, 9, 20, 0.25);
+}
+
+.dropdown-menu a {
+    color: #ccc !important;
+    padding: 10px 14px !important;
+    text-decoration: none;
+    display: flex !important;
+    align-items: center;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    transform: translateX(4px);
 }
 
 /* ==========================================
-   BOTÕES
+   BOTÕES GERAIS
 ========================================== */
 .btn-menu,
 .btn-primary,
 .btn-secondary{
     border-radius: 10px;
     font-weight: bold;
-    transition: 0.3s;
+    transition: all 0.25s ease;
 }
 
 .btn-menu{
@@ -122,6 +206,7 @@ a{
 
 .btn-menu:hover{
     background: #b80710;
+    transform: translateY(-1px);
 }
 
 .btn-primary{
@@ -132,6 +217,8 @@ a{
 
 .btn-primary:hover{
     background: #b80710;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(229, 9, 20, 0.3);
 }
 
 .btn-secondary{
@@ -142,11 +229,10 @@ a{
 
 .btn-secondary:hover{
     background: #e50914;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(229, 9, 20, 0.15);
 }
 
-/* ==========================================
-   BOTÃO MOBILE
-========================================== */
 .btn-mobile{
     display: none;
     background: none;
@@ -157,17 +243,14 @@ a{
 }
 
 /* ==========================================
-   HERO
+   SEÇÃO HERO / BANNER
 ========================================== */
 .hero{
     width: 100%;
     max-width: 1400px;
     margin: auto;
-
     min-height: 85vh;
-
     padding: 70px 25px;
-
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 50px;
@@ -178,41 +261,38 @@ a{
     color: #e50914;
     font-weight: bold;
     margin-bottom: 15px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
 }
 
 .hero-texto h2{
     font-size: clamp(2rem, 5vw, 4rem);
     margin-bottom: 20px;
     line-height: 1.2;
+    font-weight: 800;
 }
 
 .hero-texto p{
     color: #cfcfcf;
     line-height: 1.7;
     margin-bottom: 25px;
-    font-size: 1rem;
+    font-size: 1.05rem;
 }
 
-/* ==========================================
-   BOTÕES HERO
-========================================== */
 .botoes{
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
 }
 
-/* ==========================================
-   HERO CARD
-========================================== */
 .hero-card{
     width: 100%;
     background: linear-gradient(145deg, #1c1c1c, #111);
     border: 1px solid #2b2b2b;
     border-radius: 25px;
     padding: 40px;
-
-    box-shadow: 0 0 40px rgba(229, 9, 20, 0.25);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(229, 9, 20, 0.15);
 }
 
 .hero-card h3{
@@ -231,36 +311,41 @@ a{
 }
 
 /* ==========================================
-   BUSCA
+   BARRA DE FILTRO / BUSCA
 ========================================== */
 .busca{
     width: calc(100% - 40px);
     max-width: 1200px;
-
     margin: -40px auto 70px;
-
     background: #151515;
-
+    border: 1px solid #222;
     padding: 25px;
-
     border-radius: 18px;
-
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .busca input,
 .busca button{
     width: 100%;
-    padding: 14px;
+    padding: 14px 18px;
     border: none;
     border-radius: 10px;
+    font-size: 0.95rem;
+    outline: none;
 }
 
 .busca input{
     background: #222;
     color: white;
+    border: 1px solid #2e2e2e;
+    transition: border-color 0.2s;
+}
+
+.busca input:focus {
+    border-color: #444;
 }
 
 .busca button{
@@ -268,10 +353,15 @@ a{
     color: white;
     font-weight: bold;
     cursor: pointer;
+    transition: background 0.2s;
+}
+
+.busca button:hover{
+    background: #b80710;
 }
 
 /* ==========================================
-   DESTAQUES
+   CARDS DE VEÍCULOS EM DESTAQUE
 ========================================== */
 .destaques{
     width: 100%;
@@ -283,11 +373,9 @@ a{
 .destaques h2{
     font-size: clamp(1.8rem, 3vw, 2.5rem);
     margin-bottom: 30px;
+    font-weight: 700;
 }
 
-/* ==========================================
-   CARDS
-========================================== */
 .cards{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -299,12 +387,13 @@ a{
     border: 1px solid #242424;
     border-radius: 20px;
     padding: 20px;
-
-    transition: 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover{
     transform: translateY(-5px);
+    border-color: #e50914;
+    box-shadow: 0 10px 20px rgba(229, 9, 20, 0.08);
 }
 
 .img-card{
@@ -317,25 +406,41 @@ a{
 
 .card h3{
     margin-bottom: 8px;
+    font-size: 1.25rem;
 }
 
 .card p{
     color: #bbb;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
 }
 
 .card strong{
     color: #e50914;
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
+    font-size: 1.3rem;
 }
 
 .card a{
     display: inline-block;
-    background: #e50914;
+    background: #222;
+    border: 1px solid #333;
     color: white;
-    padding: 10px 15px;
+    padding: 10px 20px;
     border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.card:hover a {
+    background: #e50914;
+    border-color: #e50914;
+}
+
+.card a:hover {
+    background: #b80710 !important;
 }
 
 /* ==========================================
@@ -347,16 +452,18 @@ a{
     text-align: center;
     background: #050505;
     color: #aaa;
+    border-top: 1px solid #111;
+    font-size: 0.9rem;
 }
 
 /* ==========================================
-   TABLETS
+   RESPONSIVIDADE (TABLETS & MOBILE)
 ========================================== */
 @media(max-width: 992px){
-
     .hero{
         grid-template-columns: 1fr;
         text-align: center;
+        padding: 40px 25px;
     }
 
     .hero-card{
@@ -373,37 +480,25 @@ a{
     }
 }
 
-/* ==========================================
-   MOBILE
-========================================== */
 @media(max-width: 768px){
-
     .btn-mobile{
         display: block;
     }
 
     .menu{
         display: none;
-
         position: absolute;
-
         top: 80px;
         right: 20px;
-
-        width: 230px;
-
+        width: 250px;
         background: #151515;
-
+        border: 1px solid #222;
         border-radius: 15px;
-
         padding: 20px;
-
         flex-direction: column;
         align-items: flex-start;
-
         gap: 18px;
-
-        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .menu.ativo{
@@ -411,69 +506,33 @@ a{
     }
 
     #menuNaoLogado,
-    #menuLogado{
+    .nav-item-dropdown {
         width: 100%;
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
     }
 
-    .hero{
-        padding-top: 40px;
+    .btn-config {
+        width: 100%;
+        justify-content: space-between;
     }
 
-    .hero-texto h2{
-        font-size: 2.3rem;
-    }
-
-    .botoes{
-        flex-direction: column;
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        background-color: #0e0e0e;
+        margin-top: 6px;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+        padding: 4px;
     }
 
     .busca{
         grid-template-columns: 1fr;
         margin-top: 20px;
-    }
-
-    .img-card{
-        height: 180px;
-    }
-}
-
-/* ==========================================
-   TELAS MUITO PEQUENAS
-========================================== */
-@media(max-width: 480px){
-
-    .navbar{
-        padding: 15px;
-    }
-
-    .hero{
-        padding: 40px 15px;
-    }
-
-    .hero-texto h2{
-        font-size: 2rem;
-    }
-
-    .hero-card{
-        padding: 25px;
-    }
-
-    .busca{
-        width: calc(100% - 20px);
-        padding: 18px;
-    }
-
-    .destaques{
-        padding: 15px;
-    }
-
-    .card{
-        padding: 15px;
-    }
-
-    .img-card{
-        height: 160px;
     }
 }
