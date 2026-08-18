@@ -15,7 +15,7 @@
     
     /* Cores das Badges */
     --badge-admin: #0284c7;
-    --badge-cliente: #16a34a;
+    --badge-individual: #16a34a;
     --badge-empresa: #7c3aed;
 }
 
@@ -36,7 +36,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* --- HEADER MANTIDO NO PADRÃO --- */
+/* --- HEADER --- */
 .header {
     background: rgba(17, 17, 17, 0.95);
     backdrop-filter: blur(10px);
@@ -115,11 +115,6 @@ body {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    gap: 12px;
-}
-
-.boas-vindas h2 i {
-    color: var(--primary);
 }
 
 .boas-vindas p {
@@ -127,7 +122,7 @@ body {
     font-size: 1rem;
 }
 
-/* --- ENVELOPE DO FORMULÁRIO (CARD) --- */
+/* --- ENVELOPE DO FORMULÁRIO --- */
 .perfil-wrapper {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -136,7 +131,6 @@ body {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
 }
 
-/* Container e Estilos das Badges de Tipo de Conta */
 .tipo-conta-container {
     margin-bottom: 30px;
     display: flex;
@@ -153,12 +147,10 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* Classes utilitárias das Badges controladas por JS */
 .badge.admin { background-color: var(--badge-admin); }
-.badge.individual { background-color: var(--badge-cliente); }
+.badge.individual { background-color: var(--badge-individual); }
 .badge.empresa { background-color: var(--badge-empresa); }
 
-/* --- BLOCOS DE SEÇÃO DO FORMULÁRIO --- */
 .form-secao {
     margin-bottom: 35px;
 }
@@ -171,15 +163,8 @@ body {
     font-size: 1.2rem;
     color: #ffffff;
     margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
-}
-
-.form-secao h3 i {
-    color: var(--primary);
 }
 
 /* --- FORM GRID & COMPONENTES --- */
@@ -195,7 +180,6 @@ body {
     gap: 8px;
 }
 
-/* Ocupa as duas colunas do Grid (útil para o Website ou endereços) */
 .form-group.la-inteira {
     grid-column: span 2;
 }
@@ -207,7 +191,13 @@ body {
     letter-spacing: 0.3px;
 }
 
-/* Estilização dos Inputs Protegidos (Readonly) */
+/* CONTAINER DO INPUT COM BOTÃO DE TEXTO */
+.input-com-botao {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+
 .form-group input {
     background-color: var(--bg-input);
     border: 1px solid var(--border-color);
@@ -217,13 +207,55 @@ body {
     font-size: 0.95rem;
     outline: none;
     transition: var(--transition);
-    cursor: default; /* Mostra cursor normal já que é apenas leitura */
+    cursor: default;
+    width: 100%;
 }
 
-/* Efeito sutil ao focar mesmo sendo readonly para manter acessibilidade */
+/* Aumentado para 90px para dar espaço ao texto "Ocultar" sem esmagá-lo */
+.input-com-botao input {
+    padding-right: 90px;
+}
+
 .form-group input:focus {
     border-color: var(--text-light);
     background-color: #242424;
+}
+
+/* BOTÃO DE REVELAR TEXTUAL PREMIUM CYBERPUNK */
+.btn-revelar {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #222222;
+    border: 1px solid #333333;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 75px; /* Largura esticada para acomodar o texto */
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    border-radius: 10px;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-revelar:hover {
+    color: #ffffff;
+    background-color: var(--primary);
+    border-color: var(--primary-hover);
+    transform: translateY(-50%) scale(1.02);
+    box-shadow: 0 0 14px rgba(229, 9, 20, 0.4);
+}
+
+.btn-revelar:active {
+    transform: translateY(-50%) scale(0.98);
 }
 
 /* --- RESPONSIVIDADE --- */
@@ -238,20 +270,8 @@ body {
         padding: 25px 15px;
     }
 
-    .boas-vindas {
-        padding: 25px;
-    }
-
-    .boas-vindas h2 {
-        font-size: 1.5rem;
-    }
-
-    .perfil-wrapper {
-        padding: 25px;
-    }
-
     .form-grid {
-        grid-template-columns: 1fr; /* Vira uma única coluna no celular */
+        grid-template-columns: 1fr;
     }
 
     .form-group.la-inteira {
