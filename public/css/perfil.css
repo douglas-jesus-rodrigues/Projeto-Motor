@@ -1,0 +1,260 @@
+/* Custom Properties - Design System do Tema Escuro */
+:root {
+    --primary: #e50914;
+    --primary-hover: #b80710;
+    --bg-main: #0b0b0b;
+    --bg-card: #141414;
+    --bg-input: #1f1f1f;
+    --border-color: #222222;
+    --border-focus: #262626;
+    --text-main: #ffffff;
+    --text-muted: #a3a3a3;
+    --text-light: #666666;
+    --radius: 14px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Cores das Badges */
+    --badge-admin: #0284c7;
+    --badge-cliente: #16a34a;
+    --badge-empresa: #7c3aed;
+}
+
+/* Reset Básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- HEADER MANTIDO NO PADRÃO --- */
+.header {
+    background: rgba(17, 17, 17, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+}
+
+.header h1 span {
+    color: var(--primary);
+}
+
+.header nav {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.header a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+
+.header a:hover {
+    color: var(--primary);
+}
+
+/* --- CONTAINER PRINCIPAL --- */
+.container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 20px;
+    flex: 1;
+}
+
+/* --- SEÇÃO BOAS-VINDAS --- */
+.boas-vindas {
+    background: linear-gradient(135deg, #161616, #0e0e0e);
+    padding: 35px;
+    border-radius: 20px;
+    border: 1px solid var(--border-focus);
+    margin-bottom: 35px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.boas-vindas::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+}
+
+.boas-vindas h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.boas-vindas h2 i {
+    color: var(--primary);
+}
+
+.boas-vindas p {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* --- ENVELOPE DO FORMULÁRIO (CARD) --- */
+.perfil-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* Container e Estilos das Badges de Tipo de Conta */
+.tipo-conta-container {
+    margin-bottom: 30px;
+    display: flex;
+}
+
+.badge {
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Classes utilitárias das Badges controladas por JS */
+.badge.admin { background-color: var(--badge-admin); }
+.badge.individual { background-color: var(--badge-cliente); }
+.badge.empresa { background-color: var(--badge-empresa); }
+
+/* --- BLOCOS DE SEÇÃO DO FORMULÁRIO --- */
+.form-secao {
+    margin-bottom: 35px;
+}
+
+.form-secao:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-secao h3 {
+    font-size: 1.2rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.form-secao h3 i {
+    color: var(--primary);
+}
+
+/* --- FORM GRID & COMPONENTES --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Ocupa as duas colunas do Grid (útil para o Website ou endereços) */
+.form-group.la-inteira {
+    grid-column: span 2;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+/* Estilização dos Inputs Protegidos (Readonly) */
+.form-group input {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: #ffffff;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    outline: none;
+    transition: var(--transition);
+    cursor: default; /* Mostra cursor normal já que é apenas leitura */
+}
+
+/* Efeito sutil ao focar mesmo sendo readonly para manter acessibilidade */
+.form-group input:focus {
+    border-color: var(--text-light);
+    background-color: #242424;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 20px;
+    }
+
+    .container {
+        padding: 25px 15px;
+    }
+
+    .boas-vindas {
+        padding: 25px;
+    }
+
+    .boas-vindas h2 {
+        font-size: 1.5rem;
+    }
+
+    .perfil-wrapper {
+        padding: 25px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr; /* Vira uma única coluna no celular */
+    }
+
+    .form-group.la-inteira {
+        grid-column: span 1;
+    }
+}

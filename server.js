@@ -40,20 +40,29 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "pages", "index.html"));
 });
 
-// ROTAS
+// ==========================================
+// REGISTRO DE ROTAS DO SISTEMA
+// ==========================================
+
 const usuarioRoutes = require("./src/routes/usuarioRoutes");
 app.use("/api/usuarios", usuarioRoutes);
 
 const veiculoRoutes = require("./src/routes/veiculoRoutes");
 app.use("/api/veiculos", veiculoRoutes);
 
-// NOVA ROTA ADMINISTRATIVA (Painel e Gestão de Usuários)
 const adminRoutes = require("./src/routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 
-// ROTAS DE MODERAÇÃO E GESTÃO DE DENÚNCIAS
 const moderacaoRoutes = require("./src/routes/moderacaoRoutes");
 app.use("/api/moderacao", moderacaoRoutes);
+
+// NOVA ROTA CENTRALIZADA DE PERFIL (CLIENTE, EMPRESA E ADMIN)
+const perfilRoutes = require("./src/routes/perfilRoutes");
+app.use("/api/perfil", perfilRoutes);
+
+// ==========================================
+// ENDPOINTS AUXILIARES E TRATAMENTO
+// ==========================================
 
 // TESTE
 app.get("/teste", (req, res) => {
@@ -64,7 +73,7 @@ app.get("/teste", (req, res) => {
     });
 });
 
-// 404
+// INTERCEPTADOR DE ROTA NÃO ENCONTRADA (404)
 app.use((req, res) => {
     res.status(404).json({
         sucesso: false,
@@ -72,6 +81,7 @@ app.use((req, res) => {
     });
 });
 
+// INICIALIZAÇÃO DO SERVIDOR
 const PORT = process.env.PORT || 4000;
 const PROD = process.env.PROD || "http://localhost";
 
