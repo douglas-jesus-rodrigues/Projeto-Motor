@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderação de Denúncias - MotorFlex</title>
+
+    <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
+    <!-- Link para o seu arquivo CSS externo -->
+    <link rel="stylesheet" href="/css/moderacao.css">
+</head>
+<body>
+
+    <!-- Cabeçalho do Admin -->
+    <header class="header">
+        <div class="logo">
+            <h1>Motor<span>Flex</span></h1>
+        </div>
+        <nav class="nav-menu" aria-label="Navegação principal">
+            <a href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+            <a href="/moderacao"><i class="bi bi-shield-fill-exclamation"></i> Denúncias</a>
+            <a href="/veiculos"><i class="bi bi-car-front"></i> Catálogo</a>
+            <a href="/usuarios"><i class="bi bi-people"></i> Usuários</a>
+            <a href="/sair" class="sair"><i class="bi bi-box-arrow-right"></i> Sair</a>
+        </nav>
+    </header>
+
+    <!-- Container Principal -->
+    <main class="container">
+        
+        <!-- Seção de Contexto / Fila de Moderação -->
+        <section class="boas-vindas">
+            <h2><i class="bi bi-exclamation-triangle-fill"></i> Central de Denúncias</h2>
+            <p>Examine os anúncios reportados pelos usuários. Se a denúncia for procedente e violar as regras, remova o veículo imediatamente do catálogo ativo.</p>
+        </section>
+
+        <!-- Grid de Denúncias (Onde seu backend vai fazer o loop/laço de repetição) -->
+        <section class="cards" aria-label="Lista de denúncias pendentes">
+            
+            <!-- INÍCIO DO LOOP DO BANCO DE DADOS (Ex: foreach, map, etc.) -->
+            <article class="card" data-id="ID_DO_ANUNCIO_AQUI">
+                <div class="card-content">
+                    <span class="tag-pendente">
+                        <i class="bi bi-person-badge"></i> ID do Anúncio: #ID_DO_ANUNCIO_AQUI
+                    </span>
+                    <h3>TITULO_DO_VEICULO_AQUI</h3>
+                    <p><strong>Motivo:</strong> MOTIVO_DA_DENUNCIA_AQUI</p>
+                    <small>Reportado por: DETALHES_QUEM_REPORTOU_AQUI</small>
+                </div>
+                <div class="moderacao-acoes">
+                    <button class="btn-mod btn-aprovar">
+                        <i class="bi bi-hand-thumbs-up"></i> Manter no Catálogo
+                    </button>
+                    <button class="btn-mod btn-rejeitar">
+                        <i class="bi bi-trash3"></i> Remover do Catálogo
+                    </button>
+                    <a href="/detalhes-anuncio/ID_DO_ANUNCIO_AQUI" class="btn-card">
+                        Investigar Anúncio
+                    </a>
+                </div>
+            </article>
+            <!-- FIM DO LOOP DO BANCO DE DADOS -->
+
+        </section>
+    </main>
+
+    <!-- Link para o arquivo JavaScript de moderação -->
+    <script src="moderacao.js"></script>
+</body>
+</html>

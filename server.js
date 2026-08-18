@@ -51,6 +51,10 @@ app.use("/api/veiculos", veiculoRoutes);
 const adminRoutes = require("./src/routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 
+// ROTAS DE MODERAÇÃO E GESTÃO DE DENÚNCIAS
+const moderacaoRoutes = require("./src/routes/moderacaoRoutes");
+app.use("/api/moderacao", moderacaoRoutes);
+
 // TESTE
 app.get("/teste", (req, res) => {
     res.json({
