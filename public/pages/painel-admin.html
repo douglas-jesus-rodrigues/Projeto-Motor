@@ -20,7 +20,17 @@
         <nav class="nav-menu">
             <a href="/pages/usuarios.html"><i class="fa-solid fa-users"></i> Usuários</a>
             <a href="/pages/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
-            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+            
+            <!-- Nova Partezinha de Configurações -->
+            <div class="nav-item-dropdown">
+                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </button>
+                <div class="dropdown-menu" id="menuConfig">
+                    <a href="/pages/perfil.html"><i class="fa-solid fa-user-gear"></i> Ver Informações</a>
+                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -55,6 +65,72 @@
         </section>
     </main>
 
+    <!-- Estrutura do Modal de Confirmação Oculto -->
+    <div class="modal-overlay" id="modalSairContainer">
+        <div class="modal-container">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <h3>Confirmar Saída</h3>
+            <p>Tem certeza que deseja encerrar sua sessão no painel administrativo?</p>
+            <div class="modal-botoes">
+                <button class="btn-modal btn-cancelar" id="btnCancelarSair">Cancelar</button>
+                <!-- Mantém o ID original para vincular ao seu script antigo -->
+                <button class="btn-modal btn-confirmar-sair" id="btnSair">Sim, Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seu Script Antigo Mantido -->
     <script src="/js/painel-admin.js"></script>
+
+    <!-- Lógica do Dropdown e do Modal Integrada -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnConfig = document.getElementById('btnConfig');
+            const menuConfig = document.getElementById('menuConfig');
+            
+            const gatilhoSair = document.getElementById('gatilhoSair');
+            const modalSairContainer = document.getElementById('modalSairContainer');
+            const btnCancelarSair = document.getElementById('btnCancelarSair');
+            const btnSairConfirmado = document.getElementById('btnSair');
+
+            // 1. Controle de Abertura/Fechamento do Dropdown
+            if (btnConfig && menuConfig) {
+                btnConfig.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const estáAtivo = menuConfig.classList.toggle('mostrar');
+                    btnConfig.setAttribute('aria-expanded', estáAtivo);
+                });
+
+                document.addEventListener('click', () => {
+                    menuConfig.classList.remove('mostrar');
+                    btnConfig.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            // 2. Controle do Modal de Confirmação de Saída
+            if (gatilhoSair && modalSairContainer && btnCancelarSair) {
+                gatilhoSair.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    modalSairContainer.classList.add('mostrar-modal');
+                });
+
+                btnCancelarSair.addEventListener('click', () => {
+                    modalSairContainer.classList.remove('mostrar-modal');
+                });
+
+                modalSairContainer.addEventListener('click', (e) => {
+                    if (e.target === modalSairContainer) {
+                        modalSairContainer.classList.remove('mostrar-modal');
+                    }
+                });
+
+                if (btnSairConfirmado) {
+                    btnSairConfirmado.addEventListener('click', () => {
+                        modalSairContainer.classList.remove('mostrar-modal');
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>

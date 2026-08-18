@@ -6,12 +6,14 @@
     <title>Painel do Cliente | MotorFlex</title>
 
     <link rel="icon" href="/imagens/favicon.ico">
-    <!-- Importação do Font Awesome para ícones profissionais -->
+    <!-- LINK CORRIGIDO: Importação do Font Awesome 6.4.0 Oficial -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Link para o seu arquivo CSS externo -->
     <link rel="stylesheet" href="/css/painel-cliente.css">
 </head>
 <body>
 
+    <!-- Cabeçalho Principal -->
     <header class="header">
         <div class="logo">
             <h1>Motor<span>Flex</span></h1>
@@ -21,17 +23,31 @@
             <a href="/pages/index.html"><i class="fa-solid fa-house"></i> Home</a>
             <a href="/pages/catalogo.html"><i class="fa-solid fa-car"></i> Catálogo</a>
             <a href="/pages/anunciar.html"><i class="fa-solid fa-plus-circle"></i> Anunciar Carro</a>
-            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+            
+            <!-- Componente Dropdown de Configurações -->
+            <div class="nav-item-dropdown">
+                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </button>
+                <div class="dropdown-menu" id="menuConfig">
+                    <a href="/pages/perfil.html"><i class="fa-solid fa-user-gear"></i> Ver Informações</a>
+                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                </div>
+            </div>
         </nav>
     </header>
 
+    <!-- Contêiner de Conteúdo Principal -->
     <main class="container">
+        <!-- Seção de Boas-Vindas -->
         <section class="boas-vindas">
             <h2 id="nomeUsuario"><i class="fa-solid fa-user-circle"></i> Bem-vindo ao seu painel</h2>
             <p>Acompanhe seus favoritos, gerencie seus anúncios e confira suas mensagens em um só lugar.</p>
         </section>
 
+        <!-- Grid de Cards de Atalho -->
         <section class="cards">
+            <!-- Card 1: Favoritos -->
             <div class="card">
                 <div class="card-icon">
                     <i class="fa-solid fa-heart"></i>
@@ -43,6 +59,7 @@
                 </div>
             </div>
 
+            <!-- Card 2: Anúncios -->
             <div class="card">
                 <div class="card-icon">
                     <i class="fa-solid fa-car-side"></i>
@@ -54,6 +71,7 @@
                 </div>
             </div>
 
+            <!-- Card 3: Mensagens -->
             <div class="card">
                 <div class="card-icon">
                     <i class="fa-solid fa-comments"></i>
@@ -67,6 +85,74 @@
         </section>
     </main>
 
+    <!-- Janela Modal de Confirmação Oculta -->
+    <div class="modal-overlay" id="modalSairContainer">
+        <div class="modal-container">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <h3>Confirmar Saída</h3>
+            <p>Tem certeza que deseja encerrar sua sessão na MotorFlex?</p>
+            <div class="modal-botoes">
+                <button class="btn-modal btn-cancelar" id="btnCancelarSair">Cancelar</button>
+                <!-- Mantém o ID original para o seu script js antigo capturar o evento -->
+                <button class="btn-modal btn-confirmar-sair" id="btnSair">Sim, Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seu Script Antigo Mantido -->
     <script src="/js/painel-cliente.js"></script>
+
+    <!-- Lógica do Dropdown e Modal Adicionada -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnConfig = document.getElementById('btnConfig');
+            const menuConfig = document.getElementById('menuConfig');
+            
+            const gatilhoSair = document.getElementById('gatilhoSair');
+            const modalSairContainer = document.getElementById('modalSairContainer');
+            const btnCancelarSair = document.getElementById('btnCancelarSair');
+            const btnSairConfirmado = document.getElementById('btnSair');
+
+            // 1. Abre/Fecha o Dropdown de Configurações
+            if (btnConfig && menuConfig) {
+                btnConfig.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const estáAtivo = menuConfig.classList.toggle('mostrar');
+                    btnConfig.setAttribute('aria-expanded', estáAtivo);
+                });
+
+                document.addEventListener('click', () => {
+                    menuConfig.classList.remove('mostrar');
+                    btnConfig.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            // 2. Controle do Modal de Confirmação de Saída (Código Otimizado)
+            if (gatilhoSair && modalSairContainer && btnCancelarSair) {
+                
+                // Função utilitária para fechar o modal
+                const fecharModal = () => modalSairContainer.classList.remove('mostrar-modal');
+
+                // Abre o modal ao clicar em Sair
+                gatilhoSair.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    modalSairContainer.classList.add('mostrar-modal');
+                });
+
+                // Fecha o modal ao clicar no botão Cancelar
+                btnCancelarSair.addEventListener('click', fecharModal);
+
+                // Fecha o modal ao clicar na área escura (fora da caixinha)
+                modalSairContainer.addEventListener('click', (e) => {
+                    if (e.target === modalSairContainer) fecharModal();
+                });
+
+                // Fecha o modal quando o botão definitivo de Sair for clicado
+                if (btnSairConfirmado) {
+                    btnSairConfirmado.addEventListener('click', fecharModal);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

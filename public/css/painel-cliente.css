@@ -222,3 +222,209 @@ body{
         font-size: 1.6rem;
     }
 }
+
+/* --- MENU DROPDOWN DE CONFIGURAÇÕES (NOVO) --- */
+.nav-item-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Estilo do botão de engrenagem do cliente */
+.btn-config {
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    transition: all 0.3s ease;
+}
+
+.btn-config:hover {
+    color: #e50914;
+}
+
+/* Caixa flutuante de opções (escondida por padrão) */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #141414;
+    min-width: 190px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 8px 0;
+    z-index: 1000;
+    margin-top: 12px;
+}
+
+/* Classe controlada pelo JavaScript para abrir o menu */
+.dropdown-menu.mostrar {
+    display: block;
+}
+
+.dropdown-menu a {
+    color: #ccc !important;
+    padding: 12px 18px !important;
+    text-decoration: none;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem !important;
+    font-weight: normal !important;
+    transition: all 0.2s ease;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    border-radius: 0 !important;
+}
+
+.dropdown-menu a:hover {
+    background: #1c1c1c !important;
+    color: #e50914 !important;
+}
+
+/* Item de Sair específico dentro da caixinha */
+.dropdown-menu a.sair-item {
+    color: #ff4d4d !important;
+    border-top: 1px solid #222;
+    margin-top: 5px;
+    padding-top: 14px !important;
+}
+
+.dropdown-menu a.sair-item:hover {
+    background: rgba(229, 9, 20, 0.1) !important;
+    color: #e50914 !important;
+}
+
+
+/* --- MODAL DE CONFIRMAÇÃO DE SAÍDA (NOVO) --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Injetado via JS para escurecer o fundo */
+.modal-overlay.mostrar-modal {
+    display: flex;
+    opacity: 1;
+}
+
+/* Caixa branca/escura centralizada com a mensagem */
+.modal-container {
+    background: #141414;
+    border: 1px solid #222;
+    padding: 35px 30px;
+    border-radius: 18px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.mostrar-modal .modal-container {
+    transform: scale(1);
+}
+
+/* Ícone de aviso do modal */
+.modal-container i {
+    color: #e50914;
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.modal-container h3 {
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.modal-container p {
+    color: #a3a3a3;
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.modal-botoes {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Botões padrões internos do modal */
+.btn-modal {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancelar {
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #333;
+}
+
+.btn-cancelar:hover {
+    background-color: #333;
+}
+
+.btn-confirmar-sair {
+    background-color: #e50914;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
+}
+
+.btn-confirmar-sair:hover {
+    background-color: #b80710;
+}
+
+
+/* --- AJUSTE DE RESPONSIVIDADE PARA O DROPDOWN --- */
+@media (max-width: 768px) {
+    .nav-item-dropdown {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        background-color: #0e0e0e;
+        margin-top: 6px;
+    }
+
+    .modal-botoes {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-modal {
+        width: 100%;
+    }
+}
