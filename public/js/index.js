@@ -88,7 +88,7 @@ if (irPainel) {
         if (usuario.tipo === "empresa") {
             window.location.href = "/pages/painel-empresa.html";
         } else if (usuario.tipo === "admin") {
-            window.location.href = "/pages/admin.html";
+            window.location.href = "/pages/painel-admin.html";
         } else {
             window.location.href = "/pages/painel-cliente.html";
         }
