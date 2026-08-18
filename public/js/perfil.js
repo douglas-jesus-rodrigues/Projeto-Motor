@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // 6. ATIVAÇÃO DO GATILHO DOS BOTÕES TEXTUAIS
+        // 6. ATIVAÇÃO DO GATILHO DOS BOTÕES TEXTUAIS (VER / OCULTAR)
         configurarBotoesRevelar(dadosReais);
 
     } catch (error) {
@@ -78,6 +78,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+/**
+ * Define de maneira dinâmica para qual painel o usuário retornará ao clicar em Voltar
+ */
 function configurarBotaoVoltar(tipo) {
     const btnVoltar = document.getElementById("btnVoltar");
     if (btnVoltar) {
@@ -102,18 +105,17 @@ function configurarBotoesRevelar(dadosReais) {
 
             if (!input) return;
 
-            // Se o botão estiver exibindo "VER", nós revelamos o dado real
-            if (botao.innerText === "VER") {
-                input.value = dadosReais[alvoId]; // Alimenta com o valor real
-                botao.innerText = "Ocultar"; // Alterna o texto do botão
+            // Tratamento toUpperCase para evitar qualquer falha caso mude a caixa alta do HTML
+            if (botao.innerText.trim().toUpperCase() === "VER") {
+                input.value = dadosReais[alvoId]; // Revela o dado real
+                botao.innerText = "Ocultar"; // Altera o texto
                 botao.style.color = "#ffffff";
-                botao.style.backgroundColor = "var(--primary)"; // Botão fica ativo em vermelho
+                botao.style.backgroundColor = "var(--primary)"; // Destaca o botão ativo em vermelho
                 botao.style.borderColor = "var(--primary-hover)";
             } else {
-                // Se estiver em "Ocultar", nós censuramos o dado novamente
                 input.value = alvoId === "email" ? gerarMascaraEmail(dadosReais.email) : "***.***.***-**";
                 botao.innerText = "Ver"; // Retorna o texto original
-                botao.style.color = ""; // Reseta os estilos inline para voltar ao CSS padrão
+                botao.style.color = ""; // Reseta o estilo para o padrão CSS
                 botao.style.backgroundColor = "";
                 botao.style.borderColor = "";
             }
@@ -121,6 +123,9 @@ function configurarBotoesRevelar(dadosReais) {
     });
 }
 
+/**
+ * Cria uma máscara amigável para emails (exemplo: adm***@motorflex.com)
+ */
 function gerarMascaraEmail(email) {
     if (!email.includes("@")) return "******";
     const [usuario, dominio] = email.split("@");
@@ -128,7 +133,10 @@ function gerarMascaraEmail(email) {
     return `${usuario.substring(0, 3)}***@${dominio}`;
 }
 
-// MÁSCARAS DE INPUTS
+// ==========================================
+// MÁSCARAS DE PROCESSAMENTO VISUAL (MYSQL)
+// ==========================================
+
 function formatarCPF(cpf) {
     if (!cpf) return "";
     const limpo = cpf.replace(/\D/g, "");

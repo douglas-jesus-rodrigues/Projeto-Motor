@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil | MotorFlex</title>
     <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Link para o seu arquivo CSS externo -->
     <link rel="stylesheet" href="/css/perfil.css">
 </head>
 <body>
 
-    <!-- Cabeçalho Dinâmico -->
+    <!-- Cabeçalho Dinâmico Simplificado -->
     <header class="header">
         <div class="logo">
             <h1>Motor<span>Flex</span></h1>
         </div>
-        <nav class="nav-menu">
-            <!-- Botão Voltar Nativo em SVG -->
-            <a href="#" id="btnVoltar">
-                <svg xmlns="http://w3.org" viewBox="0 0 448 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
+        <nav class="nav-menu" aria-label="Navegação do Perfil">
+            <!-- Botão Voltar Nativo em SVG (Classe btn-voltar adicionada) -->
+            <a href="#" id="btnVoltar" class="btn-voltar">
+                <svg xmlns="http://w3.org" viewBox="0 0 448 512" width="14" height="14" fill="currentColor">
                     <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32L109.3 224 214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
                 </svg> 
                 Voltar
@@ -61,7 +62,7 @@
                             <input type="text" id="sobrenome" readonly>
                         </div>
 
-                        <!-- E-mail com botão de texto nativo -->
+                        <!-- E-mail com botão textual -->
                         <div class="form-group la-inteira">
                             <label for="email">E-mail</label>
                             <div class="input-com-botao">
@@ -75,7 +76,7 @@
                             <input type="text" id="telefone" readonly>
                         </div>
 
-                        <!-- CPF com botão de texto nativo -->
+                        <!-- CPF com botão textual -->
                         <div class="form-group">
                             <label for="cpf">CPF</label>
                             <div class="input-com-botao">
@@ -122,6 +123,7 @@
         </div>
     </main>
 
+    <!-- Script de lógica dinâmico -->
     <script src="/js/perfil.js"></script>
 </body>
 </html>

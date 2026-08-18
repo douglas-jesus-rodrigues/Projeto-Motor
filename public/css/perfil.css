@@ -65,18 +65,47 @@ body {
     align-items: center;
 }
 
-.header a {
-    color: #ccc;
-    text-decoration: none;
-    font-size: 0.95rem;
-    display: flex;
+/* --- BOTÃO VOLTAR PREMIUM INTERATIVO --- */
+.header .nav-menu a.btn-voltar {
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    background: #222222;
+    border: 1px solid #333333;
+    padding: 10px 18px;
+    border-radius: 10px;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: var(--transition);
 }
 
-.header a:hover {
-    color: var(--primary);
+/* Suavidade do ícone de seta */
+.header .nav-menu a.btn-voltar svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover do Botão Voltar: Acende o Neon Glow e expande levemente */
+.header .nav-menu a.btn-voltar:hover {
+    color: #ffffff;
+    background-color: var(--primary);
+    border-color: var(--primary-hover);
+    box-shadow: 0 0 14px rgba(229, 9, 20, 0.4);
+    transform: scale(1.02);
+}
+
+/* Micro-interação: Setinha desliza para a esquerda no hover */
+.header .nav-menu a.btn-voltar:hover svg {
+    transform: translateX(-4px);
+}
+
+/* Feedback físico de clique pressionado */
+.header .nav-menu a.btn-voltar:active {
+    transform: scale(0.98);
 }
 
 /* --- CONTAINER PRINCIPAL --- */
@@ -211,9 +240,9 @@ body {
     width: 100%;
 }
 
-/* Aumentado para 90px para dar espaço ao texto "Ocultar" sem esmagá-lo */
+/* Espaçamento para o texto ocultado não encostar no botão */
 .input-com-botao input {
-    padding-right: 90px;
+    padding-right: 96px;
 }
 
 .form-group input:focus {
@@ -221,41 +250,140 @@ body {
     background-color: #242424;
 }
 
-/* BOTÃO DE REVELAR TEXTUAL PREMIUM CYBERPUNK */
+/* BOTÃO DE REVELAR TEXTUAL VERSÃO CYBERPUNK PREMIUM */
 .btn-revelar {
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: #222222;
-    border: 1px solid #333333;
+    background: rgba(34, 34, 34, 0.6); /* Fundo semi-transparente */
+    backdrop-filter: blur(4px); /* Efeito de vidro sutil interno */
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid #2d2d2d;
     color: var(--text-muted);
-    font-size: 0.8rem;
-    font-weight: bold;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px; /* Espaçamento moderno entre as letras */
     cursor: pointer;
-    width: 75px; /* Largura esticada para acomodar o texto */
-    height: 38px;
+    width: 80px; /* Largura ajustada para o texto respirar */
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
-    border-radius: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px; /* Cantos leves e simétricos */
     z-index: 5;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* Efeito Hover: O botão ganha borda vermelha e acende o texto com brilho neon */
 .btn-revelar:hover {
     color: #ffffff;
-    background-color: var(--primary);
-    border-color: var(--primary-hover);
-    transform: translateY(-50%) scale(1.02);
-    box-shadow: 0 0 14px rgba(229, 9, 20, 0.4);
+    background-color: rgba(229, 9, 20, 0.15); /* Fundo com tom vermelho suave */
+    border-color: var(--primary); /* Borda acende em vermelho */
+    text-shadow: 0 0 8px rgba(229, 9, 20, 0.6); /* Texto brilha no escuro */
+    box-shadow: 0 0 12px rgba(229, 9, 20, 0.2); /* Glow sutil em volta do botão */
+    transform: translateY(-50%) scale(1.02); /* Leve aproximação interativa */
 }
 
+/* Feedback tátil de clique pressionado */
 .btn-revelar:active {
-    transform: translateY(-50%) scale(0.98);
+    transform: translateY(-50%) scale(0.96);
+}
+
+/* Foco por teclado para acessibilidade */
+.btn-revelar:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* --- MODAL DE CONFIRMAÇÃO COM DESFOQUE --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.mostrar-modal {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-container {
+    background: #141414;
+    border: 1px solid #222;
+    padding: 35px 30px;
+    border-radius: 18px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.mostrar-modal .modal-container {
+    transform: scale(1);
+}
+
+.modal-container h3 {
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.modal-container p {
+    color: #a3a3a3;
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.modal-botoes {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-modal {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancelar {
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #333;
+}
+
+.btn-cancelar:hover {
+    background-color: #333;
+}
+
+.btn-confirmar-sair {
+    background-color: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
+}
+
+.btn-confirmar-sair:hover {
+    background-color: var(--primary-hover);
 }
 
 /* --- RESPONSIVIDADE --- */
