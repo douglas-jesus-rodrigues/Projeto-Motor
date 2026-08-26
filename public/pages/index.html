@@ -3,129 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex | Compra e Venda de Veículos</title>
-
-    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
-    <link rel="stylesheet" href="/css/index.css">
+    <title>MotorFlex - Aluguel de Veículos Premium</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<header class="header">
-    <nav class="navbar">
+    <!-- TOPBAR SUPERIOR -->
+    <div class="topbar">
+        <div class="topbar-container">
+            <div class="topbar-info">
+                <span>📍 Av. Premium, 1000</span>
+                <span>📞 (11) 99999-8888</span>
+                <span>✉️ contato@motorflex.com</span>
+            </div>
+            <div class="topbar-social">
+                <a href="#" aria-label="Facebook">FB</a>
+                <a href="#" aria-label="X / Twitter">X</a>
+                <a href="#" aria-label="Instagram">IG</a>
+                <a href="#" aria-label="YouTube">YT</a>
+            </div>
+        </div>
+    </div>
 
-        <h1 class="logo">
-            <a href="/pages/index.html">Motor<span>Flex</span></a>
-        </h1>
+    <!-- HEADER / NAVEGAÇÃO PRINCIPAL -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="logo">
+                <a href="#home" class="nav-link">Motor<span>Flex</span></a>
+            </div>
 
-        <ul class="menu" id="menu">
-            <li>
-                <a href="/pages/catalogo.html">Catálogo</a>
-            </li>
+            <!-- BOTÃO MENU MOBILE -->
+            <button class="btn-mobile" id="btnMobile" aria-label="Abrir Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
 
-            <!-- MENU RESTRITO: EXIBIDO APENAS PARA USUÁRIOS NÃO LOGADOS -->
-            <li id="menuNaoLogado">
-                <a href="/pages/login.html">Login</a>
-                <a href="/pages/cadastro.html" class="btn-menu">Cadastrar</a>
-            </li>
+            <!-- MENU COM LINKS SPA -->
+            <ul class="menu" id="menuNavegacao">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#sobre" class="nav-link">Sobre</a></li>
+                <li><a href="#veiculos" class="nav-link">Veículos</a></li>
+                <li><a href="#servicos" class="nav-link">Serviços</a></li>
+                <li><a href="#contato" class="nav-link">Contato</a></li>
+            </ul>
 
-            <!-- MENU RESTRITO: COMPONENTE DROPDOWN PREMIUM DO USUÁRIO LOGADO -->
-            <li id="menuLogado" style="display: none;" class="nav-item-dropdown">
-                <!-- Botão de Configurações transformado em Avatar Interativo -->
-                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true" title="Minha Conta">
-                    <!-- Avatar Circular do Usuário Nativo em SVG -->
-                    <svg class="avatar-usuario" xmlns="http://w3.org" viewBox="0 0 448 512" width="18" height="18" fill="currentColor">
-                        <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 363.8 0 459.4C0 488.4 23.6 512 52.6 512l342.8 0c29 0 52.6-23.6 52.6-52.6c0-95.6-79.8-155.4-178.3-155.4l-91.4 0z"/>
-                    </svg>
-                    <!-- Nome do usuário inserido dinamicamente via JS -->
-                    <span id="nomeUsuario"></span>
-                </button>
-                <div class="dropdown-menu" id="menuConfig">
-                    <a href="#" id="irPainel">Meu Painel</a>
-                    <a href="/pages/perfil.html">Ver Perfil</a>
+            <div class="auth-actions">
+                <a href="#veiculos" class="btn-action nav-link">Alugar Carro</a>
+
+                <!-- DROPDOWN DA CONTA DO USUÁRIO -->
+                <div class="nav-item-dropdown">
+                    <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
+                        <span class="avatar-usuario">U</span>
+                        <span id="nomeUsuario">Minha Conta</span>
+                    </button>
+                    <div class="dropdown-menu" id="menuConfig" hidden>
+                        <a href="#perfil" class="nav-link">Meu Perfil</a>
+                        <a href="#reservas" class="nav-link">Minhas Reservas</a>
+                        <a href="#configuracoes" class="nav-link">Configurações</a>
+                        <a href="#sair" id="btnSair" class="link-sair">Sair da Conta</a>
+                    </div>
                 </div>
-            </li>
-        </ul>
-
-        <button class="btn-mobile" id="btnMobile">☰</button>
-
-    </nav>
-</header>
-
-<main>
-
-    <!-- Seção Banner Hero -->
-    <section class="hero">
-        <div class="hero-texto">
-            <p class="tag">Compra e venda de veículos</p>
-
-            <h2>
-                Encontre o carro ideal com segurança e sofisticação.
-            </h2>
-
-            <p>
-                A MotorFlex conecta clientes e vendedores em uma plataforma moderna,
-                rápida e confiável.
-            </p>
-
-            <div class="botoes">
-                <a href="/pages/catalogo.html" class="btn-primary">Ver veículos</a>
-                <a href="/pages/anunciar.html" class="btn-secondary">Anunciar carro</a>
             </div>
-        </div>
+        </nav>
+    </header>
 
-        <div class="hero-card">
-            <h3>BMW 320i Sport</h3>
-            <p>Ano 2022 • Automático • Flex</p>
-            <strong>R$ 189.900,00</strong>
-        </div>
-    </section>
+    <!-- CONTEÚDO DAS PÁGINAS (SEÇÕES DINÂMICAS) -->
+    <main>
+        <!-- PÁGINA: HOME -->
+        <section id="home" class="page-section active">
+            <div class="hero-banner">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <span class="hero-subtitle">BEM-VINDO À MOTORFLEX</span>
+                    <h1 class="hero-title">Os Melhores Carros Para Sua Jornada</h1>
+                    <p class="hero-description">
+                        Oferecemos uma frota exclusiva com tarifas competitivas. Garanta segurança, conforto e alta performance para sua próxima viagem.
+                    </p>
+                </div>
 
-    <!-- Filtros de Busca Rápica -->
-    <section class="busca">
-        <input type="text" placeholder="Marca do veículo">
-        <input type="text" placeholder="Modelo">
-        <input type="number" placeholder="Ano">
-        <button type="button">Buscar</button>
-    </section>
-
-    <!-- Grid de Carros em Destaque -->
-    <section class="destaques">
-        <h2>Veículos em destaque</h2>
-
-        <div class="cards">
-            <div class="card">
-                <div class="img-card"></div>
-                <h3>Honda Civic</h3>
-                <p>2021 • Automático</p>
-                <strong>R$ 142.000,00</strong>
-                <a href="#">Ver detalhes</a>
+                <div class="carousel-indicators">
+                    <span class="indicator active"></span>
+                    <span class="indicator"></span>
+                    <span class="indicator"></span>
+                </div>
             </div>
+        </section>
 
-            <div class="card">
-                <div class="img-card"></div>
-                <h3>Toyota Corolla</h3>
-                <p>2022 • Flex</p>
-                <strong>R$ 158.000,00</strong>
-                <a href="#">Ver detalhes</a>
+        <!-- PÁGINA: SOBRE -->
+        <section id="sobre" class="page-section">
+            <div class="container" style="padding: 60px 24px; text-align: center;">
+                <h2>Sobre a MotorFlex</h2>
+                <p>Somos uma empresa dedicada a entregar os veículos mais seguros e luxuosos do mercado.</p>
             </div>
+        </section>
 
-            <div class="card">
-                <div class="img-card"></div>
-                <h3>Jeep Compass</h3>
-                <p>2023 • Turbo</p>
-                <strong>R$ 179.000,00</strong>
-                <a href="#">Ver detalhes</a>
+        <!-- PÁGINA: VEÍCULOS -->
+        <section id="veiculos" class="page-section">
+            <div class="destaques">
+                <div class="container">
+                    <div class="cards" id="cardsVeiculos">
+                        <!-- Cards carregados dinamicamente via JS -->
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-</main>
+        <!-- PÁGINA: SERVIÇOS -->
+        <section id="servicos" class="page-section">
+            <div class="container" style="padding: 60px 24px; text-align: center;">
+                <h2>Nossos Serviços</h2>
+                <p>Aluguel corporativo, transfer executivo e locação de longo prazo com manutenção inclusa.</p>
+            </div>
+        </section>
 
-<footer class="footer">
-    <p>© 2026 MotorFlex - Sistema Web de Compra e Venda de Veículos</p>
-</footer>
+        <!-- PÁGINA: CONTATO -->
+        <section id="contato" class="page-section">
+            <div class="container" style="padding: 60px 24px; text-align: center;">
+                <h2>Fale Conosco</h2>
+                <p>Entre em contato pelo e-mail contato@motorflex.com ou via WhatsApp.</p>
+            </div>
+        </section>
+    </main>
 
-<!-- Script controlador da Home -->
-<script src="/js/index.js"></script>
+    <!-- JAVASCRIPT DE NAVEGAÇÃO SPA E MENU -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnConfig = document.getElementById('btnConfig');
+            const menuConfig = document.getElementById('menuConfig');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pageSections = document.querySelectorAll('.page-section');
+
+            // NAVEGAÇÃO SEM RECARREGAR (SPA)
+            function navegarPara(targetId) {
+                pageSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                const activeSection = document.querySelector(targetId);
+                if (activeSection) {
+                    activeSection.classList.add('active');
+                }
+
+                if (menuConfig) {
+                    btnConfig.setAttribute('aria-expanded', 'false');
+                    menuConfig.hidden = true;
+                }
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const href = link.getAttribute('href');
+                    
+                    if (href && href.startsWith('#')) {
+                        e.preventDefault();
+                        navegarPara(href);
+
+                        document.querySelectorAll('.menu .nav-link').forEach(l => l.classList.remove('active'));
+                        if (link.classList.contains('nav-link') && link.closest('.menu')) {
+                            link.classList.add('active');
+                        }
+                    }
+                });
+            });
+
+            // DROPDOWN DO USUÁRIO
+            if (btnConfig && menuConfig) {
+                btnConfig.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isExpanded = btnConfig.getAttribute('aria-expanded') === 'true';
+                    btnConfig.setAttribute('aria-expanded', !isExpanded);
+                    menuConfig.hidden = isExpanded;
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!btnConfig.contains(e.target) && !menuConfig.contains(e.target)) {
+                        btnConfig.setAttribute('aria-expanded', 'false');
+                        menuConfig.hidden = true;
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="../js/index.js"></script>
 </body>
 </html>
