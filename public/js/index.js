@@ -4,52 +4,99 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. GERENCIAMENTO DE SESSÃO E PERFIL DO USUÁRIO
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    // 1. GERENCIAMENTO DE NAVEGAÇÃO SPA (INÍCIO, SOBRE NÓS E CONTATO)
+    const linksSpa = document.querySelectorAll(".nav-link[data-target]");
+    const secoes = document.querySelectorAll(".page-section");
 
-    const menuLogado = document.getElementById("menuLogado");
-    const menuNaoLogado = document.getElementById("menuNaoLogado");
-    const nomeUsuario = document.getElementById("nomeUsuario");
-    const irPainel = document.getElementById("irPainel");
+    function alternarSecao(targetId) {
+        secoes.forEach(sec => {
+            sec.classList.remove("active");
+        });
 
-    if (usuario) {
-        if (menuNaoLogado) menuNaoLogado.style.display = "none";
-        if (menuLogado) menuLogado.hidden = false;
-
-        if (nomeUsuario) {
-            if (usuario.tipo === "empresa" && usuario.empresa && usuario.empresa.nome_empresa) {
-                nomeUsuario.textContent = usuario.empresa.nome_empresa;
-            } else if (usuario.nome) {
-                nomeUsuario.textContent = usuario.nome.split(" ")[0];
-            } else {
-                nomeUsuario.textContent = "Minha Conta";
-            }
+        const secaoAtiva = document.getElementById(`sec-${targetId}`);
+        if (secaoAtiva) {
+            secaoAtiva.classList.add("active");
         }
-    } else {
-        if (menuNaoLogado) menuNaoLogado.style.display = "flex";
-        if (menuLogado) menuLogado.hidden = true;
-    }
 
-    if (irPainel) {
-        irPainel.addEventListener("click", (event) => {
-            if (!usuario) return; // Permite o fluxo normal de navegação caso não logado
-            event.preventDefault();
-
-            switch (usuario.tipo) {
-                case "empresa":
-                    window.location.href = "/pages/painel-empresa.html";
-                    break;
-                case "admin":
-                    window.location.href = "/pages/painel-admin.html";
-                    break;
-                default:
-                    window.location.href = "/pages/painel-cliente.html";
-                    break;
+        linksSpa.forEach(link => {
+            if (link.getAttribute("data-target") === targetId) {
+                link.classList.add("active");
+            } else {
+                link.classList.remove("active");
             }
         });
     }
 
-    // 2. CONTROLE DO DROPDOWN DE CONTA E LOGOUT
+    linksSpa.forEach(link => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            const target = link.getAttribute("data-target");
+            alternarSecao(target);
+            window.location.hash = target;
+        });
+    });
+
+    // Detectar Hash na URL ao carregar (ex: index.html#sobre ou index.html#contato)
+    const hashAtual = window.location.hash.replace("#", "") || "home";
+    if (document.getElementById(`sec-${hashAtual}`)) {
+        alternarSecao(hashAtual);
+    } else {
+        alternarSecao("home");
+    }
+
+    // 2. GERENCIAMENTO DE SESSÃO E PERFIL DO USUÁRIO
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+    const btnLogin = document.getElementById("btnLogin");
+    const btnCadastro = document.getElementById("btnCadastro");
+    const dropdownUsuario = document.getElementById("dropdownUsuario");
+    const nomeUsuario = document.getElementById("nomeUsuario");
+    const avatarLetra = document.getElementById("avatarLetra");
+    const irPainel = document.getElementById("irPainel");
+    const menuNavegacao = document.getElementById("menuNavegacao");
+
+    if (usuario) {
+        if (btnLogin) btnLogin.style.display = "none";
+        if (btnCadastro) btnCadastro.style.display = "none";
+        if (dropdownUsuario) dropdownUsuario.style.display = "block";
+
+        let rotaPainel = "/pages/painel-cliente.html";
+        if (usuario.tipo === "empresa") {
+            rotaPainel = "/pages/painel-empresa.html";
+        } else if (usuario.tipo === "admin") {
+            rotaPainel = "/pages/painel-admin.html";
+        }
+
+        if (irPainel) {
+            irPainel.href = rotaPainel;
+        }
+
+        if (menuNavegacao && !document.getElementById("linkMeuPainel")) {
+            const li = document.createElement("li");
+            li.innerHTML = `<a href="${rotaPainel}" id="linkMeuPainel" style="color: var(--primary); font-weight: 700;">Meu Painel</a>`;
+            menuNavegacao.appendChild(li);
+        }
+
+        let nomeExibicao = "Minha Conta";
+        if (usuario.tipo === "empresa" && usuario.empresa && usuario.empresa.nome_empresa) {
+            nomeExibicao = usuario.empresa.nome_empresa;
+        } else if (usuario.nome) {
+            nomeExibicao = usuario.nome.split(" ")[0];
+        }
+
+        if (nomeUsuario) nomeUsuario.textContent = nomeExibicao;
+        if (avatarLetra) avatarLetra.textContent = nomeExibicao.charAt(0).toUpperCase();
+
+    } else {
+        if (btnLogin) btnLogin.style.display = "inline-block";
+        if (btnCadastro) btnCadastro.style.display = "inline-block";
+        if (dropdownUsuario) dropdownUsuario.style.display = "none";
+
+        const linkMeuPainel = document.getElementById("linkMeuPainel");
+        if (linkMeuPainel) linkMeuPainel.parentElement.remove();
+    }
+
+    // 3. DROPDOWN E SAIR
     const btnConfig = document.getElementById("btnConfig");
     const menuConfig = document.getElementById("menuConfig");
 
@@ -74,13 +121,12 @@ document.addEventListener("DOMContentLoaded", () => {
         btnSair.addEventListener("click", (e) => {
             e.preventDefault();
             localStorage.removeItem("usuario");
-            window.location.href = "/index.html";
+            window.location.reload();
         });
     }
 
-    // 3. MENU RESPONSIVO MOBILE E EFEITOS DE SCROLL
+    // 4. MENU RESPONSIVO MOBILE E EFEITOS DE SCROLL
     const btnMobile = document.getElementById("btnMobile");
-    const menuNavegacao = document.getElementById("menuNavegacao");
 
     if (btnMobile && menuNavegacao) {
         btnMobile.addEventListener("click", () => {
@@ -101,36 +147,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 4. SISTEMA DE BUSCA RÁPIDA
-    const botaoBusca = document.getElementById("btnPesquisar") || document.querySelector(".busca button");
-
-    if (botaoBusca) {
-        botaoBusca.addEventListener("click", (e) => {
-            e.preventDefault();
-
-            const inputMarca = document.querySelector("input[name='marca']");
-            const inputModelo = document.querySelector("input[name='modelo']");
-            const inputAno = document.querySelector("input[name='ano']");
-
-            const marca = inputMarca ? inputMarca.value.trim() : "";
-            const modelo = inputModelo ? inputModelo.value.trim() : "";
-            const ano = inputAno ? inputAno.value.trim() : "";
-
-            const parametros = new URLSearchParams();
-            if (marca) parametros.append("marca", marca);
-            if (modelo) parametros.append("modelo", modelo);
-            if (ano) parametros.append("ano", ano);
-
-            window.location.href = `/pages/catalogo.html?${parametros.toString()}`;
-        });
-    }
-
-    // 5. CARREGAMENTO DOS CARDS (HOME E CATÁLOGO)
-    const containerHome = document.getElementById("cardsVeiculos") || document.querySelector(".destaques .cards");
-    const containerCatalogo = document.getElementById("listaCatalogo");
-
+    // 5. CARREGAMENTO DOS CARDS NA HOME
+    const containerHome = document.getElementById("cardsVeiculos");
     if (containerHome) carregarVeiculosHome(containerHome);
-    if (containerCatalogo) carregarVeiculosCatalogo(containerCatalogo);
 });
 
 async function carregarVeiculosHome(container) {
@@ -151,32 +170,6 @@ async function carregarVeiculosHome(container) {
     } catch (erro) {
         console.error("Erro ao carregar veículos na Home:", erro);
         container.innerHTML = `<p style="color: var(--primary); grid-column: 1/-1; text-align: center; padding: 40px 0;">Erro ao conectar com o banco de dados.</p>`;
-    }
-}
-
-async function carregarVeiculosCatalogo(container) {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const marca = params.get("marca") || "";
-        const modelo = params.get("modelo") || "";
-        const ano = params.get("ano") || "";
-
-        const resposta = await fetch(`/api/veiculos?marca=${encodeURIComponent(marca)}&modelo=${encodeURIComponent(modelo)}&ano=${encodeURIComponent(ano)}`);
-        if (!resposta.ok) throw new Error(`Erro: ${resposta.status}`);
-
-        const dados = await resposta.json();
-
-        if (dados.sucesso && Array.isArray(dados.veiculos) && dados.veiculos.length > 0) {
-            container.innerHTML = "";
-            dados.veiculos.forEach(veiculo => {
-                container.appendChild(criarElementoCard(veiculo));
-            });
-        } else {
-            container.innerHTML = `<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center; padding: 40px 0;">Nenhum veículo encontrado para a sua busca.</p>`;
-        }
-    } catch (erro) {
-        console.error("Erro ao carregar catálogo:", erro);
-        container.innerHTML = `<p style="color: var(--primary); grid-column: 1/-1; text-align: center; padding: 40px 0;">Erro ao carregar o catálogo de veículos.</p>`;
     }
 }
 

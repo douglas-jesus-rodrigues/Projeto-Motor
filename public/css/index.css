@@ -36,6 +36,35 @@ body {
 }
 
 /* =========================================================
+   ESTRUTURA DA PÁGINA SPA (SEÇÕES DINÂMICAS)
+========================================================= */
+.page-section {
+    display: none;
+    min-height: calc(100vh - 120px);
+}
+
+.page-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================================
    TOPBAR SUPERIOR
 ========================================================= */
 .topbar {
@@ -124,21 +153,22 @@ body {
     transition: var(--transition);
 }
 
-.menu a:hover {
+.menu a:hover,
+.menu a.active {
     color: var(--text-primary);
 }
 
-/* Ações do Usuário e Dropdown */
+/* Ações do Usuário e Botões de Login/Cadastro */
 .auth-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
 .btn-action {
     background-color: var(--primary);
     color: #ffffff;
-    padding: 9px 18px;
+    padding: 8px 18px;
     border-radius: var(--radius-sm);
     text-decoration: none;
     font-weight: 700;
@@ -146,6 +176,7 @@ body {
     box-shadow: 0 0 12px var(--primary-glow);
     transition: var(--transition);
     text-align: center;
+    display: inline-block;
 }
 
 .btn-action:hover {
@@ -153,6 +184,26 @@ body {
     box-shadow: 0 0 20px var(--primary-glow);
 }
 
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 18px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+    background-color: rgba(229, 9, 20, 0.05);
+    color: #ffffff;
+}
+
+/* Dropdown da Conta */
 .nav-item-dropdown {
     position: relative;
 }
@@ -187,6 +238,7 @@ body {
     justify-content: center;
     font-weight: 700;
     font-size: 0.75rem;
+    color: #ffffff;
 }
 
 .dropdown-menu {
@@ -279,45 +331,6 @@ body {
     margin-bottom: 28px;
 }
 
-.hero-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 14px;
-}
-
-.btn-primary, .btn-secondary {
-    padding: 12px 26px;
-    border-radius: var(--radius-sm);
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.9rem;
-    transition: var(--transition);
-    cursor: pointer;
-    border: none;
-}
-
-.btn-primary {
-    background-color: var(--primary);
-    color: #ffffff;
-    box-shadow: 0 0 15px var(--primary-glow);
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-hover);
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-    border-color: var(--primary);
-    background-color: rgba(229, 9, 20, 0.05);
-}
-
 .carousel-indicators {
     position: absolute;
     bottom: 20px;
@@ -338,56 +351,18 @@ body {
 }
 
 /* =========================================================
-   BARRA DE BUSCA RÁPIDA
-========================================================= */
-.busca {
-    display: flex;
-    gap: 10px;
-    background: rgba(18, 18, 22, 0.85);
-    backdrop-filter: blur(10px);
-    padding: 12px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-}
-
-.busca input {
-    flex: 1;
-    min-width: 130px;
-    background: var(--bg-dark);
-    border: 1px solid var(--border-color);
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    outline: none;
-}
-
-.busca input:focus {
-    border-color: var(--primary);
-}
-
-/* =========================================================
    SEÇÃO DE CARDS DE VEÍCULOS
 ========================================================= */
 .destaques {
-    padding: 60px 24px;
     max-width: 1200px;
     margin: 0 auto;
-}
-
-.section-title {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin-bottom: 30px;
-    text-align: center;
 }
 
 .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
+    margin-top: 24px;
 }
 
 .card {
@@ -485,11 +460,12 @@ body {
         font-size: 2.2rem;
     }
 
-    .busca {
-        flex-direction: column;
+    .auth-actions {
+        gap: 8px;
     }
 
-    .busca input {
-        width: 100%;
+    .btn-action, .btn-secondary {
+        padding: 6px 12px;
+        font-size: 0.8rem;
     }
 }
