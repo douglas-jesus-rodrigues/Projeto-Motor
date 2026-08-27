@@ -7,7 +7,9 @@ require("dotenv").config();
 
 const app = express();
 
-// CONFIGURAÇÕES
+// ==========================================
+// CONFIGURAÇÕES E MIDDLEWARES
+// ==========================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -32,18 +34,28 @@ app.use(session({
     }
 }));
 
-// ARQUIVOS PÚBLICOS
+// ==========================================
+// SERVIÇOS EM SEGUNDO PLANO (CRON JOBS / LGPD)
+// ==========================================
+try {
+    require("./src/middlewares/cronInatividade");
+    console.log("⚙️ Agendador de inatividade LGPD ativado.");
+} catch (err) {
+    console.error("❌ Erro ao inicializar o middleware do Cron:", err.message);
+}
+
+// ==========================================
+// ARQUIVOS PÚBLICOS E PÁGINA INICIAL
+// ==========================================
 app.use(express.static(path.join(__dirname, "public")));
 
-// PÁGINA INICIAL
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "pages", "index.html"));
 });
 
 // ==========================================
-// REGISTRO DE ROTAS DO SISTEMA
+// REGISTRO DE ROTAS DA API
 // ==========================================
-
 const usuarioRoutes = require("./src/routes/usuarioRoutes");
 app.use("/api/usuarios", usuarioRoutes);
 
@@ -56,24 +68,20 @@ app.use("/api/admin", adminRoutes);
 const moderacaoRoutes = require("./src/routes/moderacaoRoutes");
 app.use("/api/moderacao", moderacaoRoutes);
 
-// NOVA ROTA CENTRALIZADA DE PERFIL (CLIENTE, EMPRESA E ADMIN)
 const perfilRoutes = require("./src/routes/perfilRoutes");
 app.use("/api/perfil", perfilRoutes);
 
 // ==========================================
 // ENDPOINTS AUXILIARES E TRATAMENTO
 // ==========================================
-
-// TESTE
 app.get("/teste", (req, res) => {
     res.json({
         sucesso: true,
-        mensagem: "Servidor motorFlex funcionando!",
+        mensagem: "Servidor MotorFlex funcionando!",
         porta: process.env.PORT || 4000
     });
 });
 
-// INTERCEPTADOR DE ROTA NÃO ENCONTRADA (404)
 app.use((req, res) => {
     res.status(404).json({
         sucesso: false,
@@ -81,10 +89,12 @@ app.use((req, res) => {
     });
 });
 
+// ==========================================
 // INICIALIZAÇÃO DO SERVIDOR
+// ==========================================
 const PORT = process.env.PORT || 4000;
 const PROD = process.env.PROD || "http://localhost";
 
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em ${PROD}:${PORT}`);
+    console.log(`🚀 Servidor MotorFlex rodando em ${PROD}:${PORT}`);
 });

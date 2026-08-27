@@ -7,7 +7,7 @@ let listaUsuariosGlobal = [];
 document.addEventListener("DOMContentLoaded", () => {
     carregarUsuarios();
 
-    // Configura a barra de pesquisa usando o ID exato do seu HTML: 'inputBusca'
+    // Configura a barra de pesquisa usando o ID 'inputBusca'
     const inputBusca = document.getElementById("inputBusca");
     if (inputBusca) {
         inputBusca.addEventListener("input", (e) => {
@@ -54,16 +54,16 @@ function renderizarTabela(usuarios) {
 
     usuarios.forEach(user => {
         const tr = document.createElement("tr");
-        
-        const tipoExibicao = user.tipo ? user.tipo.toUpperCase() : 'NÃO DEFINIDO';
+        const tipoAtual = user.tipo ? user.tipo.toLowerCase() : 'individual';
+        const tipoExibicao = tipoAtual.toUpperCase();
 
         tr.innerHTML = `
             <td>#${user.id}</td>
             <td>${user.nome || 'Não informado'}</td>
             <td>${user.email}</td>
-            <td><span class="badge badge-${user.tipo || 'default'}">${tipoExibicao}</span></td>
+            <td><span class="badge badge-${tipoAtual}">${tipoExibicao}</span></td>
             <td>
-                <button class="btn-acao btn-mudar" onclick="alterarTipo(${user.id}, '${user.tipo}')" title="Mudar tipo">
+                <button class="btn-acao btn-mudar" onclick="alterarTipo(${user.id}, '${tipoAtual}')" title="Mudar tipo de acesso">
                     <i class="fa-solid fa-user-gear"></i> Mudar
                 </button>
                 <button class="btn-acao btn-excluir" onclick="excluirUsuario(${user.id})" title="Excluir usuário">
@@ -80,7 +80,7 @@ function filtrarUsuarios(termo) {
     const filtrados = listaUsuariosGlobal.filter(user => {
         const nome = user.nome ? user.nome.toLowerCase() : "";
         const email = user.email ? user.email.toLowerCase() : "";
-        const cpf = user.cpf ? user.cpf.toLowerCase() : ""; // Garante a busca por CPF
+        const cpf = user.cpf ? user.cpf.toLowerCase() : "";
 
         return nome.includes(termo) || email.includes(termo) || cpf.includes(termo);
     });
@@ -88,11 +88,12 @@ function filtrarUsuarios(termo) {
     renderizarTabela(filtrados);
 }
 
-// 4. Função para alterar o tipo do usuário
+// 4. Função para alterar o tipo de acesso do usuário (Alterna entre 'admin' e 'individual')
 async function alterarTipo(id, tipoAtual) {
-    const novoTipo = tipoAtual === 'admin' ? 'individual' : 'admin';
+    const tipoNormalizado = (tipoAtual || 'individual').toLowerCase();
+    const novoTipo = tipoNormalizado === 'admin' ? 'individual' : 'admin';
     
-    if (!confirm(`Deseja realmente alterar o tipo deste usuário para "${novoTipo}"?`)) {
+    if (!confirm(`Deseja realmente alterar a permissão deste usuário de "${tipoNormalizado.toUpperCase()}" para "${novoTipo.toUpperCase()}"?`)) {
         return;
     }
 
@@ -108,14 +109,14 @@ async function alterarTipo(id, tipoAtual) {
         const resultado = await resposta.json();
 
         if (resposta.ok) {
-            alert(resultado.mensagem || "Tipo alterado com sucesso!");
+            alert(resultado.mensagem || "Tipo de acesso alterado com sucesso!");
             carregarUsuarios(); 
         } else {
             alert(resultado.erro || "Erro ao alterar permissão.");
         }
     } catch (erro) {
         console.error("Erro na requisição de alteração:", erro);
-        alert("Erro de conexão ao tentar alterar o tipo.");
+        alert("Erro de conexão ao tentar alterar o tipo de acesso.");
     }
 }
 
@@ -140,6 +141,6 @@ async function excluirUsuario(id) {
         }
     } catch (erro) {
         console.error("Erro na exclusão:", erro);
-        alert("Erro de conexão ao tentar excluir.");
+        alert("Erro de conexão ao tentar excluir o usuário.");
     }
 }

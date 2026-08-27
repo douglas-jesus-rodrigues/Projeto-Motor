@@ -6,9 +6,8 @@
     <title>Moderação de Denúncias - MotorFlex</title>
 
     <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
-    <!-- Link para Ícones Modernos (Bootstrap Icons) -->
-    <link rel="stylesheet" href="https://jsdelivr.net">
-    <!-- Link para o seu arquivo CSS externo -->
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/moderacao.css">
 </head>
 <body>
@@ -19,7 +18,7 @@
             <h1>Motor<span>Flex</span></h1>
         </div>
         <nav class="nav-menu" aria-label="Navegação principal">
-            <a href="javascript:history.back()"><i class="bi bi-arrow-left"></i> Voltar</a>
+            <a href="/pages/painel-admin.html"><i class="bi bi-arrow-left"></i> Voltar</a>
             <a href="/pages/catalogo.html"><i class="bi bi-car-front"></i> Catálogo</a>
         </nav>
     </header>
@@ -27,43 +26,28 @@
     <!-- Container Principal -->
     <main class="container">
         
-        <!-- Seção de Contexto / Fila de Moderação -->
         <section class="boas-vindas">
             <h2><i class="bi bi-exclamation-triangle-fill"></i> Central de Denúncias</h2>
-            <p>Examine os anúncios reportados pelos usuários. Se a denúncia for procedente e violar as regras, remova o veículo imediatamente do catálogo ativo.</p>
+            <p>Examine os anúncios reportados pelos usuários. Se a denúncia for procedente e violar as regras, remova o veículo do catálogo ativo.</p>
         </section>
 
-        <!-- Grid de Denúncias (Onde seu backend vai fazer o loop/laço de repetição) -->
-        <section class="cards" aria-label="Lista de denúncias pendentes">
-            
-            <!-- INÍCIO DO LOOP DO BANCO DE DADOS (Ex: foreach, map, etc.) -->
-            <article class="card" data-id="ID_DO_ANUNCIO_AQUI">
-                <div class="card-content">
-                    <span class="tag-pendente">
-                        <i class="bi bi-person-badge"></i> ID do Anúncio: #ID_DO_ANUNCIO_AQUI
-                    </span>
-                    <h3>TITULO_DO_VEICULO_AQUI</h3>
-                    <p><strong>Motivo:</strong> MOTIVO_DA_DENUNCIA_AQUI</p>
-                    <small>Reportado por: DETALHES_QUEM_REPORTOU_AQUI</small>
-                </div>
-                <div class="moderacao-acoes">
-                    <button class="btn-mod btn-aprovar">
-                        <i class="bi bi-hand-thumbs-up"></i> Manter no Catálogo
-                    </button>
-                    <button class="btn-mod btn-rejeitar">
-                        <i class="bi bi-trash3"></i> Remover do Catálogo
-                    </button>
-                    <a href="/detalhes-anuncio/ID_DO_ANUNCIO_AQUI" class="btn-card">
-                        Investigar Anúncio
-                    </a>
-                </div>
-            </article>
-            <!-- FIM DO LOOP DO BANCO DE DADOS -->
-
+        <!-- Grid de Denúncias (Renderizado dinamicamente pelo JS) -->
+        <section class="cards" id="listaDenuncias" aria-label="Lista de denúncias pendentes">
+            <!-- O JS insere os cards aqui -->
         </section>
+
+        <!-- Navegação da Paginação -->
+        <div class="paginacao" id="paginacaoContainer">
+            <button id="btnPagAnterior" class="btn-pag" disabled>
+                <i class="bi bi-chevron-left"></i> Anterior
+            </button>
+            <span id="infoPagina" class="info-pagina">Página 1</span>
+            <button id="btnPagProxima" class="btn-pag">
+                Próxima <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
     </main>
 
-    <!-- Link para o arquivo JavaScript de moderação -->
-    <script src="moderacao.js"></script>
+    <script src="/js/moderacao.js"></script>
 </body>
 </html>

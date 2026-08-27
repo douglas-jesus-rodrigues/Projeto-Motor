@@ -14,14 +14,16 @@
 
     <header class="header">
         <div class="logo">
-            <h1>Motor<span>Flex</span> <small style="color: #888; font-size: 0.9rem;">| Admin</small></h1>
+            <h1><a href="/pages/index.html" style="text-decoration: none; color: inherit;">Motor<span>Flex</span></a> <small style="color: #888; font-size: 0.9rem;">| Admin</small></h1>
         </div>
 
         <nav class="nav-menu">
+            <!-- Botão de Voltar para a Home Adicionado -->
+            <a href="/pages/index.html"><i class="fa-solid fa-house"></i> Início</a>
             <a href="/pages/usuarios.html"><i class="fa-solid fa-users"></i> Usuários</a>
             <a href="/pages/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
             
-            <!-- Nova Partezinha de Configurações -->
+            <!-- Parte de Configurações -->
             <div class="nav-item-dropdown">
                 <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
                     <i class="fa-solid fa-gear"></i> Configurações
@@ -73,13 +75,12 @@
             <p>Tem certeza que deseja encerrar sua sessão no painel administrativo?</p>
             <div class="modal-botoes">
                 <button class="btn-modal btn-cancelar" id="btnCancelarSair">Cancelar</button>
-                <!-- Mantém o ID original para vincular ao seu script antigo -->
                 <button class="btn-modal btn-confirmar-sair" id="btnSair">Sim, Sair</button>
             </div>
         </div>
     </div>
 
-    <!-- Seu Script Antigo Mantido -->
+    <!-- Script do Painel Admin -->
     <script src="/js/painel-admin.js"></script>
 
     <!-- Lógica do Dropdown e do Modal Integrada -->
