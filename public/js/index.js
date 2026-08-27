@@ -198,3 +198,16 @@ function criarElementoCard(veiculo) {
     `;
     return card;
 }
+
+// Exemplo de checagem do usuário no JS
+const usuarioLogado = JSON.parse(localStorage.getItem('usuario')) || null;
+const itemAnunciar = document.getElementById('itemAnunciar');
+
+if (usuarioLogado) {
+    // Se o tipo/cargo for admin, oculta a opção de anunciar
+    if (usuarioLogado.tipo === 'admin' || usuarioLogado.cargo === 'admin') {
+        if (itemAnunciar) itemAnunciar.style.display = 'none';
+    } else {
+        if (itemAnunciar) itemAnunciar.style.display = 'block';
+    }
+}

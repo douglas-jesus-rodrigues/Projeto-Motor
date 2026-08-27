@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex - O Seu Portal Automotivo</title>
+    <title>MotorFlex - Compre e Venda Veículos com Segurança</title>
     
     <!-- FAVICON, ESTILOS E FONTES -->
     <link rel="stylesheet" href="../css/index.css">
@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -18,8 +21,9 @@
     <div class="topbar">
         <div class="topbar-container">
             <div class="topbar-info">
-                <span>📍 Brasil</span>
-                <span>📧 contato@motorflex.com.br</span>
+                <span>📍 Av. Premium, 1000</span>
+                <span>📞 (11) 99999-8888</span>
+                <span>📧 contato@motorflex.com</span>
             </div>
             <div class="topbar-social">
                 <a href="#">Instagram</a>
@@ -45,9 +49,11 @@
 
             <!-- Links de Navegação SPA -->
             <ul class="menu" id="menuNavegacao">
-                <li><a href="#home" class="nav-link active" data-target="home">Início</a></li>
+                <li><a href="#home" class="nav-link active" data-target="home">Home</a></li>
                 <li><a href="/pages/catalogo.html">Catálogo</a></li>
-                <li><a href="#sobre" class="nav-link" data-target="sobre">Sobre Nós</a></li>
+                <!-- ID e classe adicionados para fácil controle via JS -->
+                <li id="itemAnunciar"><a href="/pages/anunciar.html" class="nav-link-anunciar">Anunciar Veículo</a></li>
+                <li><a href="#sobre" class="nav-link" data-target="sobre">Sobre</a></li>
                 <li><a href="#contato" class="nav-link" data-target="contato">Contato</a></li>
             </ul>
 
@@ -65,7 +71,7 @@
 
                     <div class="dropdown-menu" id="menuConfig" hidden>
                         <a href="/pages/painel-cliente.html" id="irPainel">Meu Painel</a>
-                        <a href="#" id="linkAdmin" style="display: none;">Painel Admin</a>
+                        <a href="/pages/painel-admin.html" id="linkAdmin" style="display: none;">Painel Admin</a>
                         <a href="#" id="btnSair" class="link-sair">Sair</a>
                     </div>
                 </div>
@@ -73,16 +79,20 @@
         </nav>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL COM SEÇÕES DINÂMICAS (SPA) -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <main>
         <!-- SEÇÃO INÍCIO (HOME) -->
         <section id="sec-home" class="page-section active">
             <div class="hero-banner">
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
-                    <span class="hero-subtitle">SEU PRÓXIMO CARRO ESTÁ AQUI</span>
-                    <h1 class="hero-title">Encontre os melhores veículos com garantia e transparência</h1>
-                    <p class="hero-description">Explore nosso catálogo completo e encontre a oferta perfeita para você.</p>
+                    <span class="hero-subtitle">BEM-VINDO À MOTORFLEX</span>
+                    <h1 class="hero-title">Compre e Venda Veículos com Segurança</h1>
+                    <p class="hero-description">A plataforma completa para pessoas físicas e concessionárias anunciarem ou encontrarem as melhores ofertas do mercado.</p>
+                    
+                    <div class="hero-actions" style="margin-top: 24px;">
+                        <a href="/pages/catalogo.html" class="btn-action" style="padding: 14px 32px; font-size: 1rem; text-decoration: none; display: inline-block;">Ver Catálogo</a>
+                    </div>
                 </div>
             </div>
 
@@ -116,11 +126,11 @@
                 <div style="max-width: 600px; display: flex; flex-direction: column; gap: 16px;">
                     <div style="background: var(--bg-surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                         <strong style="color: var(--primary); display: block; margin-bottom: 4px;">Atendimento por E-mail</strong>
-                        <span style="color: var(--text-secondary);">contato@motorflex.com.br</span>
+                        <span style="color: var(--text-secondary);">contato@motorflex.com</span>
                     </div>
                     <div style="background: var(--bg-surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--primary); display: block; margin-bottom: 4px;">Suporte Comercial</strong>
-                        <span style="color: var(--text-secondary);">suporte@motorflex.com.br</span>
+                        <strong style="color: var(--primary); display: block; margin-bottom: 4px;">Telefone / WhatsApp</strong>
+                        <span style="color: var(--text-secondary);">(11) 99999-8888</span>
                     </div>
                 </div>
             </div>

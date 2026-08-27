@@ -16,7 +16,10 @@
             <a href="/pages/index.html">Motor<span>Flex</span></a>
         </h1>
 
-        <a href="#" class="btn-voltar" id="btnPainel">Meu Painel</a>
+        <a href="#" class="btn-voltar" id="btnPainel">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Meu Painel
+        </a>
     </nav>
 </header>
 
@@ -24,8 +27,9 @@
     <section class="card-anuncio">
 
         <div class="topo">
-            <h2>Anunciar veículo</h2>
-            <p>Preencha os dados abaixo para cadastrar seu carro no sistema.</p>
+            <span class="badge-novo">Novo Anúncio</span>
+            <h2>Cadastrar Veículo</h2>
+            <p>Preencha as especificações técnicas e comerciais para expor seu veículo na vitrine da MotorFlex.</p>
         </div>
 
         <form id="formAnuncio" enctype="multipart/form-data">
@@ -63,7 +67,10 @@
 
                 <div class="grupo">
                     <label for="preco">Preço (R$) *</label>
-                    <input type="number" id="preco" name="preco" placeholder="Ex: 98000" step="0.01" min="0" required>
+                    <div class="input-money-wrapper">
+                        <span class="prefixo">R$</span>
+                        <input type="number" id="preco" name="preco" placeholder="98.000" step="0.01" min="0" required>
+                    </div>
                     <small id="erroPreco" class="erro-texto"></small>
                 </div>
 
@@ -96,7 +103,7 @@
 
                 <div class="grupo">
                     <label for="cor">Cor</label>
-                    <input type="text" id="cor" name="cor" placeholder="Ex: Preto">
+                    <input type="text" id="cor" name="cor" placeholder="Ex: Preto Perolizado">
                 </div>
 
                 <div class="grupo">
@@ -110,19 +117,23 @@
                 </div>
 
                 <div class="grupo grupo-full">
-                    <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" rows="4" placeholder="Descreva detalhes importantes do veículo, opcionais e estado de conservação..."></textarea>
+                    <label for="descricao">Descrição Detalhada</label>
+                    <textarea id="descricao" name="descricao" rows="4" placeholder="Descreva opcionais, revisões feitas, estado de conservação e diferenciais do veículo..."></textarea>
                 </div>
 
                 <div class="grupo grupo-full">
-                    <label for="imagem">Foto Principal do Veículo</label>
-                    <input type="file" id="imagem" name="imagem" accept="image/*">
+                    <label class="label-upload">Foto Principal do Veículo</label>
+                    <label for="imagem" class="dropzone-file">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span id="nomeArquivoSelecionado">Clique para escolher uma foto ou arraste até aqui</span>
+                        <input type="file" id="imagem" name="imagem" accept="image/*" style="display: none;">
+                    </label>
                 </div>
 
             </div>
 
             <button type="submit" class="btn-anunciar" id="btnAnunciar">
-                Publicar anúncio
+                Publicar Anúncio Agora
             </button>
 
         </form>
@@ -131,5 +142,18 @@
 </main>
 
 <script src="/js/anunciar.js"></script>
+<script>
+    // Atualiza o texto do dropzone quando o usuário seleciona um arquivo
+    const inputImg = document.getElementById('imagem');
+    const nomeArq = document.getElementById('nomeArquivoSelecionado');
+    if(inputImg) {
+        inputImg.addEventListener('change', (e) => {
+            if(e.target.files.length > 0) {
+                nomeArq.textContent = `Arquivo selecionado: ${e.target.files[0].name}`;
+                nomeArq.style.color = '#fff';
+            }
+        });
+    }
+</script>
 </body>
 </html>
