@@ -307,3 +307,38 @@ function limparErros() {
     erroPreco.textContent = "";
 }
 
+// PRE-VISUALIZAÇÃO DA IMAGEM SELECIONADA
+document.addEventListener('DOMContentLoaded', () => {
+    const inputImg = document.getElementById('imagem');
+    const dropzone = document.querySelector('.dropzone-file');
+    const nomeArq = document.getElementById('nomeArquivoSelecionado');
+    const svgIcon = dropzone ? dropzone.querySelector('svg') : null;
+
+    if (inputImg && dropzone) {
+        inputImg.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = (event) => {
+                    let imgPreview = dropzone.querySelector('.preview-imagem');
+
+                    if (!imgPreview) {
+                        imgPreview = document.createElement('img');
+                        imgPreview.classList.add('preview-imagem');
+                        dropzone.appendChild(imgPreview);
+                    }
+
+                    imgPreview.src = event.target.result;
+
+                    if (svgIcon) svgIcon.style.display = 'none';
+                    nomeArq.textContent = `Clique para alterar a foto (${file.name})`;
+                    nomeArq.style.color = '#ff1e27';
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
