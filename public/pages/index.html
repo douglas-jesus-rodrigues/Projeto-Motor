@@ -17,22 +17,6 @@
 </head>
 <body>
 
-    <!-- TOPBAR SUPERIOR -->
-    <div class="topbar">
-        <div class="topbar-container">
-            <div class="topbar-info">
-                <span>📍 Av. Premium, 1000</span>
-                <span>📞 (11) 99999-8888</span>
-                <span>📧 contato@motorflex.com</span>
-            </div>
-            <div class="topbar-social">
-                <a href="#">Instagram</a>
-                <a href="#">Facebook</a>
-                <a href="#">YouTube</a>
-            </div>
-        </div>
-    </div>
-
     <!-- HEADER & NAVEGAÇÃO -->
     <header class="header">
         <nav class="navbar">
@@ -51,7 +35,6 @@
             <ul class="menu" id="menuNavegacao">
                 <li><a href="#home" class="nav-link active" data-target="home">Home</a></li>
                 <li><a href="/pages/catalogo.html">Catálogo</a></li>
-                <!-- ID e classe adicionados para fácil controle via JS -->
                 <li id="itemAnunciar"><a href="/pages/anunciar.html" class="nav-link-anunciar">Anunciar Veículo</a></li>
                 <li><a href="#sobre" class="nav-link" data-target="sobre">Sobre</a></li>
                 <li><a href="#contato" class="nav-link" data-target="contato">Contato</a></li>
@@ -95,13 +78,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="destaques container" style="padding: 60px 24px;">
-                <h2>Veículos em Destaque</h2>
-                <div class="cards" id="cardsVeiculos">
-                    <!-- Cards carregados via JS -->
-                </div>
-            </div>
         </section>
 
         <!-- SEÇÃO SOBRE NÓS -->
@@ -118,20 +94,44 @@
         <!-- SEÇÃO CONTATO -->
         <section id="sec-contato" class="page-section">
             <div class="container" style="padding: 80px 24px;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 20px;">Fale Conosco</h1>
-                <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">
-                    Tem alguma dúvida, sugestão ou precisa de ajuda? Entre em contato com a nossa equipe!
-                </p>
+                <div style="text-align: center; max-width: 700px; margin: 0 auto 50px auto;">
+                    <h1 style="font-size: 2.5rem; margin-bottom: 16px;">Fale Conosco</h1>
+                    <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">
+                        Tem alguma dúvida, sugestão ou precisa de suporte? Escolha o melhor canal de atendimento para falar com a nossa equipe.
+                    </p>
+                </div>
                 
-                <div style="max-width: 600px; display: flex; flex-direction: column; gap: 16px;">
-                    <div style="background: var(--bg-surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--primary); display: block; margin-bottom: 4px;">Atendimento por E-mail</strong>
-                        <span style="color: var(--text-secondary);">contato@motorflex.com</span>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; max-width: 1000px; margin: 0 auto;">
+                    
+                    <!-- Card 1: Endereço -->
+                    <div style="background: var(--bg-surface); padding: 32px 24px; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center; transition: var(--transition);">
+                        <div style="width: 50px; height: 50px; background: rgba(229, 9, 20, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                            <i class="fa-solid fa-location-dot" style="color: var(--primary); font-size: 1.3rem;"></i>
+                        </div>
+                        <strong style="color: var(--text-primary); font-size: 1.1rem; display: block; margin-bottom: 8px;">Nosso Endereço</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; display: block;">Av. Premium, 1000<br>São Paulo - SP</span>
                     </div>
-                    <div style="background: var(--bg-surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--primary); display: block; margin-bottom: 4px;">Telefone / WhatsApp</strong>
-                        <span style="color: var(--text-secondary);">(11) 99999-8888</span>
+
+                    <!-- Card 2: Telefone/WhatsApp -->
+                    <div style="background: var(--bg-surface); padding: 32px 24px; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center; transition: var(--transition);">
+                        <div style="width: 50px; height: 50px; background: rgba(229, 9, 20, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                            <i class="fa-solid fa-phone" style="color: var(--primary); font-size: 1.3rem;"></i>
+                        </div>
+                        <strong style="color: var(--text-primary); font-size: 1.1rem; display: block; margin-bottom: 8px;">Telefone & WhatsApp</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.95rem; display: block;">(11) 99999-8888</span>
+                        <small style="color: var(--text-secondary); opacity: 0.7; display: block; margin-top: 4px;">Seg à Sex, das 8h às 18h</small>
                     </div>
+
+                    <!-- Card 3: E-mail -->
+                    <div style="background: var(--bg-surface); padding: 32px 24px; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center; transition: var(--transition);">
+                        <div style="width: 50px; height: 50px; background: rgba(229, 9, 20, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                            <i class="fa-solid fa-envelope" style="color: var(--primary); font-size: 1.3rem;"></i>
+                        </div>
+                        <strong style="color: var(--text-primary); font-size: 1.1rem; display: block; margin-bottom: 8px;">Atendimento por E-mail</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.95rem; display: block;">contato@motorflex.com</span>
+                        <small style="color: var(--text-secondary); opacity: 0.7; display: block; margin-top: 4px;">Respondemos em até 24h</small>
+                    </div>
+
                 </div>
             </div>
         </section>

@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const avatarLetra = document.getElementById("avatarLetra");
     const irPainel = document.getElementById("irPainel");
     const menuNavegacao = document.getElementById("menuNavegacao");
+    const itemAnunciar = document.getElementById("itemAnunciar");
 
     if (usuario) {
         if (btnLogin) btnLogin.style.display = "none";
@@ -63,8 +64,15 @@ document.addEventListener("DOMContentLoaded", () => {
         let rotaPainel = "/pages/painel-cliente.html";
         if (usuario.tipo === "empresa") {
             rotaPainel = "/pages/painel-empresa.html";
-        } else if (usuario.tipo === "admin") {
+        } else if (usuario.tipo === "admin" || usuario.cargo === "admin") {
             rotaPainel = "/pages/painel-admin.html";
+        }
+
+        // Oculta a opção de anunciar se o usuário for Admin
+        if (usuario.tipo === "admin" || usuario.cargo === "admin") {
+            if (itemAnunciar) itemAnunciar.style.display = "none";
+        } else {
+            if (itemAnunciar) itemAnunciar.style.display = "block";
         }
 
         if (irPainel) {
@@ -146,68 +154,4 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    // 5. CARREGAMENTO DOS CARDS NA HOME
-    const containerHome = document.getElementById("cardsVeiculos");
-    if (containerHome) carregarVeiculosHome(containerHome);
 });
-
-async function carregarVeiculosHome(container) {
-    try {
-        const resposta = await fetch("/api/veiculos");
-        if (!resposta.ok) throw new Error(`Erro: ${resposta.status}`);
-
-        const dados = await resposta.json();
-
-        if (dados.sucesso && Array.isArray(dados.veiculos) && dados.veiculos.length > 0) {
-            container.innerHTML = "";
-            dados.veiculos.slice(0, 6).forEach(veiculo => {
-                container.appendChild(criarElementoCard(veiculo));
-            });
-        } else {
-            container.innerHTML = `<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center; padding: 40px 0;">Nenhum veículo disponível no momento.</p>`;
-        }
-    } catch (erro) {
-        console.error("Erro ao carregar veículos na Home:", erro);
-        container.innerHTML = `<p style="color: var(--primary); grid-column: 1/-1; text-align: center; padding: 40px 0;">Erro ao conectar com o banco de dados.</p>`;
-    }
-}
-
-function criarElementoCard(veiculo) {
-    const imagemUrl = veiculo.imagem 
-        ? `/uploads/${veiculo.imagem}` 
-        : "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=600";
-
-    const marca = veiculo.marca_nome || veiculo.marca || "Veículo";
-    const modelo = veiculo.modelo_nome || veiculo.modelo || "";
-    const anoFab = veiculo.ano_fabricacao || veiculo.ano || "";
-    const anoMod = veiculo.ano_modelo || veiculo.ano || "";
-    const km = veiculo.quilometragem ? Number(veiculo.quilometragem).toLocaleString("pt-BR") : "0";
-    const preco = veiculo.preco ? Number(veiculo.preco).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "0,00";
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-        <div class="img-card">
-            <img src="${imagemUrl}" alt="${marca} ${modelo}" loading="lazy">
-        </div>
-        <h3>${marca} ${modelo}</h3>
-        <p class="card-info">${anoFab}/${anoMod} • ${km} km</p>
-        <strong>R$ ${preco}</strong>
-        <a href="/pages/detalhes.html?id=${veiculo.id}" class="btn-action">Ver Detalhes</a>
-    `;
-    return card;
-}
-
-// Exemplo de checagem do usuário no JS
-const usuarioLogado = JSON.parse(localStorage.getItem('usuario')) || null;
-const itemAnunciar = document.getElementById('itemAnunciar');
-
-if (usuarioLogado) {
-    // Se o tipo/cargo for admin, oculta a opção de anunciar
-    if (usuarioLogado.tipo === 'admin' || usuarioLogado.cargo === 'admin') {
-        if (itemAnunciar) itemAnunciar.style.display = 'none';
-    } else {
-        if (itemAnunciar) itemAnunciar.style.display = 'block';
-    }
-}

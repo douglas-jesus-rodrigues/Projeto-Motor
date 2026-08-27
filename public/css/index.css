@@ -1,27 +1,35 @@
 /* =========================================================
-   SISTEMA DE DESIGN - MOTORFLEX
+   SISTEMA DE DESIGN - MOTORFLEX (REVISED & OPTIMIZED)
 ========================================================= */
 
 :root {
+    /* Paleta Principal */
     --primary: #e50914;
     --primary-hover: #b80710;
     --primary-glow: rgba(229, 9, 20, 0.35);
     
+    /* Superfícies & Cores de Fundo */
     --bg-dark: #08080a;
     --bg-surface: #121216;
     --bg-surface-hover: #1a1a20;
     
+    /* Tipografia & Bordas */
     --text-primary: #ffffff;
     --text-secondary: #a0a0b0;
     --border-color: rgba(255, 255, 255, 0.08);
     
+    /* Layout & Transições */
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-pill: 50px;
     --transition: all 0.25s ease-in-out;
+    
+    /* Suporte a preferência de cor nativa do navegador */
+    color-scheme: dark;
 }
 
-* {
+/* Reset Global Otimizado */
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -30,13 +38,30 @@
 body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+/* Foco Acessível para Navegação via Teclado */
+a:focus-visible, 
+button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+/* Container Global */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 24px;
 }
 
 /* =========================================================
-   ESTRUTURA DA PÁGINA SPA (SEÇÕES DINÂMICAS)
+   ESTRUTURA SPA (SEÇÕES DINÂMICAS)
 ========================================================= */
 .page-section {
     display: none;
@@ -45,23 +70,18 @@ body {
 
 .page-section.active {
     display: block;
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 /* =========================================================
@@ -111,6 +131,7 @@ body {
 .header {
     background: rgba(8, 8, 10, 0.85);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
@@ -158,25 +179,33 @@ body {
     color: var(--text-primary);
 }
 
-/* Ações do Usuário e Botões de Login/Cadastro */
+/* Ações de Autenticação */
 .auth-actions {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.btn-action {
-    background-color: var(--primary);
-    color: #ffffff;
+.btn-action,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
     padding: 8px 18px;
     border-radius: var(--radius-sm);
     text-decoration: none;
-    font-weight: 700;
     font-size: 0.85rem;
-    box-shadow: 0 0 12px var(--primary-glow);
+    cursor: pointer;
     transition: var(--transition);
-    text-align: center;
-    display: inline-block;
+}
+
+.btn-action {
+    background-color: var(--primary);
+    color: #ffffff;
+    font-weight: 700;
+    border: 1px solid transparent;
+    box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .btn-action:hover {
@@ -188,13 +217,7 @@ body {
     background-color: transparent;
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    padding: 8px 18px;
-    border-radius: var(--radius-sm);
-    text-decoration: none;
     font-weight: 600;
-    font-size: 0.85rem;
-    transition: var(--transition);
-    display: inline-block;
 }
 
 .btn-secondary:hover {
@@ -253,6 +276,7 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    z-index: 10;
 }
 
 .dropdown-menu[hidden] {
@@ -297,10 +321,7 @@ body {
 
 .hero-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: linear-gradient(180deg, rgba(8, 8, 10, 0.5) 0%, rgba(8, 8, 10, 0.95) 100%);
 }
 
@@ -316,6 +337,7 @@ body {
     font-size: 0.85rem;
     font-weight: 800;
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .hero-title {
@@ -344,70 +366,12 @@ body {
     height: 3px;
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
+    cursor: pointer;
+    transition: var(--transition);
 }
 
 .indicator.active {
     background-color: var(--primary);
-}
-
-/* =========================================================
-   SEÇÃO DE CARDS DE VEÍCULOS
-========================================================= */
-.destaques {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    margin-top: 24px;
-}
-
-.card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    transition: var(--transition);
-}
-
-.card:hover {
-    border-color: var(--primary);
-    transform: translateY(-4px);
-}
-
-.img-card {
-    width: 100%;
-    height: 180px;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background-color: var(--bg-dark);
-}
-
-.img-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.card h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-}
-
-.card-info {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-}
-
-.card strong {
-    font-size: 1.2rem;
-    color: var(--primary);
 }
 
 /* =========================================================
@@ -419,8 +383,11 @@ body {
     border: none;
     cursor: pointer;
     flex-direction: column;
+    justify-content: center;
     gap: 5px;
-    padding: 4px;
+    padding: 8px;
+    min-height: 44px;
+    min-width: 44px;
 }
 
 .btn-mobile span {
@@ -428,6 +395,7 @@ body {
     height: 2px;
     background-color: var(--text-primary);
     border-radius: 2px;
+    transition: var(--transition);
 }
 
 @media (max-width: 768px) {
@@ -464,7 +432,8 @@ body {
         gap: 8px;
     }
 
-    .btn-action, .btn-secondary {
+    .btn-action, 
+    .btn-secondary {
         padding: 6px 12px;
         font-size: 0.8rem;
     }
