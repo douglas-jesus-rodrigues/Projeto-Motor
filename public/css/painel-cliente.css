@@ -1,20 +1,26 @@
-*{
+/* =========================================================================
+   1. RESET E ESTILOS BASE
+   ========================================================================= */
+   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body{
+body {
     font-family: Arial, Helvetica, sans-serif;
     background: #0b0b0b;
     color: white;
     min-height: 100vh;
 }
 
-/* --- HEADER --- */
-.header{
+/* =========================================================================
+   2. CABEÇALHO / HEADER
+   ========================================================================= */
+.header {
     background: rgba(17, 17, 17, 0.95);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid #222;
     padding: 20px 50px;
     display: flex;
@@ -30,17 +36,17 @@ body{
     letter-spacing: 0.5px;
 }
 
-.header h1 span{
+.header h1 span {
     color: #e50914;
 }
 
-.header nav{
+.header nav {
     display: flex;
     gap: 25px;
     align-items: center;
 }
 
-.header a{
+.header a {
     color: #ccc;
     text-decoration: none;
     font-size: 0.95rem;
@@ -50,11 +56,11 @@ body{
     transition: all 0.3s ease;
 }
 
-.header a:hover{
+.header a:hover {
     color: #e50914;
 }
 
-.sair{
+.sair {
     background: #e50914;
     padding: 10px 16px;
     border-radius: 8px;
@@ -63,66 +69,123 @@ body{
     box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
 }
 
-.sair:hover{
+.sair:hover {
     background: #b80710;
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(229, 9, 20, 0.4);
 }
 
-/* --- CONTAINER PRINCIPAL --- */
-.container{
+/* =========================================================================
+   3. CONTAINER PRINCIPAL
+   ========================================================================= */
+.container {
     max-width: 1100px;
     margin: auto;
     padding: 40px 20px;
 }
 
-/* --- BOAS-VINDAS --- */
-.boas-vindas{
-    background: linear-gradient(135deg, #161616, #0e0e0e);
-    padding: 35px;
+/* =========================================================================
+   4. SEÇÃO DO PERFIL (AVATAR + NOME CENTRALIZADO)
+   ========================================================================= */
+.boas-vindas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    padding: 32px 24px;
+    margin: 20px 0 40px 0;
+    background: rgba(18, 18, 24, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 3px solid #e50914;
     border-radius: 20px;
-    border: 1px solid #262626;
-    margin-bottom: 35px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 25px rgba(229, 9, 20, 0.1);
+}
+
+.perfil-avatar-wrapper {
     position: relative;
-    overflow: hidden;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
 }
 
-.boas-vindas::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
+.perfil-avatar {
+    width: 100%;
     height: 100%;
-    background: #e50914;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #ff1e27;
+    box-shadow: 0 0 16px rgba(255, 30, 39, 0.45);
+    background-color: #0c0d11;
 }
 
-.boas-vindas h2{
-    font-size: 2rem;
-    margin-bottom: 10px;
+.perfil-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-trocar-foto {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(135deg, #e50914 0%, #b80009 100%);
+    color: #ffffff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 2px solid #0d0e12;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
 }
 
-.boas-vindas h2 i {
-    color: #e50914;
+.btn-trocar-foto:hover {
+    background: #ff1e27;
+    transform: scale(1.1);
 }
 
-.boas-vindas p{
-    color: #a3a3a3;
-    font-size: 1.05rem;
+.boas-vindas-texto {
+    text-align: center;
+    margin-top: 5px;
 }
 
-/* --- CARDS DE ATALHO --- */
-.cards{
+.boas-vindas-texto h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 auto 6px auto;
+    text-align: center;
+    display: block;
+}
+
+.boas-vindas-texto p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* =========================================================================
+   5. CARDS DE ATALHO
+   ========================================================================= */
+.cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 25px;
 }
 
-.card{
+.card {
     background: #141414;
     border: 1px solid #222;
     border-radius: 18px;
@@ -133,7 +196,7 @@ body{
     justify-content: space-between;
 }
 
-.card:hover{
+.card:hover {
     transform: translateY(-6px);
     border-color: #e50914;
     box-shadow: 0 10px 25px rgba(229, 9, 20, 0.15);
@@ -153,20 +216,20 @@ body{
     border-radius: 14px;
 }
 
-.card h3{
+.card h3 {
     font-size: 1.3rem;
     margin-bottom: 10px;
     color: #fff;
 }
 
-.card p{
+.card p {
     color: #999;
     margin-bottom: 25px;
     font-size: 0.95rem;
     line-height: 1.5;
 }
 
-.btn-card{
+.btn-card {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -190,120 +253,119 @@ body{
     background: #b80710 !important;
 }
 
-/* --- RESPONSIVIDADE --- */
-@media(max-width: 900px){
-    .cards{
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media(max-width: 768px){
-    .header{
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px 20px;
-    }
-
-    .header nav{
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .cards{
-        grid-template-columns: 1fr;
-    }
-
-    .boas-vindas {
-        padding: 25px;
-    }
-
-    .boas-vindas h2 {
-        font-size: 1.6rem;
-    }
-}
-
-/* --- MENU DROPDOWN DE CONFIGURAÇÕES (NOVO) --- */
+/* =========================================================================
+   6. MENU DROPDOWN DE CONFIGURAÇÕES (GLASSMORPHISM)
+   ========================================================================= */
 .nav-item-dropdown {
     position: relative;
     display: inline-block;
 }
 
-/* Estilo do botão de engrenagem do cliente */
 .btn-config {
     cursor: pointer;
     background: none;
     border: none;
     color: #ccc;
     font-size: 0.95rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 0;
+    padding: 8px 16px;
+    border-radius: 8px;
     transition: all 0.3s ease;
 }
 
 .btn-config:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-config svg {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-config[aria-expanded="true"] svg {
+    transform: rotate(90deg);
     color: #e50914;
 }
 
-/* Caixa flutuante de opções (escondida por padrão) */
+.btn-config[aria-expanded="true"] {
+    background-color: rgba(229, 9, 20, 0.08);
+    color: #ffffff;
+}
+
 .dropdown-menu {
-    display: none;
+    display: block;
     position: absolute;
     right: 0;
     top: 100%;
-    background: #141414;
-    min-width: 190px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 1px solid #222;
-    border-radius: 10px;
-    padding: 8px 0;
+    background: rgba(20, 24, 28, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    min-width: 210px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px;
     z-index: 1000;
-    margin-top: 12px;
+    margin-top: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-15px) scale(0.93);
+    transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
-/* Classe controlada pelo JavaScript para abrir o menu */
 .dropdown-menu.mostrar {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 
+                0 0 20px rgba(229, 9, 20, 0.15); 
+    border-color: rgba(229, 9, 20, 0.3);
 }
 
 .dropdown-menu a {
     color: #ccc !important;
-    padding: 12px 18px !important;
+    padding: 10px 14px !important;
     text-decoration: none;
     display: flex !important;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 0.9rem !important;
-    font-weight: normal !important;
-    transition: all 0.2s ease;
+    font-weight: 500 !important;
+    border-radius: 8px;
+    transition: all 0.25s ease;
     background: transparent !important;
     box-shadow: none !important;
     transform: none !important;
-    border-radius: 0 !important;
 }
 
 .dropdown-menu a:hover {
-    background: #1c1c1c !important;
-    color: #e50914 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    transform: translateX(4px) !important; 
 }
 
-/* Item de Sair específico dentro da caixinha */
 .dropdown-menu a.sair-item {
-    color: #ff4d4d !important;
-    border-top: 1px solid #222;
-    margin-top: 5px;
+    color: #ff5252 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 6px;
     padding-top: 14px !important;
+    border-radius: 0 0 8px 8px;
 }
 
 .dropdown-menu a.sair-item:hover {
-    background: rgba(229, 9, 20, 0.1) !important;
-    color: #e50914 !important;
+    background: rgba(229, 9, 20, 0.12) !important;
+    color: #ff7373 !important;
+    transform: translateX(4px) !important;
 }
 
-
-/* --- MODAL DE CONFIRMAÇÃO DE SAÍDA (NOVO) --- */
+/* =========================================================================
+   7. MODAL DE CONFIRMAÇÃO DE SAÍDA
+   ========================================================================= */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -313,6 +375,7 @@ body{
     height: 100%;
     background-color: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 2000;
     justify-content: center;
     align-items: center;
@@ -320,13 +383,11 @@ body{
     transition: opacity 0.3s ease;
 }
 
-/* Injetado via JS para escurecer o fundo */
 .modal-overlay.mostrar-modal {
     display: flex;
     opacity: 1;
 }
 
-/* Caixa branca/escura centralizada com a mensagem */
 .modal-container {
     background: #141414;
     border: 1px solid #222;
@@ -344,7 +405,6 @@ body{
     transform: scale(1);
 }
 
-/* Ícone de aviso do modal */
 .modal-container i {
     color: #e50914;
     font-size: 3rem;
@@ -370,7 +430,6 @@ body{
     gap: 15px;
 }
 
-/* Botões padrões internos do modal */
 .btn-modal {
     padding: 12px 24px;
     border: none;
@@ -401,165 +460,46 @@ body{
     background-color: #b80710;
 }
 
-
-/* --- AJUSTE DE RESPONSIVIDADE PARA O DROPDOWN --- */
-@media (max-width: 768px) {
-    .nav-item-dropdown {
-        width: 100%;
-        display: flex;
-        justify-content: center;
+/* =========================================================================
+   8. RESPONSIVIDADE
+   ========================================================================= */
+@media(max-width: 900px) {
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
     }
-    
-    .dropdown-menu {
-        position: static;
-        width: 100%;
-        box-shadow: none;
-        border: none;
-        background-color: #0e0e0e;
-        margin-top: 6px;
-    }
+}
 
-    .modal-botoes {
+@media(max-width: 768px) {
+    .header {
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
+        padding: 15px 20px;
     }
 
-    .btn-modal {
-        width: 100%;
+    .header nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
     }
-}
 
-/* =========================================================================
-   INTERAÇÃO PREMIUM DA ENGRENAGEM DE CONFIGURAÇÃO (NOVO)
-   ========================================================================= */
-   .btn-config {
-    cursor: pointer;
-    background: none;
-    border: none;
-    color: #ccc;
-    font-size: 0.95rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
+    .cards {
+        grid-template-columns: 1fr;
+    }
 
-.btn-config:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.05);
-}
+    .boas-vindas {
+        padding: 25px 15px;
+    }
 
-/* Transição amortecida do vetor da engrenagem */
-.btn-config svg {
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+    .boas-vindas-texto h2 {
+        font-size: 1.6rem;
+    }
 
-/* Gira 90° e acende em vermelho ao expandir o painel */
-.btn-config[aria-expanded="true"] svg {
-    transform: rotate(90deg);
-    color: #e50914; /* Cor primária */
-}
-
-/* Fundo sutil do gatilho fixado enquanto o menu estiver na tela */
-.btn-config[aria-expanded="true"] {
-    background-color: rgba(229, 9, 20, 0.08);
-    color: #ffffff;
-}
-
-/* =========================================================================
-   DROP DOWN FLUTUANTE PREMIUM COM GLASSMORPHISM (NOVO)
-   ========================================================================= */
-.nav-item-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-menu {
-    display: block !important; /* Mantém no DOM para transicionar a opacidade */
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background: rgba(20, 24, 28, 0.85); /* Fundo escuro semi-transparente */
-    backdrop-filter: blur(14px); /* Desfoque estilo vidro de iOS/Windows */
-    -webkit-backdrop-filter: blur(14px);
-    min-width: 210px;
-    border: 1px solid rgba(255, 255, 255, 0.08); /* Borda de vidro fina */
-    border-radius: 12px;
-    padding: 8px;
-    z-index: 1000;
-    margin-top: 14px;
-
-    /* ESTADO INICIAL DA ANIMAÇÃO (OCULTO COM SLIDE UP) */
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-15px) scale(0.93);
-    transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.3s ease;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-}
-
-/* ESTADO ATIVO DA ANIMAÇÃO (SURGE COM SLIDE DOWN E GLOW NEON) */
-.dropdown-menu.mostrar {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0) scale(1);
-    /* Sombra profunda projetada + Brilho Neon Vermelho esfumaçado ao fundo */
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 
-                0 0 20px rgba(229, 9, 20, 0.15); 
-    border-color: rgba(229, 9, 20, 0.3); /* Borda ganha tom sutil vermelho */
-}
-
-/* LINKS INTERNOS DO MENU FLUTUANTE */
-.dropdown-menu a {
-    color: #ccc !important;
-    padding: 10px 14px !important;
-    text-decoration: none;
-    display: flex !important;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.9rem !important;
-    font-weight: 500 !important;
-    border-radius: 8px;
-    transition: all 0.25s ease;
-    background: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
-}
-
-/* Feedback tátil jogando o link de leve para a direita */
-.dropdown-menu a:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
-    transform: translateX(4px) !important; 
-}
-
-/* ITEM DE SAIR ESPECÍFICO INTERNO */
-.dropdown-menu a.sair-item {
-    color: #ff5252 !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    margin-top: 6px;
-    padding-top: 14px !important;
-    border-radius: 0 0 8px 8px;
-}
-
-.dropdown-menu a.sair-item:hover {
-    background: rgba(229, 9, 20, 0.12) !important;
-    color: #ff7373 !important;
-    transform: translateX(4px) !important;
-}
-
-/* Ajuste Responsivo Mobile para o Dropdown */
-@media (max-width: 768px) {
     .nav-item-dropdown {
         width: 100%;
         display: flex;
         justify-content: center;
     }
-    
+
     .dropdown-menu {
         position: static;
         width: 100%;
@@ -571,5 +511,13 @@ body{
         pointer-events: auto;
         transform: none;
     }
-}
 
+    .modal-botoes {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-modal {
+        width: 100%;
+    }
+}

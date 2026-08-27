@@ -1,119 +1,99 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. VERIFICAÇÃO DE SEGURANÇA
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
-
-    if (!usuario) {
+    // 1. Recupera os dados do usuário salvos no navegador no momento do login
+    const chaveSessao = localStorage.getItem("usuario") ? "usuario" : "usuario_logado";
+    const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario") || sessionStorage.getItem("usuario_logado");
+    
+    if (!usuarioSalvo) {
+        // Se não estiver logado, redireciona para a página de login
         window.location.href = "/pages/login.html";
         return;
     }
 
-    // 2. EXIBIR O NOME DO USUÁRIO PERSONALIZADO
-    const nomeUsuario = document.getElementById("nomeUsuario");
-    if (usuario && nomeUsuario) {
-        // Separa o nome pelos espaços e pega apenas a primeira palavra
-        const primeiroNome = usuario.nome ? usuario.nome.split(" ")[0] : "Cliente";
-        
-        // Mantém o ícone do Font Awesome e atualiza o texto de boas-vindas
-        nomeUsuario.innerHTML = `<i class="fa-solid fa-user-circle"></i> Bem-vindo, ${primeiroNome}`;
+    const usuario = JSON.parse(usuarioSalvo);
+
+    // 2. Preenche o Nome do Usuário na tag <h2> com o ID 'nomeUsuario'
+    const elNome = document.getElementById("nomeUsuario");
+    if (elNome && usuario.nome) {
+        elNome.textContent = usuario.nome;
     }
 
-    // 3. CONFIGURAR BOTÃO DE SAIR DEFINITIVO (DENTRO DO MODAL)
-    const btnSair = document.getElementById("btnSair");
-    if (btnSair) {
-        btnSair.addEventListener("click", function() {
-            // Limpa o armazenamento local das credenciais do usuário
-            localStorage.removeItem("usuario");
-            localStorage.removeItem("token"); // Remove o token de autenticação caso utilize
-            
-            // Redireciona o cliente de volta para a tela de login
-            window.location.href = "/pages/login.html";
-        });
-    }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-    // =========================================================================
-    // 1. VERIFICAÇÃO DE SEGURANÇA E SAUDAÇÃO PERSONALIZADA
-    // =========================================================================
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
-
-    // Bloqueia o acesso e joga para o login caso o usuário não esteja autenticado
-    if (!usuario) {
-        window.location.href = "/pages/login.html";
-        return;
-    }
-
-    // Exibe o primeiro nome do banco de dados na mensagem de boas-vindas
-    const nomeUsuario = document.getElementById("nomeUsuario");
-    if (usuario && nomeUsuario) {
-        // Separa o nome pelos espaços e pega apenas a primeira palavra
-        const primeiroNome = usuario.nome ? usuario.nome.split(" ")[0] : "Cliente";
-        nomeUsuario.innerHTML = `<i class="fa-solid fa-user-circle"></i> Bem-vindo, ${primeiroNome}`;
-    }
-
-    // =========================================================================
-    // 2. CONTROLE DO DROPDOWN DE CONFIGURAÇÕES (COM ANIMAÇÃO)
-    // =========================================================================
-    const btnConfig = document.getElementById('btnConfig');
-    const menuConfig = document.getElementById('menuConfig');
-
-    if (btnConfig && menuConfig) {
-        // Abre e fecha o menu ao clicar na engrenagem
-        btnConfig.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que o evento de fechar global seja disparado
-            
-            // Alterna a classe que aciona a opacidade e escala no CSS
-            const estaAtivo = menuConfig.classList.toggle('mostrar');
-            
-            // Altera o atributo aria para o CSS disparar a rotação da engrenagem
-            btnConfig.setAttribute('aria-expanded', estaAtivo);
-        });
-
-        // Fecha a caixinha automaticamente se o usuário clicar fora dela
-        document.addEventListener('click', () => {
-            menuConfig.classList.remove('mostrar');
-            btnConfig.setAttribute('aria-expanded', 'false');
-        });
-    }
-
-    // =========================================================================
-    // 3. CONTROLE MICRO-INTERATIVO DO MODAL DE CONFIRMAÇÃO DE SAÍDA
-    // =========================================================================
-    const gatilhoSair = document.getElementById('gatilhoSair');
-    const modalSairContainer = document.getElementById('modalSairContainer');
-    const btnCancelarSair = document.getElementById('btnCancelarSair');
-    const btnSairConfirmado = document.getElementById('btnSair');
-
-    if (gatilhoSair && modalSairContainer && btnCancelarSair) {
-        // Função utilitária para fechar o modal limpando as classes
-        const fecharModal = () => modalSairContainer.classList.remove('mostrar-modal');
-
-        // Intercepta o clique do link de sair do dropdown e ergue o modal na tela
-        gatilhoSair.addEventListener('click', (e) => {
-            e.preventDefault();
-            modalSairContainer.classList.add('mostrar-modal');
-        });
-
-        // Fecha se o usuário desistir e clicar em Cancelar
-        btnCancelarSair.addEventListener('click', fecharModal);
-
-        // Fecha se o usuário clicar na área escura desfocada (fora da caixinha)
-        modalSairContainer.addEventListener('click', (e) => {
-            if (e.target === modalSairContainer) fecharModal();
-        });
-
-        // AÇÃO DEFINITIVA: Executa o logout limpo se o usuário confirmar
-        if (btnSairConfirmado) {
-            btnSairConfirmado.addEventListener('click', () => {
-                fecharModal();
-                
-                // Limpa as credenciais de segurança salvas no navegador
-                localStorage.removeItem("usuario");
-                localStorage.removeItem("token"); 
-                
-                // Desloga e manda de volta para a tela de login
-                window.location.href = "/pages/login.html";
-            });
+    // 3. Preenche a Foto de Perfil inicial
+    const imgPerfil = document.getElementById("imgPerfil");
+    if (imgPerfil) {
+        if (usuario.fotoUrl) {
+            imgPerfil.src = usuario.fotoUrl;
+        } else if (usuario.nome) {
+            // Se não tiver foto, gera as iniciais personalizadas com o seu nome
+            imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome)}&background=181824&color=ff1e27&size=150`;
         }
+    }
+
+    // =========================================================================
+    // 4. GERENCIAMENTO DE UPLOAD DA FOTO DE PERFIL (VIA BACKEND / API)
+    // =========================================================================
+    const inputFoto = document.getElementById("inputFotoPerfil");
+
+    if (inputFoto && imgPerfil) {
+        inputFoto.addEventListener("change", async (e) => {
+            const arquivo = e.target.files[0];
+            if (!arquivo) return;
+
+            // Validação de tamanho no Front-end (ex: máximo 5MB)
+            const tamanhoMaximo = 5 * 1024 * 1024;
+            if (arquivo.size > tamanhoMaximo) {
+                alert("A foto selecionada deve ter no máximo 5MB.");
+                inputFoto.value = ""; // Limpa a seleção
+                return;
+            }
+
+            // Pré-visualização instantânea para melhorar a experiência do usuário (UX)
+            const previewUrl = URL.createObjectURL(arquivo);
+            const fotoAnterior = imgPerfil.src;
+            imgPerfil.src = previewUrl;
+
+            // Monta os dados para o envio via multipart/form-data
+            const formData = new FormData();
+            formData.append("fotoPerfil", arquivo);
+            formData.append("usuarioId", usuario.id || usuario._id); // Envia a identificação do usuário
+
+            try {
+                // Obtenha o token caso sua rota exija autenticação
+                const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                const resposta = await fetch("/api/usuarios/upload-foto", {
+                    method: "POST",
+                    headers: {
+                        ...(token && { "Authorization": `Bearer ${token}` })
+                    },
+                    body: formData
+                });
+
+                if (!resposta.ok) {
+                    throw new Error("Erro no servidor ao tentar salvar a imagem.");
+                }
+
+                const dados = await resposta.json();
+
+                // Atualiza a imagem com a URL final retornada pelo servidor
+                if (dados.fotoUrl) {
+                    imgPerfil.src = dados.fotoUrl;
+                    
+                    // Atualiza o objeto do usuário na sessão atual
+                    usuario.fotoUrl = dados.fotoUrl;
+                    localStorage.setItem(chaveSessao, JSON.stringify(usuario));
+                }
+
+                alert("Foto de perfil atualizada com sucesso!");
+
+            } catch (erro) {
+                console.error("Falha no upload:", erro);
+                alert("Não foi possível salvar a nova foto de perfil.");
+                // Reverte para a foto anterior caso o envio falhe
+                imgPerfil.src = fotoAnterior;
+            } finally {
+                // Libera a memória alocada para o preview temporário
+                URL.revokeObjectURL(previewUrl);
+            }
+        });
     }
 });
