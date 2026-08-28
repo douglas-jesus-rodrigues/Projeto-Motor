@@ -217,4 +217,42 @@ router.put("/:id/tipo", authAdmin, async (req, res) => {
     }
 });
 
+// ==========================================
+// ROTA PARA VERIFICAR SENHA ATUAL NO MODAL
+// ==========================================
+router.post("/verificar-senha", async (req, res) => {
+    const { id, senha } = req.body;
+
+    if (!id || !senha) {
+        return res.status(400).json({ sucesso: false, erro: "ID e senha são obrigatórios." });
+    }
+
+    try {
+        const [usuarios] = await db.query("SELECT * FROM usuarios WHERE id = ?", [id]);
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
+        }
+
+        const usuario = usuarios[0];
+
+        // Compara a senha digitada com o hash salvo no banco usando bcrypt
+        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+        if (!senhaCorreta) {
+            return res.status(200).json({ sucesso: false, erro: "Senha incorreta." });
+        }
+
+        return res.status(200).json({ 
+            sucesso: true, 
+            mensagem: "Senha verificada com sucesso!",
+            senhaReal: senha // Envia de volta para revelar temporariamente se necessário
+        });
+
+    } catch (erro) {
+        console.error("Erro ao verificar senha:", erro);
+        return res.status(500).json({ sucesso: false, erro: "Erro interno no servidor ao verificar a senha." });
+    }
+});
+
 module.exports = router;

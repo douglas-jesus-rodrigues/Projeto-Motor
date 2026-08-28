@@ -29,7 +29,79 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 4. GERENCIAMENTO DE UPLOAD DA FOTO DE PERFIL (VIA BACKEND / API)
+    // 4. GERENCIAMENTO DO MENU DROPDOWN DE CONFIGURAÇÕES
+    // =========================================================================
+    const btnConfig = document.getElementById('btnConfig');
+    const menuConfig = document.getElementById('menuConfig');
+
+    if (btnConfig && menuConfig) {
+        btnConfig.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita fechar imediatamente ao clicar no botão
+            const isOpen = menuConfig.classList.toggle('mostrar');
+            btnConfig.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Fecha o menu ao clicar em qualquer outro lugar da tela
+        document.addEventListener('click', (e) => {
+            if (!menuConfig.contains(e.target) && !btnConfig.contains(e.target)) {
+                menuConfig.classList.remove('mostrar');
+                btnConfig.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    // =========================================================================
+    // 5. GERENCIAMENTO DO MODAL DE SAÍDA / LOGOUT
+    // =========================================================================
+    const gatilhoSair = document.getElementById('gatilhoSair');
+    const modalSairContainer = document.getElementById('modalSairContainer');
+    const btnCancelarSair = document.getElementById('btnCancelarSair');
+    const btnSair = document.getElementById('btnSair');
+
+    if (gatilhoSair && modalSairContainer) {
+        gatilhoSair.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Fecha o menu dropdown caso esteja aberto
+            if (menuConfig) {
+                menuConfig.classList.remove('mostrar');
+                if (btnConfig) btnConfig.setAttribute('aria-expanded', 'false');
+            }
+            modalSairContainer.classList.add('mostrar-modal');
+        });
+    }
+
+    if (btnCancelarSair && modalSairContainer) {
+        btnCancelarSair.addEventListener('click', () => {
+            modalSairContainer.classList.remove('mostrar-modal');
+        });
+    }
+
+    if (modalSairContainer) {
+        // Fecha o modal ao clicar fora da caixa de diálogo (no overlay escuro)
+        modalSairContainer.addEventListener('click', (e) => {
+            if (e.target === modalSairContainer) {
+                modalSairContainer.classList.remove('mostrar-modal');
+            }
+        });
+    }
+
+    if (btnSair) {
+        btnSair.addEventListener('click', () => {
+            // Limpa todos os dados de sessão do usuário
+            localStorage.removeItem("usuario");
+            localStorage.removeItem("usuario_logado");
+            localStorage.removeItem("token");
+            sessionStorage.removeItem("usuario");
+            sessionStorage.removeItem("usuario_logado");
+            sessionStorage.removeItem("token");
+
+            // Redireciona para a página de login
+            window.location.href = "/pages/login.html";
+        });
+    }
+
+    // =========================================================================
+    // 6. GERENCIAMENTO DE UPLOAD DA FOTO DE PERFIL (VIA BACKEND / API)
     // =========================================================================
     const inputFoto = document.getElementById("inputFotoPerfil");
 
