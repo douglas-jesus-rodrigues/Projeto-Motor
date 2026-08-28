@@ -47,18 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. GERENCIAMENTO DE SESSÃO E PERFIL DO USUÁRIO
     const usuario = JSON.parse(localStorage.getItem("usuario"));
 
-    const btnLogin = document.getElementById("btnLogin");
-    const btnCadastro = document.getElementById("btnCadastro");
+    const acoesDeslogado = document.getElementById("acoesDeslogado");
     const dropdownUsuario = document.getElementById("dropdownUsuario");
     const nomeUsuario = document.getElementById("nomeUsuario");
     const avatarLetra = document.getElementById("avatarLetra");
     const irPainel = document.getElementById("irPainel");
-    const menuNavegacao = document.getElementById("menuNavegacao");
     const itemAnunciar = document.getElementById("itemAnunciar");
 
     if (usuario) {
-        if (btnLogin) btnLogin.style.display = "none";
-        if (btnCadastro) btnCadastro.style.display = "none";
+        if (acoesDeslogado) acoesDeslogado.style.display = "none";
         if (dropdownUsuario) dropdownUsuario.style.display = "block";
 
         let rotaPainel = "/pages/painel-cliente.html";
@@ -79,12 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
             irPainel.href = rotaPainel;
         }
 
-        if (menuNavegacao && !document.getElementById("linkMeuPainel")) {
-            const li = document.createElement("li");
-            li.innerHTML = `<a href="${rotaPainel}" id="linkMeuPainel" style="color: var(--primary); font-weight: 700;">Meu Painel</a>`;
-            menuNavegacao.appendChild(li);
-        }
-
         let nomeExibicao = "Minha Conta";
         if (usuario.tipo === "empresa" && usuario.empresa && usuario.empresa.nome_empresa) {
             nomeExibicao = usuario.empresa.nome_empresa;
@@ -96,12 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (avatarLetra) avatarLetra.textContent = nomeExibicao.charAt(0).toUpperCase();
 
     } else {
-        if (btnLogin) btnLogin.style.display = "inline-block";
-        if (btnCadastro) btnCadastro.style.display = "inline-block";
+        if (acoesDeslogado) acoesDeslogado.style.display = "flex";
         if (dropdownUsuario) dropdownUsuario.style.display = "none";
-
-        const linkMeuPainel = document.getElementById("linkMeuPainel");
-        if (linkMeuPainel) linkMeuPainel.parentElement.remove();
     }
 
     // 3. DROPDOWN E SAIR
@@ -133,8 +120,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 4. MENU RESPONSIVO MOBILE E EFEITOS DE SCROLL
+    // 4. FUNCIONALIDADE DE BUSCA RÁPIDA
+    const btnBuscarRapido = document.getElementById("btnBuscarRapido");
+    const inputBuscaRapida = document.getElementById("inputBuscaRapida");
+
+    function executarBusca() {
+        const termo = inputBuscaRapida.value.trim();
+        if (termo) {
+            window.location.href = `/pages/catalogo.html?busca=${encodeURIComponent(termo)}`;
+        } else {
+            window.location.href = "/pages/catalogo.html";
+        }
+    }
+
+    if (btnBuscarRapido && inputBuscaRapida) {
+        btnBuscarRapido.addEventListener("click", executarBusca);
+        inputBuscaRapida.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                executarBusca();
+            }
+        });
+    }
+
+    // 5. MENU RESPONSIVO MOBILE E EFEITOS DE SCROLL
     const btnMobile = document.getElementById("btnMobile");
+    const menuNavegacao = document.getElementById("menuNavegacao");
 
     if (btnMobile && menuNavegacao) {
         btnMobile.addEventListener("click", () => {
@@ -154,4 +164,50 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // 6. EFEITO DE FUMAÇA AO CLICAR NO BOTÃO "VER CATÁLOGO"
+    const btnCatalogo = document.getElementById("btnVerCatalogo");
+
+    if (btnCatalogo) {
+        btnCatalogo.addEventListener("click", (e) => {
+            const rect = btnCatalogo.getBoundingClientRect();
+            const totalParticles = 16;
+
+            for (let i = 0; i < totalParticles; i++) {
+                createSmokeParticle(rect);
+            }
+        });
+    }
 });
+
+function createSmokeParticle(rect) {
+    const particle = document.createElement("div");
+    particle.classList.add("smoke-particle");
+
+    const posX = rect.left + rect.width / 2;
+    const posY = rect.top + rect.height / 2;
+
+    const size = Math.random() * 70 + 40;
+
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 140 + 50; 
+    
+    const dx = (Math.cos(angle) * distance) + "px";
+    const dy = (Math.sin(angle) * distance - Math.random() * 60) + "px"; 
+    const scale = (Math.random() * 1.6 + 1.8).toFixed(2);
+
+    particle.style.left = `${posX}px`;
+    particle.style.top = `${posY}px`;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    
+    particle.style.setProperty("--dx", dx);
+    particle.style.setProperty("--dy", dy);
+    particle.style.setProperty("--scale", scale);
+
+    document.body.appendChild(particle);
+
+    setTimeout(() => {
+        particle.remove();
+    }, 1200);
+}
