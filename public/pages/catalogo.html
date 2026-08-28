@@ -1,14 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <title>Catálogo de Veículos</title>
+    <link rel="stylesheet" href="/css/catalogo.css">
 </head>
 <body>
-    <h1>Catalogo teste</h1>
-    <p>1</p>
-    <p>1</p>
+
+<div class="container">
+    <!-- Menu de Navegação -->
+    <nav class="navbar">
+        <a href="#" class="active">Início</a>
+        <a href="#">Estoque</a>
+        <a href="#">Notícias</a>
+        <a href="#">Venda seu Carro</a>
+        <a href="#">Financiamento</a>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-layout">
+        
+        <!-- Sidebar de Busca -->
+        <aside class="sidebar">
+            <div class="widget-box">
+                <div class="widget-title">Buscar Veículos</div>
+                <form id="formBusca" class="search-box">
+                    <select id="selectMarca">
+                        <option value="">SELECIONE A MARCA</option>
+                        <option value="BMW">BMW</option>
+                        <option value="Acura">Acura</option>
+                        <option value="Audi">Audi</option>
+                        <option value="Mercedes-Benz">Mercedes-Benz</option>
+                        <option value="Porsche">Porsche</option>
+                    </select>
+
+                    <select id="selectCondicao">
+                        <option value="">CONDIÇÃO</option>
+                        <option value="Novo">Novo</option>
+                        <option value="Usado">Usado</option>
+                    </select>
+
+                    <select id="selectAno">
+                        <option value="">ANO</option>
+                        <option value="2014">2014</option>
+                        <option value="2013">2013</option>
+                        <option value="2012">2012</option>
+                    </select>
+
+                    <select id="selectPreco">
+                        <option value="">QUALQUER PREÇO</option>
+                        <option value="100000">Até R$ 100.000</option>
+                        <option value="200000">Até R$ 200.000</option>
+                        <option value="400000">Até R$ 400.000</option>
+                    </select>
+
+                    <button type="button" id="btnBuscar">Buscar</button>
+                </form>
+            </div>
+
+            <!-- Melhores Ofertas Sidebar -->
+            <div class="widget-box">
+                <div class="widget-title">Melhores Ofertas</div>
+                <div class="top-deals" id="topDeals">
+                    <!-- Inserido dinamicamente pelo JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Seção Principal de Veículos -->
+        <main class="content-area">
+            
+            <!-- Banner Destaque Principal -->
+            <div class="featured-car" id="featuredCar">
+                <!-- Renderizado via JS -->
+            </div>
+
+            <!-- Grid de Cards de Veículos -->
+            <div class="cars-grid" id="carsGrid">
+                <!-- Renderizado via JS -->
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="/js/catalogo.js"></script>
 </body>
 </html>

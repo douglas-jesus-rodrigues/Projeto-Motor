@@ -1,0 +1,330 @@
+:root {
+    --bg-dark: #121316;
+    --card-bg: rgba(22, 24, 29, 0.85);
+    --input-bg: #22252c;
+    --border-red-glow: rgba(255, 30, 30, 0.45);
+    --red-glow-shadow: 0 0 25px rgba(255, 30, 30, 0.25);
+    --accent-red: #ff2222;
+    --accent-red-hover: #ff4444;
+    --text-main: #ffffff;
+    --text-muted: #9aa0a6;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: radial-gradient(circle at center, #232730 0%, #0d0e11 100%),
+                url('https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1920&q=80') center/cover no-repeat fixed;
+    background-blend-mode: overlay;
+    color: var(--text-main);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 30px 15px;
+    min-height: 100vh;
+}
+
+/* Animação de Entrada de 1,5 segundos (cresce e aparece) */
+@keyframes expandFade {
+    0% {
+        opacity: 0;
+        transform: scale(0.85) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Container Principal */
+.container {
+    max-width: 1150px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 30px;
+    border-radius: 16px;
+    border: 1px solid var(--border-red-glow);
+    box-shadow: var(--red-glow-shadow), 0 10px 40px rgba(0, 0, 0, 0.8);
+    animation: expandFade 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Menu de Navegação */
+.navbar {
+    background: rgba(12, 13, 16, 0.7);
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--accent-red);
+    overflow: hidden;
+}
+
+.navbar a {
+    color: var(--text-main);
+    padding: 14px 22px;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.navbar a.active, .navbar a:hover {
+    background-color: var(--accent-red);
+    box-shadow: 0 0 15px rgba(255, 34, 34, 0.5);
+}
+
+/* Layout Grid */
+.main-layout {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    gap: 25px;
+}
+
+/* Sidebar e Caixas de Filtro */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.widget-box {
+    background: rgba(15, 16, 20, 0.6);
+    border: 1px solid var(--border-red-glow);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.widget-title {
+    background-color: var(--accent-red);
+    color: var(--text-main);
+    padding: 12px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.search-box {
+    padding: 15px;
+}
+
+.search-box select, .search-box button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.search-box select:focus {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 10px rgba(255, 34, 34, 0.3);
+}
+
+.search-box button {
+    background-color: var(--accent-red);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    margin-top: 5px;
+    margin-bottom: 0;
+    box-shadow: 0 0 15px rgba(255, 34, 34, 0.4);
+}
+
+.search-box button:hover {
+    background-color: var(--accent-red-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 34, 34, 0.7);
+}
+
+/* Sidebar Top Deals */
+.top-deals {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.deal-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.deal-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.deal-item img {
+    width: 70px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.deal-info {
+    font-size: 0.78rem;
+}
+
+.deal-title {
+    font-weight: bold;
+    color: #fff;
+}
+
+.deal-price {
+    color: var(--accent-red);
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+/* Banner Destaque Principal */
+.featured-car {
+    position: relative;
+    background-color: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-red-glow);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.featured-car img {
+    width: 100%;
+    height: 310px;
+    object-fit: cover;
+    display: block;
+}
+
+.featured-info {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0));
+    padding: 20px;
+    font-weight: bold;
+    font-size: 1.15rem;
+}
+
+.featured-info .price {
+    color: var(--accent-red);
+}
+
+/* Grid de Cards */
+.cars-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.car-card {
+    background: rgba(15, 16, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.car-card:hover {
+    border-color: var(--accent-red);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(255, 34, 34, 0.25);
+}
+
+.car-badge {
+    position: absolute;
+    top: 12px;
+    left: -28px;
+    background-color: #ffffff;
+    color: #111;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 3px 30px;
+    transform: rotate(-45deg);
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.car-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.car-card-body {
+    padding: 14px;
+}
+
+.car-card-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-main);
+}
+
+.car-card-details {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 6px 0 10px 0;
+}
+
+.car-card-price {
+    color: var(--accent-red);
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.btn-view {
+    display: block;
+    text-align: center;
+    background: var(--input-bg);
+    color: var(--text-main);
+    padding: 9px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.btn-view:hover {
+    background-color: var(--accent-red);
+    border-color: var(--accent-red);
+    box-shadow: 0 0 10px rgba(255, 34, 34, 0.5);
+}
+
+/* Responsividade */
+@media (max-width: 850px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+    .cars-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .cars-grid {
+        grid-template-columns: 1fr;
+    }
+}
