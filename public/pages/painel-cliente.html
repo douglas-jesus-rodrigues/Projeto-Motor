@@ -1,52 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Configurações básicas de codificação e responsividade -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Cliente | MotorFlex</title>
     
-    <!-- Favicon -->
     <link rel="icon" href="/imagens/favicon.ico">
-    
-    <!-- Estilos CSS do Painel -->
     <link rel="stylesheet" href="/css/painel-cliente.css">
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- 1. CABEÇALHO / NAVBAR                      -->
-    <!-- ========================================== -->
     <header class="header">
-        <!-- Logo da Marca -->
         <div class="logo">
             <h1>Motor<span>Flex</span></h1>
         </div>
 
-        <!-- Menu de Navegação Principal -->
         <nav class="nav-menu">
-            <!-- Link: Home -->
             <a href="/pages/index.html">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
                     <path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .1 160c0 27.1-22 49.4-49 49.4l-320 0c-27.1 0-49.1-22.3-49.1-49.4l-.1-160-21.8 0c-18 0-32-14.1-32-32.1c0-9 7.1-17.1 13.1-24.1l242-212c14-12.1 35-12.1 49 0l241.9 212c6 7 13.1 15.1 13.1 24.1z"/>
                 </svg> Home
             </a>
 
-            <!-- Link: Catálogo -->
             <a href="/pages/catalogo.html">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
                     <path d="M135.2 117.4L109.1 192l293.8 0-26.1-74.6C372.3 104.1 360 96 346.2 96L165.8 96c-13.8 0-26.1 8.1-31.6 21.4zM48 400c0 17.7 14.3 32 32 32l32 0c17.7 0 32-14.3 32-32l0-32 224 0l0 32c0 17.7 14.3 32 32 32l32 0c17.7 0 32-14.3 32-32l0-144 0-14.1c0-10.4-3.3-20.5-9.3-29l-34.6-49.5c-16.7-23.8-43.6-38.1-72.3-38.1l-180.1 0c-28.7 0-55.6 14.3-72.3 38.1L41.3 212.9C35.3 221.4 32 231.5 32 242l0 14.1 0 144zM432 288a24 24 0 1 1 0 48 24 24 0 1 1 0-48zM96 312a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/>
                 </svg> Catálogo
             </a>
 
-            <!-- Link: Anunciar Carro -->
             <a href="/pages/anunciar.html">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
                     <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 344l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
                 </svg> Anunciar Carro
             </a>
             
-            <!-- Menu Dropdown: Configurações -->
             <div class="nav-item-dropdown">
                 <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
                     <svg class="icone-engrenagem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor">
@@ -55,21 +42,15 @@
                     Configurações
                 </button>
                 <div class="dropdown-menu" id="menuConfig">
-                    <a href="/pages/perfil.html">Ver Informações</a>
+                    <a href="/pages/perfil.html">Meus Dados</a>
                     <a href="#" id="gatilhoSair" class="sair-item">Sair</a>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- ========================================== -->
-    <!-- 2. CONTEÚDO PRINCIPAL                      -->
-    <!-- ========================================== -->
     <main class="container">
-
-        <!-- SEÇÃO: PERFIL CENTRALIZADO DA CONTA -->
         <section class="boas-vindas">
-            <!-- Avatar do Usuário com Botão de Upload -->
             <div class="perfil-avatar-wrapper">
                 <div class="perfil-avatar">
                     <img id="imgPerfil" src="https://ui-avatars.com/api/?name=Cliente&background=181824&color=ff1e27&size=150" alt="Foto de Perfil">
@@ -82,17 +63,13 @@
                 <input type="file" id="inputFotoPerfil" accept="image/*" hidden>
             </div>
 
-            <!-- Nome do Usuário (Centralizado) e Subtítulo -->
             <div class="boas-vindas-texto">
                 <h2 id="nomeUsuario">Cliente</h2>
                 <p>Acompanhe seus favoritos, gerencie seus anúncios e confira suas mensagens em um só lugar.</p>
             </div>
         </section>
 
-        <!-- SEÇÃO: GRID DE ATALHOS / CARDS -->
         <section class="cards">
-            
-            <!-- Card 1: Meus Favoritos -->
             <div class="card">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="28" height="28" fill="currentColor">
@@ -102,11 +79,10 @@
                 <div class="card-content">
                     <h3>Meus Favoritos</h3>
                     <p>Veja os carros que você salvou para conferir depois.</p>
-                    <a href="/pages/favoritos.html" class="btn-card">Ver favoritos <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="/pages/favoritos.html" class="btn-card">Ver favoritos</a>
                 </div>
             </div>
 
-            <!-- Card 2: Meus Anúncios -->
             <div class="card">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="28" height="28" fill="currentColor">
@@ -116,11 +92,10 @@
                 <div class="card-content">
                     <h3>Meus Anúncios</h3>
                     <p>Gerencie, edite ou remova os veículos que você anunciou.</p>
-                    <a href="/pages/meus-anuncios.html" class="btn-card">Ver anúncios <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="/pages/meus-anuncios.html" class="btn-card">Ver anúncios</a>
                 </div>
             </div>
 
-            <!-- Card 3: Mensagens -->
             <div class="card">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="28" height="28" fill="currentColor">
@@ -130,16 +105,12 @@
                 <div class="card-content">
                     <h3>Mensagens</h3>
                     <p>Confira contatos de vendedores e compradores interessados.</p>
-                    <a href="/pages/mensagens.html" class="btn-card">Ver mensagens <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="/pages/mensagens.html" class="btn-card">Ver mensagens</a>
                 </div>
             </div>
-
         </section>
     </main>
 
-    <!-- ========================================== -->
-    <!-- 3. MODAL DE CONFIRMAÇÃO (SAIR DA CONTA)    -->
-    <!-- ========================================== -->
     <div class="modal-overlay" id="modalSairContainer">
         <div class="modal-container">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="48" height="48" fill="var(--primary)" style="margin-bottom: 15px;">
@@ -154,8 +125,6 @@
         </div>
     </div>
 
-    <!-- Script JavaScript do Painel -->
     <script src="/js/painel-cliente.js"></script>
-
 </body>
 </html>

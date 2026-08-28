@@ -7,11 +7,33 @@
     box-sizing: border-box;
 }
 
+:root {
+    --primary: #e50914;
+    --primary-hover: #b80710;
+    --bg-grad-1: #030305;
+    --bg-grad-2: #120507;
+    --bg-grad-3: #1a080c;
+    --card-bg: rgba(20, 20, 20, 0.82);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-main: #ffffff;
+    --text-muted: #b3b3b3;
+    --error-color: #ff4d4d;
+    --radius-sm: 10px;
+    --radius-lg: 22px;
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background: #0b0b0b;
-    color: white;
     min-height: 100vh;
+    background: 
+        radial-gradient(circle at 15% 15%, rgba(229, 9, 20, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(184, 7, 16, 0.08) 0%, transparent 50%),
+        linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
+    background-attachment: fixed;
+    color: var(--text-main);
+    line-height: 1.5;
 }
 
 /* =========================================================================
@@ -21,7 +43,7 @@ body {
     background: rgba(17, 17, 17, 0.95);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid var(--border-color);
     padding: 20px 50px;
     display: flex;
     justify-content: space-between;
@@ -37,7 +59,7 @@ body {
 }
 
 .header h1 span {
-    color: #e50914;
+    color: var(--primary);
 }
 
 .header nav {
@@ -53,15 +75,15 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
 }
 
 .header a:hover {
-    color: #e50914;
+    color: var(--primary);
 }
 
 .sair {
-    background: #e50914;
+    background: var(--primary);
     padding: 10px 16px;
     border-radius: 8px;
     color: white !important;
@@ -70,7 +92,7 @@ body {
 }
 
 .sair:hover {
-    background: #b80710;
+    background: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(229, 9, 20, 0.4);
 }
@@ -99,9 +121,9 @@ body {
     background: rgba(18, 18, 24, 0.75);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 3px solid #e50914;
-    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--primary);
+    border-radius: var(--radius-lg);
     box-shadow: 
         0 20px 50px rgba(0, 0, 0, 0.6),
         0 0 25px rgba(229, 9, 20, 0.1);
@@ -134,7 +156,7 @@ body {
     position: absolute;
     bottom: 0;
     right: 0;
-    background: linear-gradient(135deg, #e50914 0%, #b80009 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
     color: #ffffff;
     width: 28px;
     height: 28px;
@@ -168,7 +190,7 @@ body {
 }
 
 .boas-vindas-texto p {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.95rem;
     max-width: 500px;
     margin: 0 auto;
@@ -186,26 +208,28 @@ body {
 }
 
 .card {
-    background: #141414;
-    border: 1px solid #222;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
     border-radius: 18px;
     padding: 30px 25px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .card:hover {
     transform: translateY(-6px);
-    border-color: #e50914;
-    box-shadow: 0 10px 25px rgba(229, 9, 20, 0.15);
+    border-color: rgba(229, 9, 20, 0.3);
+    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.15);
     background: #181818;
 }
 
 .card-icon {
     font-size: 2rem;
-    color: #e50914;
+    color: var(--primary);
     margin-bottom: 20px;
     background: rgba(229, 9, 20, 0.1);
     width: 60px;
@@ -223,7 +247,7 @@ body {
 }
 
 .card p {
-    color: #999;
+    color: var(--text-muted);
     margin-bottom: 25px;
     font-size: 0.95rem;
     line-height: 1.5;
@@ -240,17 +264,17 @@ body {
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: bold;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
     width: fit-content;
 }
 
 .card:hover .btn-card {
-    background: #e50914;
+    background: var(--primary);
     color: white;
 }
 
 .btn-card:hover {
-    background: #b80710 !important;
+    background: var(--primary-hover) !important;
 }
 
 /* =========================================================================
@@ -273,7 +297,8 @@ body {
     gap: 8px;
     padding: 8px 16px;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
+    font-family: inherit;
 }
 
 .btn-config:hover {
@@ -287,7 +312,7 @@ body {
 
 .btn-config[aria-expanded="true"] svg {
     transform: rotate(90deg);
-    color: #e50914;
+    color: var(--primary);
 }
 
 .btn-config[aria-expanded="true"] {
@@ -350,7 +375,7 @@ body {
 }
 
 .dropdown-menu a.sair-item {
-    color: #ff5252 !important;
+    color: var(--error-color) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     margin-top: 6px;
     padding-top: 14px !important;
@@ -390,9 +415,9 @@ body {
 
 .modal-container {
     background: #141414;
-    border: 1px solid #222;
+    border: 1px solid var(--border-color);
     padding: 35px 30px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
     max-width: 400px;
     width: 90%;
@@ -405,9 +430,8 @@ body {
     transform: scale(1);
 }
 
-.modal-container i {
-    color: #e50914;
-    font-size: 3rem;
+.modal-container svg {
+    color: var(--primary);
     margin-bottom: 15px;
 }
 
@@ -418,7 +442,7 @@ body {
 }
 
 .modal-container p {
-    color: #a3a3a3;
+    color: var(--text-muted);
     font-size: 0.95rem;
     margin-bottom: 25px;
     line-height: 1.5;
@@ -433,11 +457,11 @@ body {
 .btn-modal {
     padding: 12px 24px;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     font-weight: bold;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .btn-cancelar {
@@ -451,13 +475,13 @@ body {
 }
 
 .btn-confirmar-sair {
-    background-color: #e50914;
+    background-color: var(--primary);
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
 }
 
 .btn-confirmar-sair:hover {
-    background-color: #b80710;
+    background-color: var(--primary-hover);
 }
 
 /* =========================================================================
