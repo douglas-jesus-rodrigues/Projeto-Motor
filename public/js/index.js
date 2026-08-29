@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             rotaPainel = "/pages/painel-admin.html";
         }
 
-        // Oculta a opção de anunciar se o usuário for Admin
+        // Oculta a opção de anunciar se o usuário for Admin, exibe se for cliente/empresa
         if (usuario.tipo === "admin" || usuario.cargo === "admin") {
             if (itemAnunciar) itemAnunciar.style.display = "none";
         } else {
@@ -89,6 +89,9 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         if (acoesDeslogado) acoesDeslogado.style.display = "flex";
         if (dropdownUsuario) dropdownUsuario.style.display = "none";
+        
+        // Garante que visitantes deslogados não vejam o botão de anunciar
+        if (itemAnunciar) itemAnunciar.style.display = "none";
     }
 
     // 3. DROPDOWN E SAIR
