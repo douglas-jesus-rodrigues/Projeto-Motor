@@ -1,5 +1,5 @@
-// URL base da API
-const API_URL = "http://localhost:4000/api";
+// URL base da API corrigida para apontar corretamente para as rotas administrativas
+const API_URL = "/api/admin";
 
 let listaUsuariosGlobal = [];
 
@@ -32,7 +32,10 @@ async function carregarUsuarios() {
 
     } catch (erro) {
         console.error("Erro:", erro);
-        alert("Não foi possível carregar os usuários.");
+        const tbody = document.getElementById("tabelaUsuarios");
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Erro ao carregar os usuários do servidor.</td></tr>`;
+        }
     }
 }
 
