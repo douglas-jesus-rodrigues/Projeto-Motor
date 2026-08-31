@@ -20,8 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Preenche a Foto de Perfil inicial
     const imgPerfil = document.getElementById("imgPerfil");
     if (imgPerfil) {
-        if (usuario.fotoUrl) {
-            imgPerfil.src = usuario.fotoUrl;
+        if (usuario.fotoUrl || usuario.foto_perfil) {
+            imgPerfil.src = usuario.fotoUrl || usuario.foto_perfil;
         } else if (usuario.nome) {
             // Se não tiver foto, gera as iniciais personalizadas com o seu nome
             imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome)}&background=181824&color=ff1e27&size=150`;
@@ -125,14 +125,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Monta os dados para o envio via multipart/form-data
             const formData = new FormData();
-            formData.append("fotoPerfil", arquivo);
+            formData.append("fotoPerfil", arquivo); // Deve coincidir com upload.single("fotoPerfil") no backend
             formData.append("usuarioId", usuario.id || usuario._id); // Envia a identificação do usuário
 
             try {
                 // Obtenha o token caso sua rota exija autenticação
                 const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-                const resposta = await fetch("/api/usuarios/upload-foto", {
+                // CORRIGIDO: Rota ajustada para o prefixo correto do perfil ("/api/perfil/upload-foto")
+                const resposta = await fetch("/api/perfil/upload-foto", {
                     method: "POST",
                     headers: {
                         ...(token && { "Authorization": `Bearer ${token}` })
@@ -152,6 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     // Atualiza o objeto do usuário na sessão atual
                     usuario.fotoUrl = dados.fotoUrl;
+                    usuario.foto_perfil = dados.fotoUrl;
                     localStorage.setItem(chaveSessao, JSON.stringify(usuario));
                 }
 
