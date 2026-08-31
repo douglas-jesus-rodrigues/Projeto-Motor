@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 3. Preenche a Foto de Perfil inicial
+    // 3. Preenche a Foto de Perfil inicial (Verifica fotoUrl ou foto_perfil do banco)
     if (imgPerfil) {
         const fotoAtual = usuario.fotoUrl || usuario.foto_perfil;
         if (fotoAtual) {
@@ -237,13 +237,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 imagemParaCortar.src = eventoLeitura.target.result;
                 modalRecorte.style.display = "flex";
 
-                // Inicializa o Cropper.js com formato circular estilo WhatsApp
+                // Inicializa o Cropper.js com limites de tamanho e formato circular
                 if (cropper) {
                     cropper.destroy();
                 }
                 
                 cropper = new Cropper(imagemParaCortar, {
-                    aspectRatio: 1, // Quadrado perfeito para gerar o círculo
+                    aspectRatio: 1, // Quadrado perfeito para o círculo
                     viewMode: 1,
                     dragMode: 'move',
                     autoCropArea: 0.8,
@@ -254,6 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     toggleDragModeOnDblclick: false,
+                    minCropBoxWidth: 120, 
+                    minCropBoxHeight: 120, 
+                    maxCropBoxWidth: 500, 
+                    maxCropBoxHeight: 500, 
                 });
             };
             reader.readAsDataURL(arquivo);
@@ -273,7 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
             btnConfirmarRecorte.addEventListener("click", () => {
                 if (!cropper) return;
 
-                // Gera a imagem cortada em formato Blob (PNG)
                 cropper.getCroppedCanvas({
                     width: 400,
                     height: 400,
@@ -300,14 +303,18 @@ document.addEventListener("DOMContentLoaded", () => {
                             body: formData
                         });
 
-                        if (!resposta.ok) throw new Error("Erro no servidor ao tentar salvar a imagem.");
+                        if (!resposta.ok) {
+                            const erroDados = await resposta.json().catch(() => ({}));
+                            throw new Error(erroDados.mensagem || "Erro no servidor ao tentar salvar a imagem.");
+                        }
 
                         const dados = await resposta.json();
+                        const novaUrlFoto = dados.fotoUrl || dados.foto_perfil;
 
-                        if (dados.fotoUrl) {
-                            imgPerfil.src = dados.fotoUrl;
-                            usuario.fotoUrl = dados.fotoUrl;
-                            usuario.foto_perfil = dados.fotoUrl;
+                        if (novaUrlFoto) {
+                            imgPerfil.src = novaUrlFoto;
+                            usuario.fotoUrl = novaUrlFoto;
+                            usuario.foto_perfil = novaUrlFoto;
                             localStorage.setItem(chaveSessao, JSON.stringify(usuario));
                             
                             atualizarVisibilidadeBotaoRemover(true);
@@ -317,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     } catch (erro) {
                         console.error("Falha no upload:", erro);
-                        mostrarNotificacao("Não foi possível salvar a nova foto de perfil.", "erro");
+                        mostrarNotificacao(erro.message || "Não foi possível salvar a nova foto de perfil.", "erro");
                         imgPerfil.src = fotoAnterior;
                     } finally {
                         URL.revokeObjectURL(previewUrl);
@@ -349,7 +356,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     const dados = await resposta.json();
 
-                    if (dados.sucesso) {
+                    if (!resposta.ok) {
+                        throw new Error(dados.mensagem || "Não foi possível remover a foto no servidor.");
+                    }
+
+                    if (dados.sucesso !== false) { // Aceita tanto sucesso true quanto ausência de flag de erro
                         const avatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
                         
                         if (imgPerfil) {
@@ -368,11 +379,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 } catch (erro) {
                     console.error("Erro ao remover foto:", erro);
-                    mostrarNotificacao("Erro de conexão ao tentar remover a foto.", "erro");
+                    mostrarNotificacao(erro.message || "Erro de conexão ao tentar remover a foto.", "erro");
                 }
             });
         });
     }
 });
-
-
