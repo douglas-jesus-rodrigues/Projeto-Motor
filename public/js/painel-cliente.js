@@ -4,28 +4,147 @@ document.addEventListener("DOMContentLoaded", () => {
     const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario") || sessionStorage.getItem("usuario_logado");
     
     if (!usuarioSalvo) {
-        // Se não estiver logado, redireciona para a página de login
         window.location.href = "/pages/login.html";
         return;
     }
 
     const usuario = JSON.parse(usuarioSalvo);
 
-    // 2. Preenche o Nome do Usuário na tag <h2> com o ID 'nomeUsuario'
+    // 2. Preenche o Nome do Usuário
     const elNome = document.getElementById("nomeUsuario");
     if (elNome && usuario.nome) {
         elNome.textContent = usuario.nome;
     }
 
-    // 3. Preenche a Foto de Perfil inicial
+    // Elementos da foto
     const imgPerfil = document.getElementById("imgPerfil");
-    if (imgPerfil) {
-        if (usuario.fotoUrl) {
-            imgPerfil.src = usuario.fotoUrl;
-        } else if (usuario.nome) {
-            // Se não tiver foto, gera as iniciais personalizadas com o seu nome
-            imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome)}&background=181824&color=ff1e27&size=150`;
+    const btnRemoverFoto = document.getElementById("btnRemoverFoto");
+
+    // Função para atualizar a visibilidade do botão de remover
+    function atualizarVisibilidadeBotaoRemover(temFotoPersonalizada) {
+        if (btnRemoverFoto) {
+            btnRemoverFoto.style.display = temFotoPersonalizada ? "flex" : "none";
         }
+    }
+
+    // 3. Preenche a Foto de Perfil inicial
+    if (imgPerfil) {
+        const fotoAtual = usuario.fotoUrl || usuario.foto_perfil;
+        if (fotoAtual) {
+            imgPerfil.src = fotoAtual;
+            atualizarVisibilidadeBotaoRemover(true);
+        } else if (usuario.nome) {
+            imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome)}&background=181824&color=ff1e27&size=150`;
+            atualizarVisibilidadeBotaoRemover(false);
+        }
+    }
+
+    // Função auxiliar para exibir notificações elegantes (Toast)
+    function mostrarNotificacao(mensagem, tipo = 'sucesso') {
+        const toastAntigo = document.querySelector('.toast-notificacao');
+        if (toastAntigo) toastAntigo.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notificacao ${tipo}`;
+        toast.textContent = mensagem;
+        
+        toast.style.position = 'fixed';
+        toast.style.bottom = '30px';
+        toast.style.right = '30px';
+        toast.style.backgroundColor = tipo === 'sucesso' ? '#1b873f' : '#e50914';
+        toast.style.color = '#fff';
+        toast.style.padding = '14px 22px';
+        toast.style.borderRadius = '12px';
+        toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+        toast.style.zIndex = '9999';
+        toast.style.fontSize = '0.95rem';
+        toast.style.fontWeight = '600';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 10);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // Função customizada para confirmar a remoção da foto
+    function abrirModalConfirmacaoFoto(onConfirm) {
+        const modalAntigo = document.getElementById('modalCustomFoto');
+        if (modalAntigo) modalAntigo.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'modalCustomFoto';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+        overlay.style.backdropFilter = 'blur(4px)';
+        overlay.style.zIndex = '9999';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease';
+
+        const caixa = document.createElement('div');
+        caixa.style.background = '#141414';
+        caixa.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+        caixa.style.padding = '35px 30px';
+        caixa.style.borderRadius = '22px';
+        caixa.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.6)';
+        caixa.style.maxWidth = '400px';
+        caixa.style.width = '90%';
+        caixa.style.textAlign = 'center';
+        caixa.style.transform = 'scale(0.8)';
+        caixa.style.transition = 'transform 0.3s ease';
+
+        caixa.innerHTML = `
+            <div style="font-size: 2.5rem; margin-bottom: 15px;">🗑️</div>
+            <h3 style="font-size: 1.3rem; color: #fff; margin-bottom: 10px;">Remover foto de perfil?</h3>
+            <p style="color: #b3b3b3; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5;">
+                Sua foto atual será apagada e substituída pelo seu avatar padrão com as iniciais.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 15px;">
+                <button id="btnNaoRemover" style="padding: 12px 24px; border: 1px solid #333; background: #222; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1;">Cancelar</button>
+                <button id="btnSimRemover" style="padding: 12px 24px; border: none; background: #e50914; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1; box-shadow: 0 4px 12px rgba(229,9,20,0.3);">Sim, remover</button>
+            </div>
+        `;
+
+        overlay.appendChild(caixa);
+        document.body.appendChild(overlay);
+
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            caixa.style.transform = 'scale(1)';
+        }, 10);
+
+        const fecharModal = () => {
+            overlay.style.opacity = '0';
+            caixa.style.transform = 'scale(0.8)';
+            setTimeout(() => overlay.remove(), 300);
+        };
+
+        document.getElementById('btnNaoRemover').addEventListener('click', fecharModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) fecharModal();
+        });
+
+        document.getElementById('btnSimRemover').addEventListener('click', () => {
+            fecharModal();
+            onConfirm();
+        });
     }
 
     // =========================================================================
@@ -36,12 +155,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnConfig && menuConfig) {
         btnConfig.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita fechar imediatamente ao clicar no botão
+            e.stopPropagation();
             const isOpen = menuConfig.classList.toggle('mostrar');
             btnConfig.setAttribute('aria-expanded', isOpen);
         });
 
-        // Fecha o menu ao clicar em qualquer outro lugar da tela
         document.addEventListener('click', (e) => {
             if (!menuConfig.contains(e.target) && !btnConfig.contains(e.target)) {
                 menuConfig.classList.remove('mostrar');
@@ -61,7 +179,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (gatilhoSair && modalSairContainer) {
         gatilhoSair.addEventListener('click', (e) => {
             e.preventDefault();
-            // Fecha o menu dropdown caso esteja aberto
             if (menuConfig) {
                 menuConfig.classList.remove('mostrar');
                 if (btnConfig) btnConfig.setAttribute('aria-expanded', 'false');
@@ -77,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (modalSairContainer) {
-        // Fecha o modal ao clicar fora da caixa de diálogo (no overlay escuro)
         modalSairContainer.addEventListener('click', (e) => {
             if (e.target === modalSairContainer) {
                 modalSairContainer.classList.remove('mostrar-modal');
@@ -87,85 +203,176 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnSair) {
         btnSair.addEventListener('click', () => {
-            // Limpa todos os dados de sessão do usuário
-            localStorage.removeItem("usuario");
-            localStorage.removeItem("usuario_logado");
-            localStorage.removeItem("token");
-            sessionStorage.removeItem("usuario");
-            sessionStorage.removeItem("usuario_logado");
-            sessionStorage.removeItem("token");
-
-            // Redireciona para a página de login
+            localStorage.clear();
+            sessionStorage.clear();
             window.location.href = "/pages/login.html";
         });
     }
 
     // =========================================================================
-    // 6. GERENCIAMENTO DE UPLOAD DA FOTO DE PERFIL (VIA BACKEND / API)
+    // 6. GERENCIAMENTO DE UPLOAD COM RECORTE ESTILO WHATSAPP (CROPPER.JS)
     // =========================================================================
     const inputFoto = document.getElementById("inputFotoPerfil");
+    const modalRecorte = document.getElementById("modalRecorte");
+    const imagemParaCortar = document.getElementById("imagemParaCortar");
+    const btnCancelarRecorte = document.getElementById("btnCancelarRecorte");
+    const btnConfirmarRecorte = document.getElementById("btnConfirmarRecorte");
+    
+    let cropper = null;
 
     if (inputFoto && imgPerfil) {
-        inputFoto.addEventListener("change", async (e) => {
+        inputFoto.addEventListener("change", (e) => {
             const arquivo = e.target.files[0];
             if (!arquivo) return;
 
-            // Validação de tamanho no Front-end (ex: máximo 5MB)
             const tamanhoMaximo = 5 * 1024 * 1024;
             if (arquivo.size > tamanhoMaximo) {
-                alert("A foto selecionada deve ter no máximo 5MB.");
-                inputFoto.value = ""; // Limpa a seleção
+                mostrarNotificacao("A foto selecionada deve ter no máximo 5MB.", "erro");
+                inputFoto.value = "";
                 return;
             }
 
-            // Pré-visualização instantânea para melhorar a experiência do usuário (UX)
-            const previewUrl = URL.createObjectURL(arquivo);
-            const fotoAnterior = imgPerfil.src;
-            imgPerfil.src = previewUrl;
+            const reader = new FileReader();
+            reader.onload = (eventoLeitura) => {
+                imagemParaCortar.src = eventoLeitura.target.result;
+                modalRecorte.style.display = "flex";
 
-            // Monta os dados para o envio via multipart/form-data
-            const formData = new FormData();
-            formData.append("fotoPerfil", arquivo);
-            formData.append("usuarioId", usuario.id || usuario._id); // Envia a identificação do usuário
-
-            try {
-                // Obtenha o token caso sua rota exija autenticação
-                const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-                const resposta = await fetch("/api/usuarios/upload-foto", {
-                    method: "POST",
-                    headers: {
-                        ...(token && { "Authorization": `Bearer ${token}` })
-                    },
-                    body: formData
+                // Inicializa o Cropper.js com formato circular estilo WhatsApp
+                if (cropper) {
+                    cropper.destroy();
+                }
+                
+                cropper = new Cropper(imagemParaCortar, {
+                    aspectRatio: 1, // Quadrado perfeito para gerar o círculo
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
                 });
+            };
+            reader.readAsDataURL(arquivo);
+        });
 
-                if (!resposta.ok) {
-                    throw new Error("Erro no servidor ao tentar salvar a imagem.");
-                }
+        // Botão Cancelar Recorte
+        if (btnCancelarRecorte) {
+            btnCancelarRecorte.addEventListener("click", () => {
+                modalRecorte.style.display = "none";
+                if (cropper) cropper.destroy();
+                inputFoto.value = "";
+            });
+        }
 
-                const dados = await resposta.json();
+        // Botão Confirmar Recorte
+        if (btnConfirmarRecorte) {
+            btnConfirmarRecorte.addEventListener("click", () => {
+                if (!cropper) return;
 
-                // Atualiza a imagem com a URL final retornada pelo servidor
-                if (dados.fotoUrl) {
-                    imgPerfil.src = dados.fotoUrl;
+                // Gera a imagem cortada em formato Blob (PNG)
+                cropper.getCroppedCanvas({
+                    width: 400,
+                    height: 400,
+                }).toBlob(async (blob) => {
+                    modalRecorte.style.display = "none";
                     
-                    // Atualiza o objeto do usuário na sessão atual
-                    usuario.fotoUrl = dados.fotoUrl;
-                    localStorage.setItem(chaveSessao, JSON.stringify(usuario));
+                    const arquivoCortado = new File([blob], "foto-perfil.png", { type: "image/png" });
+                    const previewUrl = URL.createObjectURL(arquivoCortado);
+                    const fotoAnterior = imgPerfil.src;
+                    imgPerfil.src = previewUrl;
+
+                    const formData = new FormData();
+                    formData.append("fotoPerfil", arquivoCortado);
+                    formData.append("usuarioId", usuario.id || usuario._id);
+
+                    try {
+                        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                        const resposta = await fetch("/api/perfil/upload-foto", {
+                            method: "POST",
+                            headers: {
+                                ...(token && { "Authorization": `Bearer ${token}` })
+                            },
+                            body: formData
+                        });
+
+                        if (!resposta.ok) throw new Error("Erro no servidor ao tentar salvar a imagem.");
+
+                        const dados = await resposta.json();
+
+                        if (dados.fotoUrl) {
+                            imgPerfil.src = dados.fotoUrl;
+                            usuario.fotoUrl = dados.fotoUrl;
+                            usuario.foto_perfil = dados.fotoUrl;
+                            localStorage.setItem(chaveSessao, JSON.stringify(usuario));
+                            
+                            atualizarVisibilidadeBotaoRemover(true);
+                        }
+
+                        mostrarNotificacao("✨ Foto de perfil atualizada com sucesso!");
+
+                    } catch (erro) {
+                        console.error("Falha no upload:", erro);
+                        mostrarNotificacao("Não foi possível salvar a nova foto de perfil.", "erro");
+                        imgPerfil.src = fotoAnterior;
+                    } finally {
+                        URL.revokeObjectURL(previewUrl);
+                        if (cropper) cropper.destroy();
+                        inputFoto.value = "";
+                    }
+                }, "image/png");
+            });
+        }
+    }
+
+    // =========================================================================
+    // 7. GERENCIAMENTO DE REMOÇÃO DA FOTO DE PERFIL
+    // =========================================================================
+    if (btnRemoverFoto) {
+        btnRemoverFoto.addEventListener("click", () => {
+            abrirModalConfirmacaoFoto(async () => {
+                try {
+                    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+                    const resposta = await fetch("/api/perfil/remover-foto", {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(token && { "Authorization": `Bearer ${token}` })
+                        },
+                        body: JSON.stringify({ usuarioId: usuario.id || usuario._id })
+                    });
+
+                    const dados = await resposta.json();
+
+                    if (dados.sucesso) {
+                        const avatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
+                        
+                        if (imgPerfil) {
+                            imgPerfil.src = avatarPadrao;
+                        }
+                        
+                        usuario.fotoUrl = null;
+                        usuario.foto_perfil = null;
+                        localStorage.setItem(chaveSessao, JSON.stringify(usuario));
+
+                        atualizarVisibilidadeBotaoRemover(false);
+                        mostrarNotificacao("🗑️ Foto de perfil removida com sucesso!");
+                    } else {
+                        mostrarNotificacao(dados.mensagem || "Não foi possível remover a foto.", "erro");
+                    }
+
+                } catch (erro) {
+                    console.error("Erro ao remover foto:", erro);
+                    mostrarNotificacao("Erro de conexão ao tentar remover a foto.", "erro");
                 }
-
-                alert("Foto de perfil atualizada com sucesso!");
-
-            } catch (erro) {
-                console.error("Falha no upload:", erro);
-                alert("Não foi possível salvar a nova foto de perfil.");
-                // Reverte para a foto anterior caso o envio falhe
-                imgPerfil.src = fotoAnterior;
-            } finally {
-                // Libera a memória alocada para o preview temporário
-                URL.revokeObjectURL(previewUrl);
-            }
+            });
         });
     }
 });
+
+
