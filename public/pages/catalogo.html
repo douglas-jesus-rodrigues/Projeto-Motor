@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MotorFlex - Portal & Catálogo Automotivo</title>
     <link rel="stylesheet" href="/css/catalogo.css">
+    <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
 </head>
 <body>
 
@@ -12,8 +13,8 @@
     <!-- Menu de Navegação Superior com Seta de Retorno -->
     <nav class="navbar">
         <a href="/" class="nav-back-btn" title="Voltar para a Página Inicial">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 12H5M12 19l-7-7 7-7"></path>
             </svg>
             <span>Início</span>
         </a>
@@ -197,7 +198,7 @@
                     <div class="grupo grupo-full">
                         <label class="label-upload">Foto Principal do Veículo</label>
                         <label for="imagem" class="dropzone-file">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                             <span id="nomeArquivoSelecionado">Clique para escolher uma foto ou arraste até aqui</span>
                             <input type="file" id="imagem" name="imagem" accept="image/*" style="display: none;">
                         </label>
@@ -318,7 +319,7 @@
                             <strong id="resFinanciado">R$ 0,00</strong>
                         </div>
                         <div class="fin-item">
-                            <span>Valor da Parcelas:</span>
+                            <span>Valor das Parcelas:</span>
                             <strong id="resParcela" class="highlight-price">R$ 0,00 /mês</strong>
                         </div>
                         <div class="fin-item">
