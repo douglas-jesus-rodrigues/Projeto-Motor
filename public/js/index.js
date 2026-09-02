@@ -3,6 +3,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const linksSpa = document.querySelectorAll(".nav-link[data-target]");
     const secoes = document.querySelectorAll(".page-section");
     
+    // Elemento de anunciar carro (forçado a sumir abaixo)
+    const itemAnunciar = document.getElementById("itemAnunciar"); // Certifique-se que o ID no HTML é esse ou ajuste aqui
+    if (itemAnunciar) {
+        itemAnunciar.style.display = "none";
+    }
+    
     function alternarSecao(targetId) {
         secoes.forEach(sec => sec.classList.remove("active"));
         document.getElementById(`sec-${targetId}`)?.classList.add("active");
@@ -30,13 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
             rotaPainel = "/pages/painel-empresa.html";
         } else if (usuario.tipo === "admin" || usuario.cargo === "admin") {
             rotaPainel = "/pages/painel-admin.html";
-        }
-
-        // Oculta a opção de anunciar se o usuário for Admin
-        if (usuario.tipo === "admin" || usuario.cargo === "admin") {
-            if (itemAnunciar) itemAnunciar.style.display = "none";
-        } else {
-            if (itemAnunciar) itemAnunciar.style.display = "block";
         }
 
         if (irPainel) {
