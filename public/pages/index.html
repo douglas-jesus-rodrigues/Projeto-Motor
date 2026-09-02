@@ -23,7 +23,6 @@
             <ul class="menu" id="menuNavegacao">
                 <li><a href="#home" class="nav-link active" data-target="home">Home</a></li>
                 <li><a href="/pages/catalogo.html">Catálogo</a></li>
-                <!-- Modificado: oculto por padrão no HTML para evitar piscar na tela antes do JS rodar -->
                 <li id="itemAnunciar" style="display: none;"><a href="/pages/anunciar.html" class="nav-link-anunciar">Anunciar Veículo</a></li>
                 <li><a href="#sobre" class="nav-link" data-target="sobre">Sobre</a></li>
                 <li><a href="#contato" class="nav-link" data-target="contato">Contato</a></li>
@@ -35,7 +34,11 @@
                 </div>
                 <div class="nav-item-dropdown" id="dropdownUsuario" style="display: none;">
                     <button class="btn-config" id="btnConfig" aria-expanded="false">
-                        <div class="avatar-usuario" id="avatarLetra">U</div>
+                        <!-- MODIFICADO: Adicionei a tag de imagem aqui -->
+                        <div class="avatar-usuario" id="avatarLetra">
+                            U
+                            <img src="" alt="Foto de Perfil" id="avatarImagem">
+                        </div>
                         <span id="nomeUsuario">Minha Conta</span>
                     </button>
                     <div class="dropdown-menu" id="menuConfig" hidden>
@@ -47,7 +50,6 @@
             </div>
         </nav>
     </header>
-
     <main>
         <section id="sec-home" class="page-section active">
             <div class="hero-banner">
@@ -72,7 +74,6 @@
                 </div>
             </div>
         </section>
-
         <section id="sec-sobre" class="page-section">
             <div class="container section-compact">
                 <h1 style="font-size: 2rem; margin-bottom: 16px;">Sobre a MotorFlex</h1>
@@ -82,7 +83,6 @@
                 </p>
             </div>
         </section>
-
         <section id="sec-contato" class="page-section">
             <div class="container section-compact">
                 <div class="contact-header">
