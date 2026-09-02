@@ -22,32 +22,74 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     if (usuario) {
-        acoesDeslogado.style.display = "none";
-        dropdownUsuario.style.display = "block";
-        let rota = "/pages/painel-cliente.html";
-        if (usuario.tipo === "empresa") rota = "/pages/painel-empresa.html";
-        else if (usuario.tipo === "admin" || usuario.cargo === "admin") rota = "/pages/painel-admin.html";
-        if (usuario.tipo === "admin" || usuario.cargo === "admin") itemAnunciar.style.display = "none";
-        irPainel.href = rota;
-        let nome = "Minha Conta";
-        if (usuario.tipo === "empresa" && usuario.empresa?.nome_empresa) nome = usuario.empresa.nome_empresa;
-        else if (usuario.nome) nome = usuario.nome.split(" ")[0];
-        nomeUsuario.textContent = nome;
-        avatarLetra.textContent = nome.charAt(0).toUpperCase();
+        if (acoesDeslogado) acoesDeslogado.style.display = "none";
+        if (dropdownUsuario) dropdownUsuario.style.display = "block";
+
+        let rotaPainel = "/pages/painel-cliente.html";
+        if (usuario.tipo === "empresa") {
+            rotaPainel = "/pages/painel-empresa.html";
+        } else if (usuario.tipo === "admin" || usuario.cargo === "admin") {
+            rotaPainel = "/pages/painel-admin.html";
+        }
+
+        // Oculta a opção de anunciar se o usuário for Admin
+        if (usuario.tipo === "admin" || usuario.cargo === "admin") {
+            if (itemAnunciar) itemAnunciar.style.display = "none";
+        } else {
+            if (itemAnunciar) itemAnunciar.style.display = "block";
+        }
+
+        if (irPainel) {
+            irPainel.href = rotaPainel;
+        }
+
+        let nomeExibicao = "Minha Conta";
+        if (usuario.tipo === "empresa" && usuario.empresa && usuario.empresa.nome_empresa) {
+            nomeExibicao = usuario.empresa.nome_empresa;
+        } else if (usuario.nome) {
+            nomeExibicao = usuario.nome.split(" ")[0];
+        }
+
+        if (nomeUsuario) nomeUsuario.textContent = nomeExibicao;
+        if (avatarLetra) avatarLetra.textContent = nomeExibicao.charAt(0).toUpperCase();
+
+    } else {
+        if (acoesDeslogado) acoesDeslogado.style.display = "flex";
+        if (dropdownUsuario) dropdownUsuario.style.display = "none";
     }
 
-    btnConfig?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        menuConfig.hidden = !menuConfig.hidden;
-    });
-    document.addEventListener("click", (e) => {
-        if (!btnConfig?.contains(e.target) && !menuConfig?.contains(e.target)) menuConfig.hidden = true;
-    });
-    btnSair?.addEventListener("click", (e) => {
-        e.preventDefault();
-        localStorage.removeItem("usuario");
-        location.reload();
-    });
+    // 3. DROPDOWN E SAIR
+    const btnConfig = document.getElementById("btnConfig");
+    const menuConfig = document.getElementById("menuConfig");
+
+    if (btnConfig && menuConfig) {
+        btnConfig.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const oculto = menuConfig.hidden;
+            menuConfig.hidden = !oculto;
+            btnConfig.setAttribute("aria-expanded", oculto);
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!btnConfig.contains(e.target) && !menuConfig.contains(e.target)) {
+                menuConfig.hidden = true;
+                btnConfig.setAttribute("aria-expanded", "false");
+            }
+        });
+    }
+
+    const btnSair = document.getElementById("btnSair");
+    if (btnSair) {
+        btnSair.addEventListener("click", (e) => {
+            e.preventDefault();
+            localStorage.removeItem("usuario");
+            window.location.reload();
+        });
+    }
+
+    // 4. FUNCIONALIDADE DE BUSCA RÁPIDA
+    const btnBuscarRapido = document.getElementById("btnBuscarRapido");
+    const inputBuscaRapida = document.getElementById("inputBuscaRapida");
 
     function buscar() {
         const termo = inputBuscaRapida.value.trim();

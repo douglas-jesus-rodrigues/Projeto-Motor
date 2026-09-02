@@ -9,6 +9,7 @@
         "dev": "nodemon server.js"
     },
     "dependencies": {
+        "bcrypt": "^6.0.0",
         "bcryptjs": "^3.0.3",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
@@ -20,7 +21,8 @@
         "multer": "^2.2.0",
         "mysql2": "^3.23.2",
         "node-cron": "^4.6.0",
-        "resend": "^6.18.1",
+        "nodemailer": "^9.0.6",
+        "resend": "^6.24.0",
         "uuid": "^14.0.1"
     },
     "devDependencies": {

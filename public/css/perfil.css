@@ -82,6 +82,7 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: var(--transition);
+    text-decoration: none;
 }
 
 /* Suavidade do ícone de seta */
@@ -251,54 +252,58 @@ body {
 }
 
 /* BOTÃO DE REVELAR TEXTUAL VERSÃO CYBERPUNK PREMIUM */
-.btn-revelar {
+.btn-revelar,
+.btn-revelar-senha {
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(34, 34, 34, 0.6); /* Fundo semi-transparente */
-    backdrop-filter: blur(4px); /* Efeito de vidro sutil interno */
+    background: rgba(34, 34, 34, 0.6);
+    backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     border: 1px solid #2d2d2d;
     color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px; /* Espaçamento moderno entre as letras */
+    letter-spacing: 0.8px;
     cursor: pointer;
-    width: 80px; /* Largura ajustada para o texto respirar */
+    width: 80px;
     height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 8px; /* Cantos leves e simétricos */
+    border-radius: 8px;
     z-index: 5;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Efeito Hover: O botão ganha borda vermelha e acende o texto com brilho neon */
-.btn-revelar:hover {
+/* Efeito Hover */
+.btn-revelar:hover,
+.btn-revelar-senha:hover {
     color: #ffffff;
-    background-color: rgba(229, 9, 20, 0.15); /* Fundo com tom vermelho suave */
-    border-color: var(--primary); /* Borda acende em vermelho */
-    text-shadow: 0 0 8px rgba(229, 9, 20, 0.6); /* Texto brilha no escuro */
-    box-shadow: 0 0 12px rgba(229, 9, 20, 0.2); /* Glow sutil em volta do botão */
-    transform: translateY(-50%) scale(1.02); /* Leve aproximação interativa */
+    background-color: rgba(229, 9, 20, 0.15);
+    border-color: var(--primary);
+    text-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
+    box-shadow: 0 0 12px rgba(229, 9, 20, 0.2);
+    transform: translateY(-50%) scale(1.02);
 }
 
-/* Feedback tátil de clique pressionado */
-.btn-revelar:active {
+/* Feedback tátil */
+.btn-revelar:active,
+.btn-revelar-senha:active {
     transform: translateY(-50%) scale(0.96);
 }
 
-/* Foco por teclado para acessibilidade */
-.btn-revelar:focus-visible {
+/* Foco por teclado */
+.btn-revelar:focus-visible,
+.btn-revelar-senha:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
-/* --- MODAL DE CONFIRMAÇÃO COM DESFOQUE --- */
+/* --- MODAL DE SENHA E CONFIRMAÇÃO --- */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -315,12 +320,14 @@ body {
     transition: opacity 0.3s ease;
 }
 
-.modal-overlay.mostrar-modal {
-    display: flex;
+.modal-overlay.mostrar-modal,
+#modalSenha[style*="display: flex"] {
+    display: flex !important;
     opacity: 1;
 }
 
-.modal-container {
+.modal-container,
+.modal-card {
     background: #141414;
     border: 1px solid #222;
     padding: 35px 30px;
@@ -333,30 +340,98 @@ body {
     transition: transform 0.3s ease;
 }
 
-.modal-overlay.mostrar-modal .modal-container {
+.modal-overlay.mostrar-modal .modal-container,
+#modalSenha[style*="display: flex"] .modal-card {
     transform: scale(1);
 }
 
-.modal-container h3 {
+.modal-container h3,
+.modal-card h3 {
     font-size: 1.4rem;
     color: #fff;
     margin-bottom: 10px;
 }
 
-.modal-container p {
+.modal-container p,
+.modal-card p {
     color: #a3a3a3;
     font-size: 0.95rem;
     margin-bottom: 25px;
     line-height: 1.5;
 }
 
+.campo-modal {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.campo-modal .input-wrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+
+.campo-modal input {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: #ffffff;
+    padding: 14px 16px;
+    padding-right: 96px;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    outline: none;
+    width: 100%;
+    transition: var(--transition);
+}
+
+.campo-modal input:focus {
+    border-color: var(--text-light);
+    background-color: #242424;
+}
+
+.btn-mostrar-senha-modal {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(34, 34, 34, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid #2d2d2d;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    width: 80px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    z-index: 5;
+}
+
+.btn-mostrar-senha-modal:hover {
+    color: #ffffff;
+    background-color: rgba(229, 9, 20, 0.15);
+    border-color: var(--primary);
+    text-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
+}
+
+.modal-acoes,
 .modal-botoes {
     display: flex;
     justify-content: center;
     gap: 15px;
 }
 
-.btn-modal {
+.btn-modal,
+.btn-cancelar,
+.btn-confirmar,
+.btn-confirmar-sair {
     padding: 12px 24px;
     border: none;
     border-radius: 10px;
@@ -364,6 +439,7 @@ body {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex: 1;
 }
 
 .btn-cancelar {
@@ -376,12 +452,14 @@ body {
     background-color: #333;
 }
 
+.btn-confirmar,
 .btn-confirmar-sair {
     background-color: var(--primary);
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
 }
 
+.btn-confirmar:hover,
 .btn-confirmar-sair:hover {
     background-color: var(--primary-hover);
 }

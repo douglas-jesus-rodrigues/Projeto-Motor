@@ -1,12 +1,342 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <title>MotorFlex - Portal & Catálogo Automotivo</title>
+    <link rel="stylesheet" href="/css/catalogo.css">
 </head>
 <body>
-    <h1>Catalogo</h1>
+
+<div class="container">
+    <!-- Menu de Navegação Superior com Seta de Retorno -->
+    <nav class="navbar">
+        <a href="/" class="nav-back-btn" title="Voltar para a Página Inicial">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span>Início</span>
+        </a>
+        <a href="#" class="nav-link active" data-tab="tab-catalogo">Catálogo de Veículos</a>
+        <a href="#" class="nav-link" data-tab="tab-cadastrar">Anunciar Veículo</a>
+        <a href="#" class="nav-link" data-tab="tab-vender">Avaliação Profissional</a>
+        <a href="#" class="nav-link" data-tab="tab-financiamento">Financiamento</a>
+    </nav>
+
+    <!-- ABA 1: CATÁLOGO -->
+    <div id="tab-catalogo" class="page-tab active">
+        <div class="main-layout">
+            
+            <aside class="sidebar">
+                <div class="widget-box">
+                    <div class="widget-title">FILTRAR VEÍCULOS</div>
+                    <form id="formBusca" class="search-box" onsubmit="event.preventDefault();">
+                        <div class="filter-group">
+                            <label for="inputPesquisa">Busca Livre</label>
+                            <input type="text" id="inputPesquisa" placeholder="Marca, modelo..." autocomplete="off"/>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="selectMarca">Marca</label>
+                            <select id="selectMarca">
+                                <option value="">Todas as Marcas</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="selectCategoria">Categoria</label>
+                            <select id="selectCategoria">
+                                <option value="">Todas as Categorias</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="selectTransmissao">Câmbio</label>
+                            <select id="selectTransmissao">
+                                <option value="">Qualquer Transmissão</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="btnBuscar">APLICAR FILTRO</button>
+                        <button type="button" id="btnLimpar" class="btn-secondary">LIMPAR SELEÇÃO</button>
+                    </form>
+                </div>
+
+                <div class="widget-box">
+                    <div class="widget-title">DESTAQUES DA SEMANA</div>
+                    <div class="top-deals" id="topDeals"></div>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <div class="featured-car" id="featuredCar"></div>
+
+                <div class="catalogo-tabs-bar">
+                    <button class="cat-tab-btn active" data-categoria="todos">Todos os Carros</button>
+                    <button class="cat-tab-btn" data-categoria="SUV">SUVs</button>
+                    <button class="cat-tab-btn" data-categoria="Coupé">Esportivos / Coupés</button>
+                    <button class="cat-tab-btn" data-categoria="Conversível">Conversíveis</button>
+                    <button class="cat-tab-btn" data-categoria="Sedan">Sedans</button>
+                    <button class="cat-tab-btn" data-categoria="Hatch">Hatches</button>
+                    <button class="cat-tab-btn" data-categoria="Picape">Picapes</button>
+                </div>
+
+                <div class="cars-grid" id="carsGrid"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ABA 2: CADASTRAR / ANUNCIAR VEÍCULO -->
+    <div id="tab-cadastrar" class="page-tab">
+        <section class="card-anuncio">
+            <div class="topo">
+                <span class="badge-novo">Novo Anúncio</span>
+                <h2>Cadastrar Veículo</h2>
+                <p>Preencha as especificações técnicas e comerciais para expor seu veículo na vitrine da MotorFlex.</p>
+            </div>
+
+            <form id="formAnuncio" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="grupo">
+                        <label for="marca">Marca *</label>
+                        <input type="text" id="marca" name="marca" placeholder="Ex: Honda" required>
+                        <small id="erroMarca" class="erro-texto"></small>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="modelo">Modelo *</label>
+                        <input type="text" id="modelo" name="modelo" placeholder="Ex: Civic" required>
+                        <small id="erroModelo" class="erro-texto"></small>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="versao">Versão</label>
+                        <input type="text" id="versao" name="versao" placeholder="Ex: EXL 2.0">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="anoFabricacao">Ano fabricação *</label>
+                        <input type="number" id="anoFabricacao" name="ano_fabricacao" placeholder="Ex: 2021" min="1900" max="2030" required>
+                        <small id="erroAnoFabricacao" class="erro-texto"></small>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="anoModelo">Ano modelo *</label>
+                        <input type="number" id="anoModelo" name="ano_modelo" placeholder="Ex: 2022" min="1900" max="2030" required>
+                        <small id="erroAnoModelo" class="erro-texto"></small>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="preco">Preço (R$) *</label>
+                        <div class="input-money-wrapper">
+                            <span class="prefixo">R$</span>
+                            <input type="number" id="preco" name="preco" placeholder="98000" step="0.01" min="0" required>
+                        </div>
+                        <small id="erroPreco" class="erro-texto"></small>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="quilometragem">Quilometragem (Km)</label>
+                        <input type="number" id="quilometragem" name="quilometragem" placeholder="Ex: 45000" min="0">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="combustivel">Combustível</label>
+                        <select id="combustivel" name="combustivel">
+                            <option value="Flex">Flex</option>
+                            <option value="Gasolina">Gasolina</option>
+                            <option value="Etanol">Etanol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Elétrico">Elétrico</option>
+                            <option value="Híbrido">Híbrido</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="cambio">Câmbio</label>
+                        <select id="cambio" name="cambio">
+                            <option value="Manual">Manual</option>
+                            <option value="Automático">Automático</option>
+                            <option value="Automatizado">Automatizado</option>
+                            <option value="CVT">CVT</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo">
+                        <label for="cor">Cor</label>
+                        <input type="text" id="cor" name="cor" placeholder="Ex: Preto Perolizado">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="portas">Portas</label>
+                        <input type="number" id="portas" name="portas" placeholder="Ex: 4" min="2" max="6">
+                    </div>
+
+                    <div class="grupo">
+                        <label for="carroceria">Carroceria / Categoria</label>
+                        <select id="carroceria" name="carroceria">
+                            <option value="Sedan">Sedan</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Coupé">Coupé</option>
+                            <option value="Conversível">Conversível</option>
+                            <option value="Hatch">Hatch</option>
+                            <option value="Picape">Picape</option>
+                        </select>
+                    </div>
+
+                    <div class="grupo grupo-full">
+                        <label for="urlImagemDireta">URL da Imagem Direta (Opcional se enviar arquivo)</label>
+                        <input type="url" id="urlImagemDireta" placeholder="https://exemplo.com/foto.jpg">
+                    </div>
+
+                    <div class="grupo grupo-full">
+                        <label for="descricao">Descrição Detalhada</label>
+                        <textarea id="descricao" name="descricao" rows="4" placeholder="Descreva opcionais, revisões feitas, estado de conservação e diferenciais do veículo..."></textarea>
+                    </div>
+
+                    <div class="grupo grupo-full">
+                        <label class="label-upload">Foto Principal do Veículo</label>
+                        <label for="imagem" class="dropzone-file">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span id="nomeArquivoSelecionado">Clique para escolher uma foto ou arraste até aqui</span>
+                            <input type="file" id="imagem" name="imagem" accept="image/*" style="display: none;">
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-anunciar" id="btnAnunciar">Publicar Anúncio Agora</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- ABA 3: AVALIAÇÃO VEICULAR PROFISSIONAL -->
+    <div id="tab-vender" class="page-tab">
+        <section class="card-anuncio">
+            <div class="topo">
+                <span class="badge-novo">Venda Garantida</span>
+                <h2>Avaliação Técnica & Compra Rápida</h2>
+                <p>Nossa equipe de peritos realiza a precificação baseada na Tabela FIPE e análise de mercado em tempo real.</p>
+            </div>
+
+            <form id="formAvaliacao" class="custom-form" onsubmit="event.preventDefault(); solicitarAvaliacao();">
+                <div class="form-grid">
+                    <div class="grupo">
+                        <label for="avaNome">Nome Completo *</label>
+                        <input type="text" id="avaNome" placeholder="Seu nome completo" required>
+                    </div>
+                    <div class="grupo">
+                        <label for="avaTelefone">Telefone / WhatsApp *</label>
+                        <input type="tel" id="avaTelefone" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="grupo">
+                        <label for="avaPlaca">Placa do Veículo *</label>
+                        <input type="text" id="avaPlaca" placeholder="ABC-1D23" maxlength="8" required style="text-transform:uppercase;">
+                    </div>
+                    <div class="grupo">
+                        <label for="avaKm">Quilometragem Atual *</label>
+                        <input type="number" id="avaKm" placeholder="Ex: 45000" required>
+                    </div>
+                    <div class="grupo">
+                        <label for="avaEstado">Estado de Conservação</label>
+                        <select id="avaEstado">
+                            <option value="Excelente">Excelente (Sem detalhes, revisões em dia)</option>
+                            <option value="Bom">Bom (Pequenos detalhes de uso)</option>
+                            <option value="Regular">Regular (Necessita de pequenos reparos)</option>
+                        </select>
+                    </div>
+                    <div class="grupo">
+                        <label for="avaPretensao">Pretensão de Valor (R$)</label>
+                        <input type="number" id="avaPretensao" placeholder="Ex: 85000">
+                    </div>
+                    <div class="grupo grupo-full">
+                        <label for="avaObservacoes">Observações ou Opcionais Relevantes</label>
+                        <textarea id="avaObservacoes" rows="3" placeholder="Teto solar, bancos em couro, laudo cautelar aprovado, etc..."></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn-anunciar">Solicitar Proposta de Compra</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- ABA 4: FINANCIAMENTO CORPORATIVO -->
+    <div id="tab-financiamento" class="page-tab">
+        <section class="card-anuncio">
+            <div class="topo">
+                <span class="badge-novo">Simulador Bancário</span>
+                <h2>Simulador de Financiamento Automotivo</h2>
+                <p>Calcule estimativas reais com taxas de juros competitivas integradas aos principais bancos.</p>
+            </div>
+
+            <div class="fin-layout">
+                <form id="formFinanciamento" class="fin-form">
+                    <div class="form-grid">
+                        <div class="grupo">
+                            <label for="finValor">Valor do Veículo (R$) *</label>
+                            <div class="input-money-wrapper">
+                                <span class="prefixo">R$</span>
+                                <input type="number" id="finValor" placeholder="100000" required>
+                            </div>
+                        </div>
+
+                        <div class="grupo">
+                            <label for="finEntrada">Valor de Entrada (R$)</label>
+                            <div class="input-money-wrapper">
+                                <span class="prefixo">R$</span>
+                                <input type="number" id="finEntrada" placeholder="30000">
+                            </div>
+                        </div>
+
+                        <div class="grupo">
+                            <label for="finParcelas">Prazo de Financiamento</label>
+                            <select id="finParcelas">
+                                <option value="12">12 parcelas</option>
+                                <option value="24">24 parcelas</option>
+                                <option value="36">36 parcelas</option>
+                                <option value="48" selected>48 parcelas</option>
+                                <option value="60">60 parcelas</option>
+                            </select>
+                        </div>
+
+                        <div class="grupo">
+                            <label for="finScore">Perfil de Crédito (Score Estimado)</label>
+                            <select id="finScore">
+                                <option value="excelente">Excelente (Acima de 800) - Taxa 1.29% a.m.</option>
+                                <option value="bom" selected>Bom (600 a 799) - Taxa 1.59% a.m.</option>
+                                <option value="regular">Regular (Até 599) - Taxa 1.99% a.m.</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnSimular" class="btn-anunciar">Calcular Simulação</button>
+                </form>
+
+                <div id="resultadoSimulacao" class="fin-result-card" style="display: none;">
+                    <h3>Resumo da Simulação</h3>
+                    <div class="fin-summary-grid">
+                        <div class="fin-item">
+                            <span>Valor Financiado:</span>
+                            <strong id="resFinanciado">R$ 0,00</strong>
+                        </div>
+                        <div class="fin-item">
+                            <span>Valor da Parcelas:</span>
+                            <strong id="resParcela" class="highlight-price">R$ 0,00 /mês</strong>
+                        </div>
+                        <div class="fin-item">
+                            <span>Custo Total Estimado:</span>
+                            <strong id="resTotal">R$ 0,00</strong>
+                        </div>
+                        <div class="fin-item">
+                            <span>Taxa Aplicada:</span>
+                            <strong id="resTaxa">0% a.m.</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+</div>
+
+<script src="/js/catalogo.js"></script>
 </body>
 </html>

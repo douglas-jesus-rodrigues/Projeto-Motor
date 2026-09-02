@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex | Redefinir Senha</title>
+    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="/css/redefinir-senha.css">
+</head>
+<body>
+
+    <!-- MENSAGEM -->
+    <div id="mensagem"></div>
+
+    <main class="login-container">
+        <section class="login-card">
+            <h1>Motor<span>Flex</span></h1>
+            <p>Digite sua nova senha abaixo.</p>
+
+            <form id="formRedefinirSenha">
+                <div class="campo">
+                    <label for="novaSenha">Nova Senha</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="novaSenha" 
+                            name="novaSenha" 
+                            placeholder="Mínimo de 8 caracteres" 
+                            minlength="8"
+                            required
+                        >
+                        <button type="button" class="btn-mostrar-senha" onclick="toggleSenha('novaSenha', this)">Ver</button>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="confirmaSenha">Confirmar Nova Senha</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="confirmaSenha" 
+                            name="confirmaSenha" 
+                            placeholder="Confirme a nova senha" 
+                            minlength="8"
+                            required
+                        >
+                        <button type="button" class="btn-mostrar-senha" onclick="toggleSenha('confirmaSenha', this)">Ver</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    Salvar Nova Senha
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <script src="/js/redefinir-senha.js"></script>
+</body>
+</html>

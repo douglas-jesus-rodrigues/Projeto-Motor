@@ -305,6 +305,8 @@ exports.loginUsuario = async (req, res) => {
                 telefone: usuario.telefone,
                 cpf: usuario.cpf,
                 tipo: usuario.tipo,
+                // CORRIGIDO: Pega independentemente de como o campo se chama no banco (foto_url, foto_perfil ou foto)
+                fotoUrl: usuario.foto_url || usuario.foto_perfil || usuario.foto || null,
                 empresa
             }
         });
@@ -361,7 +363,6 @@ exports.verificarEmail = async (req, res) => {
 // PAINEL ADMINISTRATIVO (NOVAS FUNÇÕES)
 // ==========================================
 
-// 1. Listar todos os usuários para a tabela do painel
 exports.listarUsuarios = async (req, res) => {
     try {
         const [usuarios] = await db.query("SELECT id, nome, email, tipo, status FROM usuarios");
@@ -372,14 +373,12 @@ exports.listarUsuarios = async (req, res) => {
     }
 };
 
-// 2. Estatísticas para os cards do topo do painel
 exports.obterEstatisticasAdmin = async (req, res) => {
     try {
         const [usuarios] = await db.query("SELECT COUNT(*) AS total FROM usuarios");
         const [empresas] = await db.query("SELECT COUNT(*) AS total FROM empresas");
         const [veiculos] = await db.query("SELECT COUNT(*) AS total FROM veiculos");
         
-        // Caso possua uma tabela ou status de veículos vendidos, ajuste conforme sua base
         const [vendidos] = await db.query("SELECT COUNT(*) AS total FROM veiculos WHERE status = 'vendido'").catch(() => [[{ total: 0 }]]);
 
         return res.status(200).json({
@@ -394,7 +393,6 @@ exports.obterEstatisticasAdmin = async (req, res) => {
     }
 };
 
-// 3. Deletar usuário pelo ID (botão de lixeira na tabela)
 exports.deletarUsuario = async (req, res) => {
     try {
         const { id } = req.params;
@@ -429,7 +427,7 @@ async function enviarEmailConfirmacao(email, nome, token) {
 
                 <a href="${link}"
                    style="display:inline-block; background:#e50914; color:white; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:bold;">
-                   Confirmar cadastro
+                     Confirmar cadastro
                 </a>
             </div>
         `
@@ -451,11 +449,8 @@ async function enviarEmailCadastroSucesso(email, nome) {
     });
 }
 
-// Retorna a quantidade de cadastros por mês para o gráfico
 exports.obterCadastrosPorMes = async (req, res) => {
     try {
-        // Consulta que agrupa os usuários pelo mês da data de criação (ex: campo criado_em ou data_cadastro)
-        // Substitua 'criado_em' pelo nome real da coluna de data na sua tabela 'usuarios'
         const [resultado] = await db.query(`
             SELECT MONTH(criado_em) AS mes, COUNT(*) AS total 
             FROM usuarios 
@@ -464,12 +459,10 @@ exports.obterCadastrosPorMes = async (req, res) => {
             ORDER BY mes ASC
         `);
 
-        // Cria um array com 12 posições (de Jan a Dez) zeradas
         const mesesContagem = Array(12).fill(0);
 
-        // Preenche com os valores reais vindos do banco
         resultado.forEach(row => {
-            const indiceMes = row.mes - 1; // Meses em JS vão de 0 a 11
+            const indiceMes = row.mes - 1;
             mesesContagem[indiceMes] = row.total;
         });
 

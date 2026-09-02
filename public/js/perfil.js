@@ -1,11 +1,10 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    // Armazenamento privado em memória apenas para as informações estritamente ocultadas
     const dadosReais = {
         email: "",
-        cpf: ""
+        cpf: "",
+        senha: ""
     };
 
-    // 1. VERIFICAÇÃO DE SEGURANÇA LOCAL INICIAL
     const usuarioLocal = JSON.parse(localStorage.getItem("usuario"));
 
     if (!usuarioLocal) {
@@ -16,7 +15,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     configurarBotaoVoltar(usuarioLocal.tipo);
 
     try {
-        // 2. BUSCA OS DADOS EM TEMPO REAL NO BANCO DE DADOS
         const response = await fetch(`/api/perfil/meu-perfil?id=${usuarioLocal.id}`);
         const dados = await response.json();
 
@@ -27,7 +25,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const usuario = dados.usuario;
         localStorage.setItem("usuario", JSON.stringify(usuario));
 
-        // 3. CONFIGURAÇÃO DA BADGE
         const badgeTipoConta = document.getElementById("badgeTipoConta");
         if (badgeTipoConta) {
             badgeTipoConta.className = "badge";
@@ -42,20 +39,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // 4. RETENÇÃO SEGURA DOS DADOS SENSÍVEIS (E-MAIL E CPF)
         dadosReais.email = usuario.email || "";
         dadosReais.cpf = formatarCPF(usuario.cpf);
+        dadosReais.senha = usuario.senha || "";
 
-        // Preenchimento dos dados textuais limpos/comuns abertos
         document.getElementById("nome").value = usuario.nome || "";
         document.getElementById("sobrenome").value = usuario.sobrenome || "";
         document.getElementById("telefone").value = formatarTelefone(usuario.telefone) || "";
 
-        // Aplicação das máscaras iniciais protegidas
+        // Máscaras iniciais
         document.getElementById("email").value = dadosReais.email ? gerarMascaraEmail(dadosReais.email) : "";
         document.getElementById("cpf").value = dadosReais.cpf ? "***.***.***-**" : "";
+        
+        const inputSenhaPerfil = document.getElementById("senhaAtualPerfil");
+        if (inputSenhaPerfil) inputSenhaPerfil.value = "********";
 
-        // 5. SEÇÃO CORPORATIVA
         if (usuario.tipo === "empresa") {
             const secaoEmpresa = document.getElementById("secaoEmpresa");
             if (secaoEmpresa) {
@@ -69,7 +67,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // 6. ATIVAÇÃO DO GATILHO DOS BOTÕES TEXTUAIS (VER / OCULTAR)
         configurarBotoesRevelar(dadosReais);
 
     } catch (error) {
@@ -78,9 +75,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-/**
- * Define de maneira dinâmica para qual painel o usuário retornará ao clicar em Voltar
- */
 function configurarBotaoVoltar(tipo) {
     const btnVoltar = document.getElementById("btnVoltar");
     if (btnVoltar) {
@@ -93,7 +87,7 @@ function configurarBotaoVoltar(tipo) {
 }
 
 /**
- * Controla a alternância de texto do botão ("Ver" / "Ocultar") e do valor do input
+ * Controla os botões "Ver" e "Ocultar"
  */
 function configurarBotoesRevelar(dadosReais) {
     const botoes = document.querySelectorAll(".btn-revelar");
@@ -105,17 +99,33 @@ function configurarBotoesRevelar(dadosReais) {
 
             if (!input) return;
 
-            // Tratamento toUpperCase para evitar qualquer falha caso mude a caixa alta do HTML
-            if (botao.innerText.trim().toUpperCase() === "VER") {
-                input.value = dadosReais[alvoId]; // Revela o dado real
-                botao.innerText = "Ocultar"; // Altera o texto
-                botao.style.color = "#ffffff";
-                botao.style.backgroundColor = "var(--primary)"; // Destaca o botão ativo em vermelho
-                botao.style.borderColor = "var(--primary-hover)";
+            const textoBotao = botao.innerText.trim().toUpperCase();
+
+            if (textoBotao === "VER") {
+                // Se for a senha, abre o modal de segurança antes de revelar
+                if (alvoId === "senhaAtualPerfil") {
+                    abrirModalSenha();
+                } else {
+                    // Para e-mail ou CPF, revela direto (ou ajuste se quiser senha em todos)
+                    input.value = dadosReais[alvoId];
+                    botao.innerText = "Ocultar";
+                    botao.style.color = "#ffffff";
+                    botao.style.backgroundColor = "var(--primary)";
+                    botao.style.borderColor = "var(--primary-hover)";
+                }
             } else {
-                input.value = alvoId === "email" ? gerarMascaraEmail(dadosReais.email) : "***.***.***-**";
-                botao.innerText = "Ver"; // Retorna o texto original
-                botao.style.color = ""; // Reseta o estilo para o padrão CSS
+                // OCULTAR IMEDIATAMENTE (Sem pedir senha)
+                if (alvoId === "email") {
+                    input.value = gerarMascaraEmail(dadosReais.email);
+                } else if (alvoId === "cpf") {
+                    input.value = "***.***.***-**";
+                } else if (alvoId === "senhaAtualPerfil") {
+                    input.value = "********";
+                    input.type = "password"; // Garante que volta a mascarar os caracteres
+                }
+
+                botao.innerText = "Ver";
+                botao.style.color = "";
                 botao.style.backgroundColor = "";
                 botao.style.borderColor = "";
             }
@@ -123,19 +133,109 @@ function configurarBotoesRevelar(dadosReais) {
     });
 }
 
-/**
- * Cria uma máscara amigável para emails (exemplo: adm***@motorflex.com)
- */
+function abrirModalSenha() {
+    const modal = document.getElementById("modalSenha");
+    if (modal) {
+        modal.style.display = "flex";
+        modal.classList.add("mostrar-modal");
+        const inputModal = document.getElementById("senhaDigitadaModal");
+        if (inputModal) {
+            inputModal.value = "";
+            inputModal.focus();
+        }
+    }
+}
+
+function fecharModalSenha() {
+    const modal = document.getElementById("modalSenha");
+    if (modal) {
+        modal.classList.remove("mostrar-modal");
+        modal.style.display = "none";
+    }
+}
+
+function toggleSenhaModal() {
+    const input = document.getElementById("senhaDigitadaModal");
+    const botao = event.target;
+    if (!input || !botao) return;
+
+    if (input.type === "password") {
+        input.type = "text";
+        botao.textContent = "Ocultar";
+    } else {
+        input.type = "password";
+        botao.textContent = "Ver";
+    }
+}
+
+async function confirmarSenhaModal() {
+    const senhaInput = document.getElementById("senhaDigitadaModal");
+    const senhaDigitada = senhaInput ? senhaInput.value : "";
+
+    if (!senhaDigitada) {
+        alert("Por favor, digite sua senha atual.");
+        return;
+    }
+
+    try {
+        const usuarioLocal = JSON.parse(localStorage.getItem("usuario"));
+        if (!usuarioLocal || !usuarioLocal.id) {
+            alert("Sessão expirada. Faça login novamente.");
+            window.location.href = "/pages/login.html";
+            return;
+        }
+
+        const response = await fetch("/api/usuarios/verificar-senha", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: usuarioLocal.id,
+                senha: senhaDigitada
+            })
+        });
+
+        const resultado = await response.json();
+
+        if (resultado.sucesso) {
+            fecharModalSenha();
+            
+            // Revela a senha no input de perfil e muda o botão correspondente para "Ocultar"
+            const inputSenhaPerfil = document.getElementById("senhaAtualPerfil");
+            const botaoRevelarSenha = document.querySelector('[data-alvo="senhaAtualPerfil"]');
+
+            if (inputSenhaPerfil) {
+                inputSenhaPerfil.value = resultado.senhaReal || senhaDigitada;
+                inputSenhaPerfil.type = "text";
+            }
+
+            if (botaoRevelarSenha) {
+                botaoRevelarSenha.innerText = "Ocultar";
+                botaoRevelarSenha.style.color = "#ffffff";
+                botaoRevelarSenha.style.backgroundColor = "var(--primary)";
+                botaoRevelarSenha.style.borderColor = "var(--primary-hover)";
+            }
+        } else {
+            alert(resultado.erro || "Senha incorreta.");
+            if (senhaInput) {
+                senhaInput.value = "";
+                senhaInput.focus();
+            }
+        }
+
+    } catch (error) {
+        console.error("Erro ao validar senha:", error);
+        alert("Erro de conexão ao tentar validar a senha.");
+    }
+}
+
 function gerarMascaraEmail(email) {
     if (!email.includes("@")) return "******";
     const [usuario, dominio] = email.split("@");
     if (usuario.length <= 3) return `${usuario}***@${dominio}`;
     return `${usuario.substring(0, 3)}***@${dominio}`;
 }
-
-// ==========================================
-// MÁSCARAS DE PROCESSAMENTO VISUAL (MYSQL)
-// ==========================================
 
 function formatarCPF(cpf) {
     if (!cpf) return "";

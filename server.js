@@ -3,6 +3,7 @@ const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const fs = require("fs");
 require("dotenv").config();
 
 const app = express();
@@ -33,6 +34,14 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24
     }
 }));
+
+// ==========================================
+// GARANTIR QUE A PASTA DE UPLOADS EXISTE
+// ==========================================
+const uploadDir = path.join(__dirname, "public", "uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // ==========================================
 // SERVIÇOS EM SEGUNDO PLANO (CRON JOBS / LGPD)
