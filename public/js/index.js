@@ -1,59 +1,32 @@
-// =========================================================================
-// MOTORFLEX - SISTEMA UNIFICADO DE INTERFACE, ROTAS E BANCO DE DADOS
-// =========================================================================
-
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. GERENCIAMENTO DE NAVEGAÇÃO SPA (INÍCIO, SOBRE NÓS E CONTATO)
     const linksSpa = document.querySelectorAll(".nav-link[data-target]");
     const secoes = document.querySelectorAll(".page-section");
-
-    function alternarSecao(targetId) {
-        secoes.forEach(sec => {
-            sec.classList.remove("active");
-        });
-
-        const secaoAtiva = document.getElementById(`sec-${targetId}`);
-        if (secaoAtiva) {
-            secaoAtiva.classList.add("active");
-        }
-
-        linksSpa.forEach(link => {
-            if (link.getAttribute("data-target") === targetId) {
-                link.classList.add("active");
-            } else {
-                link.classList.remove("active");
-            }
-        });
+    
+    // Elemento de anunciar carro (forçado a sumir abaixo)
+    const itemAnunciar = document.getElementById("itemAnunciar"); // Certifique-se que o ID no HTML é esse ou ajuste aqui
+    if (itemAnunciar) {
+        itemAnunciar.style.display = "none";
     }
-
+    
+    function alternarSecao(targetId) {
+        secoes.forEach(sec => sec.classList.remove("active"));
+        document.getElementById(`sec-${targetId}`)?.classList.add("active");
+        linksSpa.forEach(link => link.classList.toggle("active", link.dataset.target === targetId));
+    }
+    
     linksSpa.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            const target = link.getAttribute("data-target");
-            alternarSecao(target);
-            window.location.hash = target;
+            alternarSecao(link.dataset.target);
+            window.location.hash = link.dataset.target;
         });
     });
+    
+    const hash = window.location.hash.replace("#", "") || "home";
+    alternarSecao(document.getElementById(`sec-${hash}`) ? hash : "home");
 
-    // Detectar Hash na URL ao carregar (ex: index.html#sobre ou index.html#contato)
-    const hashAtual = window.location.hash.replace("#", "") || "home";
-    if (document.getElementById(`sec-${hashAtual}`)) {
-        alternarSecao(hashAtual);
-    } else {
-        alternarSecao("home");
-    }
-
-    // 2. GERENCIAMENTO DE SESSÃO E PERFIL DO USUÁRIO
     const usuario = JSON.parse(localStorage.getItem("usuario"));
-
-    const acoesDeslogado = document.getElementById("acoesDeslogado");
-    const dropdownUsuario = document.getElementById("dropdownUsuario");
-    const nomeUsuario = document.getElementById("nomeUsuario");
-    const avatarLetra = document.getElementById("avatarLetra");
-    const irPainel = document.getElementById("irPainel");
-    const itemAnunciar = document.getElementById("itemAnunciar");
-
     if (usuario) {
         if (acoesDeslogado) acoesDeslogado.style.display = "none";
         if (dropdownUsuario) dropdownUsuario.style.display = "block";
@@ -63,13 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
             rotaPainel = "/pages/painel-empresa.html";
         } else if (usuario.tipo === "admin" || usuario.cargo === "admin") {
             rotaPainel = "/pages/painel-admin.html";
-        }
-
-        // Oculta a opção de anunciar se o usuário for Admin
-        if (usuario.tipo === "admin" || usuario.cargo === "admin") {
-            if (itemAnunciar) itemAnunciar.style.display = "none";
-        } else {
-            if (itemAnunciar) itemAnunciar.style.display = "block";
         }
 
         if (irPainel) {
@@ -124,90 +90,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnBuscarRapido = document.getElementById("btnBuscarRapido");
     const inputBuscaRapida = document.getElementById("inputBuscaRapida");
 
-    function executarBusca() {
+    function buscar() {
         const termo = inputBuscaRapida.value.trim();
-        if (termo) {
-            window.location.href = `/pages/catalogo.html?busca=${encodeURIComponent(termo)}`;
-        } else {
-            window.location.href = "/pages/catalogo.html";
+        location.href = termo ? `/pages/catalogo.html?busca=${encodeURIComponent(termo)}` : "/pages/catalogo.html";
+    }
+    btnBuscarRapido?.addEventListener("click", buscar);
+    inputBuscaRapida?.addEventListener("keypress", (e) => e.key === "Enter" && buscar());
+
+    btnMobile?.addEventListener("click", () => menuNavegacao.classList.toggle("ativo"));
+    window.addEventListener("scroll", () => {
+        header.style.background = scrollY > 50 ? "rgba(4,4,5,0.95)" : "rgba(8,8,10,0.85)";
+        header.style.boxShadow = scrollY > 50 ? "0 10px 30px rgba(0,0,0,0.7)" : "none";
+    });
+
+    // CARROS SEM BMW
+    const carros = [
+        { nome: "Porsche 911 Turbo", marca: "Porsche", ano: "2024", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=500" },
+        { nome: "Chevrolet Corvette", marca: "Chevrolet", ano: "2024", img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500" },
+        { nome: "Ford Mustang GT", marca: "Ford", ano: "2024", img: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=500" },
+        { nome: "Mercedes AMG GT", marca: "Mercedes", ano: "2024", img: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=500" },
+        { nome: "Audi R8 V10", marca: "Audi", ano: "2024", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500" }
+    ];
+
+    const track = document.getElementById("carsTrack");
+    if (track) track.innerHTML = [...carros, ...carros].map(c => `
+        <a href="/pages/catalogo.html" class="car-card">
+            <div class="car-imagem"><img src="${c.img}" alt="${c.nome}"></div>
+            <div class="car-info">
+                <h3 class="car-nome">${c.nome}</h3>
+                <p class="car-detalhes">Marca: ${c.marca} • Ano: ${c.ano}</p>
+            </div>
+        </a>
+    `).join("");
+
+    btnVerCatalogo?.addEventListener("click", (e) => {
+        const r = e.target.getBoundingClientRect();
+        for (let i = 0; i < 16; i++) {
+            const p = document.createElement("div");
+            p.className = "smoke-particle";
+            const a = Math.random() * Math.PI * 2, d = Math.random() * 140 + 50;
+            p.style.cssText = `left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;width:${Math.random()*70+40}px;height:${Math.random()*70+40}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d-Math.random()*60}px;--scale:${(Math.random()*1.6+1.8).toFixed(2)}`;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 1200);
         }
-    }
-
-    if (btnBuscarRapido && inputBuscaRapida) {
-        btnBuscarRapido.addEventListener("click", executarBusca);
-        inputBuscaRapida.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                executarBusca();
-            }
-        });
-    }
-
-    // 5. MENU RESPONSIVO MOBILE E EFEITOS DE SCROLL
-    const btnMobile = document.getElementById("btnMobile");
-    const menuNavegacao = document.getElementById("menuNavegacao");
-
-    if (btnMobile && menuNavegacao) {
-        btnMobile.addEventListener("click", () => {
-            menuNavegacao.classList.toggle("ativo");
-        });
-    }
-
-    const header = document.querySelector(".header");
-    if (header) {
-        window.addEventListener("scroll", () => {
-            if (window.scrollY > 50) {
-                header.style.background = "rgba(4, 4, 5, 0.95)";
-                header.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.7)";
-            } else {
-                header.style.background = "rgba(8, 8, 10, 0.85)";
-                header.style.boxShadow = "none";
-            }
-        });
-    }
-
-    // 6. EFEITO DE FUMAÇA AO CLICAR NO BOTÃO "VER CATÁLOGO"
-    const btnCatalogo = document.getElementById("btnVerCatalogo");
-
-    if (btnCatalogo) {
-        btnCatalogo.addEventListener("click", (e) => {
-            const rect = btnCatalogo.getBoundingClientRect();
-            const totalParticles = 16;
-
-            for (let i = 0; i < totalParticles; i++) {
-                createSmokeParticle(rect);
-            }
-        });
-    }
+    });
 });
-
-function createSmokeParticle(rect) {
-    const particle = document.createElement("div");
-    particle.classList.add("smoke-particle");
-
-    const posX = rect.left + rect.width / 2;
-    const posY = rect.top + rect.height / 2;
-
-    const size = Math.random() * 70 + 40;
-
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * 140 + 50; 
-    
-    const dx = (Math.cos(angle) * distance) + "px";
-    const dy = (Math.sin(angle) * distance - Math.random() * 60) + "px"; 
-    const scale = (Math.random() * 1.6 + 1.8).toFixed(2);
-
-    particle.style.left = `${posX}px`;
-    particle.style.top = `${posY}px`;
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    
-    particle.style.setProperty("--dx", dx);
-    particle.style.setProperty("--dy", dy);
-    particle.style.setProperty("--scale", scale);
-
-    document.body.appendChild(particle);
-
-    setTimeout(() => {
-        particle.remove();
-    }, 1200);
-}
