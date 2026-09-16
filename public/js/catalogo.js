@@ -1,14 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
 
     // ==========================================
     // 0. USUÁRIO E VERIFICAÇÃO DE LOGIN
     // ==========================================
     const usuario = JSON.parse(localStorage.getItem("usuario")) || { id: 1, tipo: "cliente" };
-
-    // Verificação opcional de login (descomente se quiser forçar o redirecionamento)
-    // if (!localStorage.getItem("usuario")) {
-    //     window.location.href = "/pages/login.html";
-    // }
 
     // Configuração do Botão "Meu Painel"
     const btnPainel = document.getElementById("btnPainel");
@@ -23,42 +18,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 1. GERENCIAMENTO DE NAVEGAÇÃO ENTRE ABAS
+    // 1. GERENCIAMENTO DE NAVEGAÇÃO ENTRE ABAS (COM SUPORTE A ?tab=...)
     // ==========================================
     const navLinks = document.querySelectorAll(".nav-link");
     const pageTabs = document.querySelectorAll(".page-tab");
 
+    function ativarAbaPorId(tabId) {
+        navLinks.forEach(l => {
+            if (l.getAttribute("data-tab") === tabId) {
+                l.classList.add("active");
+            } else {
+                l.classList.remove("active");
+            }
+        });
+
+        pageTabs.forEach(pt => {
+            if (pt.id === tabId) {
+                pt.classList.add("active");
+            } else {
+                pt.classList.remove("active");
+            }
+        });
+    }
+
     navLinks.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            navLinks.forEach(l => l.classList.remove("active"));
-            pageTabs.forEach(pt => pt.classList.remove("active"));
-
-            link.classList.add("active");
             const targetTab = link.getAttribute("data-tab");
-            const targetElement = document.getElementById(targetTab);
-            if (targetElement) {
-                targetElement.classList.add("active");
-            }
+            ativarAbaPorId(targetTab);
         });
     });
 
-    function irParaCatalogo() {
-        navLinks.forEach(nav => {
-            if (nav.getAttribute('data-tab') === 'tab-catalogo') {
-                nav.classList.add('active');
-            } else {
-                nav.classList.remove('active');
-            }
-        });
+    // Verifica se a página foi aberta com parâmetro na URL (Ex: ?tab=cadastrar)
+    const urlParams = new URLSearchParams(window.location.search);
+    const abaDaUrl = urlParams.get("tab");
+    if (abaDaUrl) {
+        ativarAbaPorId(`tab-${abaDaUrl}`);
+    }
 
-        pageTabs.forEach(tab => {
-            if (tab.id === 'tab-catalogo') {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
-        });
+    function irParaCatalogo() {
+        ativarAbaPorId('tab-catalogo');
     }
 
     // ==========================================
@@ -68,11 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function carregarVeiculosDoBanco() {
         try {
+            // Utiliza rota relativa ou absoluta segura para a API
             const resposta = await fetch('/api/veiculos');
             const dados = await resposta.json();
             
             if (dados.sucesso && Array.isArray(dados.veiculos)) {
-                // Mapeia os dados vindos do MySQL para o padrão do Catálogo
                 bancoDeDadosVeiculos = dados.veiculos.map(v => ({
                     id: v.id,
                     nome: `${v.marca_nome || v.marca || ''} ${v.modelo_nome || v.modelo || ''} ${v.versao || ''}`.trim(),
@@ -85,7 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     quilometragem: `${v.quilometragem || 0} Km`,
                     preco: Number(v.preco) || 0,
                     destaquePrincipal: false,
-                    imagem: v.imagem ? `/uploads/${v.imagem}` : "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800"
+                    imagem: v.imagem ? `/uploads/${v.imagem}` : "/imagens/sem-foto.jpg",
+                    marca_nome: v.marca_nome || v.marca || '',
+                    modelo_nome: v.modelo_nome || v.modelo || '',
+                    versao: v.versao || '',
+                    ano_fabricacao: v.ano_fabricacao || 2020
                 }));
             }
         } catch (erro) {
@@ -94,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         popularSelects();
         renderizarDestaque();
-        renderizarCards(bancoDeDadosVeiculos);
+        renderizarCardsCatalogo(bancoDeDadosVeiculos);
         renderizarTopDeals();
     }
 
@@ -103,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Elementos DOM do Catálogo e Filtros
     const featuredCarContainer = document.getElementById("featuredCar");
-    const carsGrid = document.getElementById("carsGrid");
+    const carsGrid = document.getElementById("carsGrid") || document.querySelector('.catalog-section');
     const topDealsContainer = document.getElementById("topDeals");
     const inputPesquisa = document.getElementById("filtroBusca") || document.getElementById("inputPesquisa");
     const selectMarca = document.getElementById("selectMarca");
@@ -143,61 +146,56 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    function renderizarCards(lista) {
+    function renderizarCardsCatalogo(lista) {
         if (!carsGrid) return;
 
-        carsGrid.innerHTML = "";
-        const itensExibicao = lista.filter(v => !v.destaquePrincipal);
+        // Procura ou cria o container de grid estilizado com fundo preto e detalhes vermelhos
+        let containerGrid = carsGrid.querySelector('.grid-veiculos');
+        if (!containerGrid) {
+            containerGrid = document.createElement('div');
+            containerGrid.className = 'grid-veiculos';
+            containerGrid.style.display = 'grid';
+            containerGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
+            containerGrid.style.gap = '20px';
+            containerGrid.style.marginTop = '15px';
+            carsGrid.appendChild(containerGrid);
+        } else {
+            containerGrid.innerHTML = '';
+        }
 
-        if (itensExibicao.length === 0) {
-            carsGrid.innerHTML = `<p style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-muted);">Nenhum veículo encontrado no banco de dados.</p>`;
+        if (lista.length === 0) {
+            containerGrid.innerHTML = `<p style="grid-column: 1/-1; padding: 40px; text-align: center; color: #aaa;">Nenhum veículo encontrado.</p>`;
             return;
         }
 
-        itensExibicao.forEach(carro => {
-            const isFav = favoritos.has(carro.id);
-            const card = document.createElement("article");
-            card.className = "car-card";
+        lista.forEach(veiculo => {
+            const card = document.createElement('div');
+            card.className = 'card-item-catalogo';
+            card.style.cssText = 'border: 1px solid #222; border-radius: 8px; overflow: hidden; background: #000; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.5);';
+
             card.innerHTML = `
-                <div class="card-thumb">
-                    <div class="car-badge">${carro.condicao}</div>
-                    <button class="btn-fav ${isFav ? 'active' : ''}" data-id="${carro.id}" title="Favoritar">
-                        ${isFav ? '♥' : '♡'}
-                    </button>
-                    <img src="${carro.imagem}" alt="${carro.nome}" loading="lazy">
+                <div class="card-img-wrapper" style="width: 100%; height: 180px; overflow: hidden; background-color: #000;">
+                    <img src="${veiculo.imagem}" alt="${veiculo.modelo_nome}" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
-                <div class="car-card-body">
-                    <div>
-                        <div class="car-card-title">${carro.nome}</div>
-                        <div class="car-card-details">${carro.ano} • ${carro.quilometragem}</div>
-                        <div class="car-specs">
-                            <span class="spec-tag">${carro.transmissao}</span>
-                            <span class="spec-tag">${carro.combustivel}</span>
-                            <span class="spec-tag">${carro.categoria}</span>
-                        </div>
+                <div class="card-corpo" style="background-color: #000000; padding: 15px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                    <h3 style="color: #ff0000; font-size: 16px; margin-bottom: 10px; font-weight: bold;">${veiculo.marca_nome} ${veiculo.modelo_nome}</h3>
+                    
+                    <div style="margin-bottom: 8px;">
+                        <p style="color: #aaa; font-size: 13px; margin-bottom: 4px;">${veiculo.versao || ''}</p>
+                        <p style="color: #888; font-size: 12px; margin-bottom: 4px;">Ano: ${veiculo.ano_fabricacao}/${veiculo.ano} | ${veiculo.quilometragem}</p>
                     </div>
-                    <div>
-                        <div class="car-card-price">${formatarMoeda(carro.preco)}</div>
-                        <a href="#" class="btn-view">Ver Detalhes</a>
+
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid #1a1a1a;">
+                        <div>
+                            <span style="font-size: 11px; color: #ff4d4d; display: block; margin-bottom: 2px;">Valor Total</span>
+                            <span class="card-preco" style="font-size: 18px; font-weight: 800; color: #ff0000;">${formatarMoeda(veiculo.preco)}</span>
+                        </div>
+                        <a href="/pages/detalhes.html?id=${veiculo.id}" class="btn-detalhes" style="background-color: #ff0000; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none;">Ver</a>
                     </div>
                 </div>
             `;
-            carsGrid.appendChild(card);
-        });
-    }
 
-    if (carsGrid) {
-        carsGrid.addEventListener('click', (e) => {
-            const btnFav = e.target.closest('.btn-fav');
-            if (btnFav) {
-                const id = Number(btnFav.dataset.id);
-                if (favoritos.has(id)) {
-                    favoritos.delete(id);
-                } else {
-                    favoritos.add(id);
-                }
-                executarBusca();
-            }
+            containerGrid.appendChild(card);
         });
     }
 
@@ -235,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return bateTexto && bateMarca && bateCategoriaSelect && bateTransmissao && bateAbaCat;
         });
 
-        renderizarCards(filtrados);
+        renderizarCardsCatalogo(filtrados);
     }
 
     catTabBtns.forEach(btn => {
@@ -334,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             limparErros();
 
-            // Captura de elementos do formulário (com suporte a múltiplos IDs possíveis)
             const marcaEl = document.getElementById("marca");
             const modeloEl = document.getElementById("modelo");
             const versaoEl = document.getElementById("versao");
@@ -349,7 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const carroceriaEl = document.getElementById("carroceria");
             const descricaoEl = document.getElementById("descricao");
 
-            // Validações básicas (exigidas pelo seu fluxo antigo)
             let valido = true;
 
             if (marcaEl && marcaEl.value.trim() === "") {
@@ -380,11 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!valido) return;
 
             const formData = new FormData();
-
-            // Vincula o ID do usuário logado de forma dinâmica com fallback seguro
             formData.append("usuario_id", usuario.id || 1); 
 
-            // Preenchimento do FormData alinhado com o back-end
             formData.append("marca", marcaEl ? marcaEl.value.trim() : "");
             formData.append("modelo", modeloEl ? modeloEl.value.trim() : "");
             formData.append("versao", versaoEl ? versaoEl.value.trim() : "");
@@ -399,7 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("carroceria", carroceriaEl ? carroceriaEl.value.trim() : "Coupé");
             formData.append("descricao", descricaoEl ? descricaoEl.value.trim() : "");
 
-            // Anexa a imagem selecionada
             if (inputImagem && inputImagem.files && inputImagem.files[0]) {
                 formData.append("imagem", inputImagem.files[0]);
             }
@@ -432,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     await carregarVeiculosDoBanco();
                     irParaCatalogo();
 
-                    // Redirecionamento dinâmico conforme o tipo de usuário
                     if (usuario.tipo === "empresa") {
                         window.location.href = "/pages/painel-empresa.html";
                     } else if (usuario.tipo === "cliente") {
@@ -470,81 +461,3 @@ function fecharModalFoto() {
         modal.classList.remove('ativo');
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    carregarVeiculosCatalogo();
-});
-
-async function carregarVeiculosCatalogo() {
-    try {
-        const resposta = await fetch('http://localhost:4000/api/veiculos');
-        const resultado = await resposta.json();
-
-        if (resultado.sucesso && resultado.veiculos) {
-            // Seleciona a seção de veículos disponíveis no seu HTML
-            const sectionVeiculos = document.querySelector('.catalog-section');
-            
-            // Cria um container para os cards se já não existir
-            let containerGrid = sectionVeiculos.querySelector('.grid-veiculos');
-            if (!containerGrid) {
-                containerGrid = document.createElement('div');
-                containerGrid.className = 'grid-veiculos';
-                containerGrid.style.display = 'grid';
-                containerGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-                containerGrid.style.gap = '20px';
-                containerGrid.style.marginTop = '15px';
-                sectionVeiculos.appendChild(containerGrid);
-            } else {
-                containerGrid.innerHTML = '';
-            }
-
-            resultado.veiculos.forEach(veiculo => {
-                const imagemSrc = veiculo.imagem ? `/uploads/${veiculo.imagem}` : '/imagens/sem-foto.jpg';
-                
-                const card = document.createElement('div');
-                card.className = 'card-item-catalogo';
-                card.style.cssText = 'border: 1px solid #e1e1e1; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);';
-
-                card.innerHTML = `
-                    <img src="${imagemSrc}" alt="${veiculo.modelo_nome}" style="width: 100%; height: 160px; object-fit: cover;">
-                    <div style="padding: 15px;">
-                        <h3 style="font-size: 16px; margin-bottom: 8px;">${veiculo.marca_nome} ${veiculo.modelo_nome}</h3>
-                        <p style="color: #666; font-size: 14px; margin-bottom: 6px;">${veiculo.versao || ''}</p>
-                        <p style="color: #666; font-size: 13px; margin-bottom: 8px;">Ano: ${veiculo.ano_fabricacao}/${veiculo.ano_modelo} | ${veiculo.quilometragem || 0} km</p>
-                        <p style="font-size: 18px; font-weight: bold; color: #2b7a78;">R$ ${Number(veiculo.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    </div>
-                `;
-
-                containerGrid.appendChild(card);
-            });
-        }
-    } catch (erro) {
-        console.error("Erro ao carregar o catálogo de veículos:", erro);
-    }
-}
-
-resultado.veiculos.forEach(veiculo => {
-    const imagemSrc = veiculo.imagem ? `/uploads/${veiculo.imagem}` : '/imagens/sem-foto.jpg';
-    
-    const card = document.createElement('div');
-    card.className = 'card-item-catalogo';
-
-    card.innerHTML = `
-        <div class="card-img-wrapper" style="width: 100%; height: 180px; overflow: hidden; background-color: #000;">
-            <img src="${imagemSrc}" alt="${veiculo.modelo_nome}" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        <div class="card-corpo" style="background-color: #000000; padding: 15px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
-            <h3 style="color: #ff0000; font-size: 16px; margin-bottom: 10px; font-weight: bold;">${veiculo.marca_nome} ${veiculo.modelo_nome}</h3>
-            
-            <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 10px;">
-                <div>
-                    <span style="font-size: 11px; color: #ff4d4d; display: block; margin-bottom: 2px;">Valor Total</span>
-                    <span class="card-preco" style="font-size: 18px; font-weight: 800; color: #ff0000;">R$ ${Number(veiculo.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <a href="/pages/detalhes.html?id=${veiculo.id}" class="btn-detalhes" style="background-color: #ff0000; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none;">Ver</a>
-            </div>
-        </div>
-    `;
-
-    containerGrid.appendChild(card);
-});
