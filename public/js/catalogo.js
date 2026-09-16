@@ -67,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function carregarVeiculosDoBanco() {
         try {
-            // Utiliza rota relativa ou absoluta segura para a API
             const resposta = await fetch('/api/veiculos');
             const dados = await resposta.json();
             
@@ -101,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderizarTopDeals();
     }
 
-    const favoritos = new Set();
     let categoriaAbaAtiva = "todos";
 
     // Elementos DOM do Catálogo e Filtros
@@ -149,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderizarCardsCatalogo(lista) {
         if (!carsGrid) return;
 
-        // Procura ou cria o container de grid estilizado com fundo preto e detalhes vermelhos
         let containerGrid = carsGrid.querySelector('.grid-veiculos');
         if (!containerGrid) {
             containerGrid = document.createElement('div');
@@ -168,14 +165,24 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        lista.forEach(veiculo => {
+        // Recupera favoritos salvos no navegador
+        const favoritosIds = JSON.parse(localStorage.getItem("favoritos_veiculos")) || [];
+
+        lista.ico = lista.forEach(veiculo => {
+            const isFavorito = favoritosIds.includes(veiculo.id);
+
             const card = document.createElement('div');
             card.className = 'card-item-catalogo';
-            card.style.cssText = 'border: 1px solid #222; border-radius: 8px; overflow: hidden; background: #000; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.5);';
+            card.style.cssText = 'border: 1px solid #222; border-radius: 8px; overflow: hidden; background: #000; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative;';
 
             card.innerHTML = `
-                <div class="card-img-wrapper" style="width: 100%; height: 180px; overflow: hidden; background-color: #000;">
+                <div class="card-img-wrapper" style="width: 100%; height: 180px; overflow: hidden; background-color: #000; position: relative;">
                     <img src="${veiculo.imagem}" alt="${veiculo.modelo_nome}" style="width: 100%; height: 100%; object-fit: cover;">
+                    
+                    <!-- Botão de Favoritar no canto superior direito da imagem -->
+                    <button type="button" class="btn-favoritar" data-id="${veiculo.id}" title="Favoritar veículo" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
+                        <span style="font-size: 18px; color: ${isFavorito ? '#ff0000' : '#ffffff'};">${isFavorito ? '❤️' : '🤍'}</span>
+                    </button>
                 </div>
                 <div class="card-corpo" style="background-color: #000000; padding: 15px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
                     <h3 style="color: #ff0000; font-size: 16px; margin-bottom: 10px; font-weight: bold;">${veiculo.marca_nome} ${veiculo.modelo_nome}</h3>
@@ -194,6 +201,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `;
+
+            // Ação de clique no botão de favoritar
+            const btnFav = card.querySelector('.btn-favoritar');
+            btnFav.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let favsAtuais = JSON.parse(localStorage.getItem("favoritos_veiculos")) || [];
+                const vId = veiculo.id;
+
+                if (favsAtuais.includes(vId)) {
+                    // Remove dos favoritos
+                    favsAtuais = favsAtuais.filter(id => id !== vId);
+                    btnFav.querySelector('span').textContent = '🤍';
+                    btnFav.querySelector('span').style.color = '#ffffff';
+                } else {
+                    // Adiciona aos favoritos
+                    favsAtuais.push(vId);
+                    btnFav.querySelector('span').textContent = '❤️';
+                    btnFav.querySelector('span').style.color = '#ff0000';
+                }
+
+                localStorage.setItem("favoritos_veiculos", JSON.stringify(favsAtuais));
+            });
 
             containerGrid.appendChild(card);
         });
@@ -450,7 +481,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnLimpar) btnLimpar.addEventListener("click", limparFiltros);
     if (inputPesquisa) inputPesquisa.addEventListener("keyup", executarBusca);
 
-    // Carrega os veículos do MySQL assim que a página é aberta
     carregarVeiculosDoBanco();
 });
 
