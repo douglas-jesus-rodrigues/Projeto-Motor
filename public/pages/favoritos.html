@@ -1,11 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Meus Favoritos | MotorFlex</title>
+    
+    <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Apenas o seu CSS dedicado de favoritos -->
+    <link rel="stylesheet" href="/css/favoritos.css">
 </head>
 <body>
-    <h1>Meu favoritos</h1>
+
+    <!-- Cabeçalho Institucional -->
+    <header class="header">
+        <div class="logo">
+            <h1>Motor<span>Flex</span></h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="/pages/painel-cliente.html">Voltar ao Painel</a>
+            <a href="/pages/catalogo.html">Catálogo</a>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="container">
+        <section class="boas-vindas">
+            <h2>Veículos Favoritos</h2>
+            <p>Aqui estão os carros que você salvou para acompanhar e conferir depois.</p>
+        </section>
+
+        <!-- Grid onde os carros favoritados serão injetados dinamicamente -->
+        <section class="catalog-section">
+            <div id="gridFavoritos" class="grid-veiculos">
+                <p id="mensagemVazio" class="mensagem-vazio">Carregando seus veículos favoritos...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Script separado -->
+    <script src="/js/favoritos.js"></script>
 </body>
 </html>
