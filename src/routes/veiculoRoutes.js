@@ -23,15 +23,15 @@ router.post("/", upload.single("imagem"), async (req, res) => {
     try {
         const {
             usuario_id,
-            marca,       // Texto enviado pelo front-end (ex: "Honda")
-            modelo,      // Texto enviado pelo front-end (ex: "Civic")
+            marca,       // Texto enviado pelo front-end
+            modelo,      // Texto enviado pelo front-end
             versao,
             ano_fabricacao,
             ano_modelo,
             preco,
             quilometragem,
-            combustivel, // Texto enviado pelo front-end (ex: "flex")
-            cambio,      // Texto enviado pelo front-end (ex: "manual")
+            combustivel, 
+            cambio,      
             cor,
             portas,
             carroceria,
@@ -41,7 +41,7 @@ router.post("/", upload.single("imagem"), async (req, res) => {
         if (!usuario_id || !marca || !modelo || !ano_fabricacao || !ano_modelo || !preco) {
             return res.status(400).json({
                 sucesso: false,
-                mensagem: "Preencha todos os campos obrigatórios."
+                mensagem: "Preencha todos os campos obrigatórios (usuario_id, marca, modelo, anos e preço)."
             });
         }
 
@@ -182,8 +182,6 @@ router.get("/", async (req, res) => {
     }
 });
 
-module.exports = router;
-
 // LISTAR APENAS OS VEÍCULOS DE UM USUÁRIO ESPECÍFICO
 router.get("/usuario/:usuarioId", async (req, res) => {
     const { usuarioId } = req.params;
@@ -221,3 +219,6 @@ router.get("/usuario/:usuarioId", async (req, res) => {
         });
     }
 });
+
+// EXPORTAÇÃO CORRETA (DEVE FICAR SEMPRE NO FINAL DO ARQUIVO)
+module.exports = router;
