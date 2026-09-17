@@ -22,6 +22,26 @@ window.aoVerificarCaptcha = function(token) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    // TRAVA DE SEGURANÇA: Só redireciona se realmente houver sessão ativa e válida
+    const usuarioLogado = localStorage.getItem("usuario");
+    if (usuarioLogado && usuarioLogado !== "undefined" && usuarioLogado !== "null") {
+        try {
+            const usuario = JSON.parse(usuarioLogado);
+            if (usuario && (usuario.tipo || usuario.cargo)) {
+                const rotas = {
+                    empresa: "../pages/painel-empresa.html",
+                    admin: "../pages/painel-admin.html",
+                    super_admin: "../pages/painel-admin.html"
+                };
+                const destino = rotas[usuario.tipo] || rotas[usuario.cargo] || "../pages/painel-cliente.html";
+                window.location.replace(destino);
+                return;
+            }
+        } catch (e) {
+            localStorage.removeItem("usuario");
+        }
+    }
+
     const formLogin = document.getElementById("formLogin");
     const emailInput = document.getElementById("email");
     const senhaInput = document.getElementById("senha");
@@ -59,10 +79,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Função que cria o modal refinado com suporte a fechamento por clique externo
+    // Função que cria o modal com animações suaves de fade-in e scale
     function mostrarModalCaptcha() {
         const modalAntigo = document.getElementById('modalAlertaSeguranca');
         if (modalAntigo) modalAntigo.remove();
+
+        // Reseta o ID para forçar uma nova renderização limpa no modal
+        recaptchaWidgetId = undefined;
 
         const overlay = document.createElement('div');
         overlay.id = 'modalAlertaSeguranca';
@@ -89,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.body.appendChild(overlay);
 
-        // Animação suave de entrada (Fade in & Zoom in)
+        // Animação de entrada suave (Fade in & Zoom in)
         requestAnimationFrame(() => {
             overlay.style.opacity = '1';
             const cardModal = overlay.querySelector('.modal-card-content');
@@ -113,7 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
             overlay.style.opacity = '0';
             const cardModal = overlay.querySelector('.modal-card-content');
             if (cardModal) cardModal.style.transform = 'scale(0.9)';
-            setTimeout(() => overlay.remove(), 250);
+            setTimeout(() => {
+                overlay.remove();
+                recaptchaWidgetId = undefined;
+            }, 250);
         };
 
         // Fecha ao clicar no botão cancelar
@@ -146,7 +172,10 @@ document.addEventListener("DOMContentLoaded", () => {
             temErro = true;
         }
 
-        if (temErro) return;
+        if (temErro) {
+            recaptchaWidgetId = undefined;
+            return;
+        }
 
         toggleLoading(true);
 
@@ -168,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.sucesso && data.usuario) {
                 localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
+                // Reduzido para 400ms para agilizar a transição e a animação do botão
                 setTimeout(() => {
                     const rotas = {
                         empresa: "../pages/painel-empresa.html",
@@ -179,8 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                     rotas[data.usuario.cargo] || 
                                     "../pages/painel-cliente.html";
 
-                    window.location.href = destino;
-                }, 1000);
+                    // Substitui o histórico para impedir voltar à tela de login via botão "Voltar"
+                    window.location.replace(destino);
+                }, 400);
             }
 
         } catch (erro) {
@@ -188,14 +219,8 @@ document.addEventListener("DOMContentLoaded", () => {
             mostrarToast(erro.message || "Erro ao conectar com o servidor.", "erro");
             toggleLoading(false);
             
-            // Reseta o reCAPTCHA para exigir nova verificação caso ocorra erro nas credenciais
-            if (typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== undefined) {
-                try {
-                    grecaptcha.reset(recaptchaWidgetId);
-                } catch (e) {
-                    // Ignora erros caso o widget já tenha sido desmontado
-                }
-            }
+            // Invalida o widget atual para permitir nova verificação limpa
+            recaptchaWidgetId = undefined;
         }
     };
 
@@ -210,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 : "";
             
             if (!respostaCaptcha) {
-                mostrarModalCaptcha(); // Abre o modal refinado na frente da tela
+                mostrarModalCaptcha(); // Abre o modal animado na frente da tela
                 return; 
             }
 
@@ -251,3 +276,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3500);
     }
 });
+

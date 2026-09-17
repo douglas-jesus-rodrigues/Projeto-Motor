@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
             alternarSecao(link.dataset.target);
-            window.location.hash = link.dataset.target;
+            history.replaceState(null, "", `#${link.dataset.target}`);
         });
     });
     
@@ -27,20 +27,24 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     
-    // MODIFICADO: Peguei os elementos da foto
+    // Elementos da interface
+    const acoesDeslogado = document.getElementById("acoesDeslogado");
+    const dropdownUsuario = document.getElementById("dropdownUsuario");
+    const irPainel = document.getElementById("irPainel");
+    const nomeUsuario = document.getElementById("nomeUsuario");
     const avatarLetra = document.getElementById("avatarLetra");
     const avatarImagem = document.getElementById("avatarImagem");
-    const CAMINHO_FOTO_PERFIL ="../uploads/1788186907271-886045211.png"
+    const CAMINHO_FOTO_PERFIL = "../uploads/1788186907271-886045211.png";
     
     if (usuario) {
         if (acoesDeslogado) acoesDeslogado.style.display = "none";
         if (dropdownUsuario) dropdownUsuario.style.display = "block";
         
-        let rotaPainel = "/pages/painel-cliente.html";
+        let rotaPainel = "painel-cliente.html";
         if (usuario.tipo === "empresa") {
-            rotaPainel = "/pages/painel-empresa.html";
+            rotaPainel = "painel-empresa.html";
         } else if (usuario.tipo === "admin" || usuario.cargo === "admin") {
-            rotaPainel = "/pages/painel-admin.html";
+            rotaPainel = "painel-admin.html";
         }
         if (irPainel) {
             irPainel.href = rotaPainel;
@@ -54,8 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (nomeUsuario) nomeUsuario.textContent = nomeExibicao;
         
-        // MODIFICADO: Mostra a foto e esconde a letra
-        if (avatarLetra) avatarLetra.style.textIndent = "-9999px"; // esconde a letra
+        if (avatarLetra) avatarLetra.style.textIndent = "-9999px";
         if (avatarImagem) {
             avatarImagem.src = CAMINHO_FOTO_PERFIL;
             avatarImagem.style.display = "block";
@@ -83,12 +86,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // CORRIGIDO: Remove o usuário e usa location.replace para limpar o histórico do navegador ao sair
     const btnSair = document.getElementById("btnSair");
     if (btnSair) {
         btnSair.addEventListener("click", (e) => {
             e.preventDefault();
             localStorage.removeItem("usuario");
-            window.location.reload();
+            window.location.replace("login.html");
         });
     }
     
@@ -96,15 +100,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputBuscaRapida = document.getElementById("inputBuscaRapida");
     function buscar() {
         const termo = inputBuscaRapida.value.trim();
-        location.href = termo ? `/pages/catalogo.html?busca=${encodeURIComponent(termo)}` : "/pages/catalogo.html";
+        const destino = termo ? `catalogo.html?busca=${encodeURIComponent(termo)}` : "catalogo.html";
+        window.location.replace(destino);
     }
     btnBuscarRapido?.addEventListener("click", buscar);
     inputBuscaRapida?.addEventListener("keypress", (e) => e.key === "Enter" && buscar());
     
+    const btnMobile = document.getElementById("btnMobile");
+    const menuNavegacao = document.getElementById("menuNavegacao");
+    const header = document.querySelector("header");
+
     btnMobile?.addEventListener("click", () => menuNavegacao.classList.toggle("ativo"));
     window.addEventListener("scroll", () => {
-        header.style.background = scrollY > 50 ? "rgba(4,4,5,0.95)" : "rgba(8,8,10,0.85)";
-        header.style.boxShadow = scrollY > 50 ? "0 10px 30px rgba(0,0,0,0.7)" : "none";
+        if (header) {
+            header.style.background = scrollY > 50 ? "rgba(4,4,5,0.95)" : "rgba(8,8,10,0.85)";
+            header.style.boxShadow = scrollY > 50 ? "0 10px 30px rgba(0,0,0,0.7)" : "none";
+        }
     });
     
     const carros = [
@@ -114,17 +125,21 @@ document.addEventListener("DOMContentLoaded", () => {
         { nome: "Mercedes AMG GT", marca: "Mercedes", ano: "2024", img: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=500" },
         { nome: "Audi R8 V10", marca: "Audi", ano: "2024", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500" }
     ];
-    const track = document.getElementById("carsTrack");
-    if (track) track.innerHTML = [...carros, ...carros].map(c => `
-        <a href="/pages/catalogo.html" class="car-card">
-            <div class="car-imagem"><img src="${c.img}" alt="${c.nome}"></div>
-            <div class="car-info">
-                <h3 class="car-nome">${c.nome}</h3>
-                <p class="car-detalhes">Marca: ${c.marca} • Ano: ${c.ano}</p>
-            </div>
-        </a>
-    `).join("");
     
+    const track = document.getElementById("carsTrack");
+    if (track) {
+        track.innerHTML = [...carros, ...carros].map(c => `
+            <a href="catalogo.html" class="car-card">
+                <div class="car-imagem"><img src="${c.img}" alt="${c.nome}"></div>
+                <div class="car-info">
+                    <h3 class="car-nome">${c.nome}</h3>
+                    <p class="car-detalhes">Marca: ${c.marca} • Ano: ${c.ano}</p>
+                </div>
+            </a>
+        `).join("");
+    }
+    
+    const btnVerCatalogo = document.getElementById("btnVerCatalogo");
     btnVerCatalogo?.addEventListener("click", (e) => {
         const r = e.target.getBoundingClientRect();
         for (let i = 0; i < 16; i++) {
