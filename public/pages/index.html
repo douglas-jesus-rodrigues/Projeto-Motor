@@ -8,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -34,7 +34,6 @@
                 </div>
                 <div class="nav-item-dropdown" id="dropdownUsuario" style="display: none;">
                     <button class="btn-config" id="btnConfig" aria-expanded="false">
-                        <!-- MODIFICADO: Adicionei a tag de imagem aqui -->
                         <div class="avatar-usuario" id="avatarLetra">
                             U
                             <img src="" alt="Foto de Perfil" id="avatarImagem">
@@ -74,15 +73,69 @@
                 </div>
             </div>
         </section>
+
+        <!-- SEÇÃO SOBRE NÍVEL PRO (COM O "MOLHO" CERTO) -->
         <section id="sec-sobre" class="page-section">
             <div class="container section-compact">
-                <h1 style="font-size: 2rem; margin-bottom: 16px;">Sobre a MotorFlex</h1>
-                <p style="color: var(--text-secondary); font-size: 1rem; max-width: 800px; line-height: 1.6;">
-                    A MotorFlex é a plataforma líder em transparência e inovação no mercado automotivo. 
-                    Nossa missão é conectar compradores e vendedores de veículos com facilidade, segurança e alta tecnologia.
-                </p>
+                <div class="about-hero-header">
+                    <span class="badge-tag">CONHEÇA A MOTORFLEX</span>
+                    <h2 class="section-title">Liberdade, Performance e Inovação</h2>
+                    <p class="section-subtitle">Inspirada na versatilidade dos motores bicombustíveis, nossa plataforma revoluciona o ecossistema automotivo digital conectando compradores, lojistas e entusiastas com alta tecnologia.</p>
+                </div>
+
+                <div class="about-grid-content">
+                    <div class="about-card-info">
+                        <div class="about-icon-box"><i class="fa-solid fa-gauge-high"></i></div>
+                        <h3>O Conceito & História</h3>
+                        <p>Assim como o motor flex adaptou-se para dar total liberdade de escolha ao condutor, a MotorFlex nasceu para eliminar burocracias. Modernizamos os classificados tradicionais com transações ágeis, transparentes e 100% protegidas.</p>
+                    </div>
+                    <div class="about-card-info">
+                        <div class="about-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h3>Segurança em Movimento</h3>
+                        <p>Cada perfil — seja cliente pessoa física ou concessionária parceira — conta com um painel exclusivo e criptografado para gerenciar anúncios, preferências e histórico de negociações em tempo real.</p>
+                    </div>
+                </div>
+
+                <div class="about-gallery-section">
+                    <div class="about-img-card">
+                        <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800" alt="Carro Esportivo em Destaque">
+                        <div class="about-img-overlay">
+                            <h4>Catálogo Exclusivo</h4>
+                            <p>Superesportivos e SUVs selecionados a dedo</p>
+                        </div>
+                    </div>
+                    <div class="about-img-card">
+                        <img src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800" alt="Performance Automotiva">
+                        <div class="about-img-overlay">
+                            <h4>Alta Performance</h4>
+                            <p>Design, potência e tecnologia em evidência</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-steps-container">
+                    <h3 class="about-steps-title"><i class="fa-solid fa-compass" style="color: var(--primary); margin-right: 8px;"></i> Como Mexer na Plataforma</h3>
+                    <div class="about-steps-grid">
+                        <div class="step-box">
+                            <span class="step-num">01</span>
+                            <h4>Busca Inteligente</h4>
+                            <p>Use a barra rápida na Home ou navegue pelos filtros avançados de marca, ano e preço no Catálogo.</p>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-num">02</span>
+                            <h4>Painel Personalizado</h4>
+                            <p>Faça login para gerenciar sua conta, favoritos e acompanhar o desempenho dos seus veículos.</p>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-num">03</span>
+                            <h4>Anúncios de Impacto</h4>
+                            <p>Vendedores contam com ferramentas fáceis para cadastrar fotos profissionais e detalhes técnicos.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
+
         <section id="sec-contato" class="page-section">
             <div class="container section-compact">
                 <div class="contact-header">
@@ -141,4 +194,4 @@
     </main>
     <script src="../js/index.js"></script>
 </body>
-</html>
+</html> 

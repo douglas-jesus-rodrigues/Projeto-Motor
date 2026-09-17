@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     
-    // MODIFICADO: Peguei os elementos da foto
     const avatarLetra = document.getElementById("avatarLetra");
     const avatarImagem = document.getElementById("avatarImagem");
     const CAMINHO_FOTO_PERFIL ="../uploads/1788186907271-886045211.png"
@@ -54,8 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (nomeUsuario) nomeUsuario.textContent = nomeExibicao;
         
-        // MODIFICADO: Mostra a foto e esconde a letra
-        if (avatarLetra) avatarLetra.style.textIndent = "-9999px"; // esconde a letra
+        if (avatarLetra) avatarLetra.style.textIndent = "-9999px";
         if (avatarImagem) {
             avatarImagem.src = CAMINHO_FOTO_PERFIL;
             avatarImagem.style.display = "block";
