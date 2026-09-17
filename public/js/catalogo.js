@@ -1,11 +1,40 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // ==========================================
-    // 0. USUÁRIO E VERIFICAÇÃO DE LOGIN
+    // 0. UTILITÁRIOS DE SEGURANÇA
     // ==========================================
-    const usuario = JSON.parse(localStorage.getItem("usuario")) || { id: 1, tipo: "cliente" };
 
-    // Configuração do Botão "Meu Painel"
+    // Escapa qualquer texto antes de inseri-lo via innerHTML, prevenindo XSS
+    // caso dados vindos da API contenham marcação maliciosa.
+    function escapeHTML(valor) {
+        return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+    }
+
+    // Só aceita imagens de origem relativa ao próprio site ou https,
+    // bloqueando esquemas como "javascript:" ou "data:" vindos da API.
+    function sanitizarSrcImagem(src) {
+        if (typeof src !== "string") return "/imagens/sem-foto.jpg";
+        if (src.startsWith("/") || src.startsWith("https://")) return src;
+        return "/imagens/sem-foto.jpg";
+    }
+
+    function lerLocalStorageSeguro(chave) {
+        try {
+            return JSON.parse(localStorage.getItem(chave));
+        } catch {
+            return null;
+        }
+    }
+
+    // Nota de segurança: o objeto "usuario" no localStorage é usado aqui
+    // apenas para conveniência de navegação (mostrar/ocultar abas). Ele NÃO
+    // deve ser tratado como prova de autenticação — qualquer chamada de API
+    // que dependa disso precisa validar a sessão/token no servidor, pois
+    // dados em localStorage podem ser alterados livremente pelo usuário.
+    const usuario = lerLocalStorageSeguro("usuario") || { id: 1, tipo: "cliente" };
+
     const btnPainel = document.getElementById("btnPainel");
     if (btnPainel && usuario) {
         if (usuario.tipo === "empresa") {
@@ -18,358 +47,449 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 1. GERENCIAMENTO DE NAVEGAÇÃO ENTRE ABAS (COM SUPORTE A ?tab=...)
+    // TOASTS (substitui alert())
+    // ==========================================
+    const toastContainer = document.getElementById("toastContainer");
+
+    function mostrarToast(mensagem, tipo = "info") {
+        if (!toastContainer) { return; }
+        const toast = document.createElement("div");
+        toast.className = `toast ${tipo}`;
+        toast.textContent = mensagem; // textContent: nunca interpreta HTML
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 4500);
+    }
+
+    function mostrarAvisoRedirecionarLogin(mensagem) {
+        const modalAntigo = document.getElementById("modalAvisoLogin");
+        if (modalAntigo) modalAntigo.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "modalAvisoLogin";
+        overlay.setAttribute("role", "alertdialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.style.cssText = `
+            position: fixed; inset: 0;
+            background: rgba(4,5,6,0.85); display: flex; align-items: center;
+            justify-content: center; z-index: 99999; backdrop-filter: blur(4px);
+        `;
+
+        const caixa = document.createElement("div");
+        caixa.style.cssText = `
+            background: #14181f; border: 1px solid #c97a3c; padding: 34px;
+            border-radius: 10px; max-width: 420px; width: 90%; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        `;
+
+        const marca = document.createElement("div");
+        marca.style.cssText = "font-family:'Oswald',sans-serif; font-size:26px; color:#e08f4d; margin-bottom:15px; font-weight:600; letter-spacing:2px;";
+        marca.textContent = "MOTORFLEX";
+
+        const titulo = document.createElement("h3");
+        titulo.style.cssText = "color:#fff; font-size:18px; margin-bottom:12px; font-weight:600;";
+        titulo.textContent = "Autenticação necessária";
+
+        const paragrafo = document.createElement("p");
+        paragrafo.style.cssText = "color:#8b93a1; font-size:13.5px; line-height:1.6; margin-bottom:22px;";
+        paragrafo.textContent = mensagem; // texto sempre tratado como dado, não HTML
+
+        const rodape = document.createElement("div");
+        rodape.style.cssText = "color:#5b6270; font-size:11px; letter-spacing:1px;";
+        rodape.textContent = "Redirecionando para o login...";
+
+        caixa.append(marca, titulo, paragrafo, rodape);
+        overlay.appendChild(caixa);
+        document.body.appendChild(overlay);
+
+        setTimeout(() => {
+            window.location.href = "/pages/login.html";
+        }, 2200);
+    }
+
+    // ==========================================
+    // 1. NAVEGAÇÃO ENTRE ABAS (com suporte a ?tab=...)
     // ==========================================
     const navLinks = document.querySelectorAll(".nav-link");
     const pageTabs = document.querySelectorAll(".page-tab");
+    const liveRegion = document.getElementById("liveRegion");
 
     function ativarAbaPorId(tabId) {
-        navLinks.forEach(l => {
-            if (l.getAttribute("data-tab") === tabId) {
-                l.classList.add("active");
-            } else {
-                l.classList.remove("active");
-            }
+        const alvo = document.getElementById(tabId);
+        if (!alvo) return;
+
+        navLinks.forEach((l) => {
+            const ehAtiva = l.getAttribute("data-tab") === tabId;
+            l.classList.toggle("active", ehAtiva);
+            if (ehAtiva) l.setAttribute("aria-current", "page");
+            else l.removeAttribute("aria-current");
         });
 
-        pageTabs.forEach(pt => {
-            if (pt.id === tabId) {
-                pt.classList.add("active");
-            } else {
-                pt.classList.remove("active");
-            }
-        });
+        pageTabs.forEach((pt) => pt.classList.toggle("active", pt.id === tabId));
+
+        if (liveRegion) liveRegion.textContent = `Seção ${alvo.querySelector("h2")?.textContent || tabId} exibida.`;
     }
 
-    navLinks.forEach(link => {
+    function exigeLogin(tabId) {
+        return tabId === "tab-cadastrar" || tabId === "cadastrar";
+    }
+
+    navLinks.forEach((link) => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
             const targetTab = link.getAttribute("data-tab");
+
+            if (exigeLogin(targetTab)) {
+                const usuarioLogado = lerLocalStorageSeguro("usuario");
+                if (!usuarioLogado || !usuarioLogado.id) {
+                    mostrarAvisoRedirecionarLogin("Para publicar anúncios de veículos na plataforma, é necessário possuir uma conta ativa e estar autenticado.");
+                    return;
+                }
+            }
+
             ativarAbaPorId(targetTab);
         });
     });
 
-    // Verifica se a página foi aberta com parâmetro na URL (Ex: ?tab=cadastrar)
     const urlParams = new URLSearchParams(window.location.search);
     const abaDaUrl = urlParams.get("tab");
-    if (abaDaUrl) {
-        ativarAbaPorId(`tab-${abaDaUrl}`);
+    if (abaDaUrl && /^[a-z-]+$/i.test(abaDaUrl)) {
+        if (exigeLogin(abaDaUrl)) {
+            const usuarioLogado = lerLocalStorageSeguro("usuario");
+            if (!usuarioLogado || !usuarioLogado.id) {
+                mostrarAvisoRedirecionarLogin("Para publicar anúncios de veículos na plataforma, é necessário possuir uma conta ativa e estar autenticado.");
+            }
+        } else {
+            ativarAbaPorId(`tab-${abaDaUrl}`);
+        }
     }
 
     function irParaCatalogo() {
-        ativarAbaPorId('tab-catalogo');
+        ativarAbaPorId("tab-catalogo");
     }
 
     // ==========================================
-    // 2. FUNÇÃO PARA BUSCAR VEÍCULOS DO BANCO (API)
+    // 2. CATÁLOGO — CARREGAMENTO DA API
     // ==========================================
     let bancoDeDadosVeiculos = [];
 
+    const featuredCarContainer = document.getElementById("featuredCar");
+    const carsGrid = document.getElementById("carsGrid");
+    const topDealsContainer = document.getElementById("topDeals");
+    const resultCount = document.getElementById("resultCount");
+
+    const inputBusca = document.getElementById("filtroBusca");
+    const inputPrecoMax = document.getElementById("filtroPrecoMax");
+    const inputAnoMin = document.getElementById("filtroAnoMin");
+    const selectCombustivel = document.getElementById("filtroCombustivel");
+    const selectCambio = document.getElementById("filtroCambio");
+    const selectCarroceria = document.getElementById("filtroCarroceria");
+    const formFiltro = document.getElementById("formFiltro");
+    const btnLimpar = document.getElementById("btnLimparFiltros");
+
+    const formatarMoeda = (valor) =>
+        (Number(valor) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
     async function carregarVeiculosDoBanco() {
         try {
-            const resposta = await fetch('/api/veiculos');
+            const resposta = await fetch("/api/veiculos");
+            if (!resposta.ok) throw new Error(`Falha HTTP ${resposta.status}`);
             const dados = await resposta.json();
-            
+
             if (dados.sucesso && Array.isArray(dados.veiculos)) {
-                bancoDeDadosVeiculos = dados.veiculos.map(v => ({
-                    id: v.id,
-                    nome: `${v.marca_nome || v.marca || ''} ${v.modelo_nome || v.modelo || ''} ${v.versao || ''}`.trim(),
-                    marca: v.marca_nome || v.marca || 'Outra',
-                    categoria: v.carroceria || 'Cupê',
-                    transmissao: (v.tipo_transmissao_id === 2 || v.cambio === 'Automático') ? 'Automático' : 'Manual',
-                    combustivel: v.combustivel || 'Gasolina', 
-                    ano: v.ano_modelo || 2020,
-                    condicao: 'Seminovo',
-                    quilometragem: `${v.quilometragem || 0} Km`,
+                bancoDeDadosVeiculos = dados.veiculos.map((v) => ({
+                    id: Number(v.id) || 0,
+                    marca: String(v.marca_nome || v.marca || "Outra"),
+                    modelo_nome: String(v.modelo_nome || v.modelo || ""),
+                    marca_nome: String(v.marca_nome || v.marca || ""),
+                    versao: String(v.versao || ""),
+                    categoria: String(v.carroceria || "Outro"),
+                    transmissao: (v.tipo_transmissao_id === 2 || v.cambio === "Automático") ? "Automático" : (v.cambio || "Manual"),
+                    combustivel: String(v.combustivel || "Gasolina"),
+                    ano: Number(v.ano_modelo) || 2020,
+                    ano_fabricacao: Number(v.ano_fabricacao) || 2020,
+                    condicao: "Seminovo",
+                    quilometragem: Number(v.quilometragem) || 0,
                     preco: Number(v.preco) || 0,
-                    destaquePrincipal: false,
-                    imagem: v.imagem ? `/uploads/${v.imagem}` : "/imagens/sem-foto.jpg",
-                    marca_nome: v.marca_nome || v.marca || '',
-                    modelo_nome: v.modelo_nome || v.modelo || '',
-                    versao: v.versao || '',
-                    ano_fabricacao: v.ano_fabricacao || 2020
+                    destaquePrincipal: Boolean(v.destaque_principal),
+                    imagem: sanitizarSrcImagem(v.imagem ? `/uploads/${v.imagem}` : "/imagens/sem-foto.jpg"),
                 }));
             }
         } catch (erro) {
             console.error("Erro ao carregar veículos do backend:", erro);
+            mostrarToast("Não foi possível carregar o catálogo agora. Tente novamente em instantes.", "erro");
         }
 
-        popularSelects();
         renderizarDestaque();
         renderizarCardsCatalogo(bancoDeDadosVeiculos);
         renderizarTopDeals();
     }
 
-    let categoriaAbaAtiva = "todos";
-
-    // Elementos DOM do Catálogo e Filtros
-    const featuredCarContainer = document.getElementById("featuredCar");
-    const carsGrid = document.getElementById("carsGrid") || document.querySelector('.catalog-section');
-    const topDealsContainer = document.getElementById("topDeals");
-    const inputPesquisa = document.getElementById("filtroBusca") || document.getElementById("inputPesquisa");
-    const selectMarca = document.getElementById("selectMarca");
-    const selectCategoria = document.getElementById("selectCategoria");
-    const selectTransmissao = document.getElementById("selectTransmissao");
-    const btnBuscar = document.getElementById("btnFiltrar") || document.getElementById("btnBuscar");
-    const btnLimpar = document.getElementById("btnLimparFiltros") || document.getElementById("btnLimpar");
-    const catTabBtns = document.querySelectorAll(".cat-tab-btn");
-
-    const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    function popularSelects() {
-        if (!selectMarca || !selectCategoria || !selectTransmissao) return;
-
-        selectMarca.innerHTML = '<option value="">Todas as Marcas</option>';
-        selectCategoria.innerHTML = '<option value="">Todas as Categorias</option>';
-        selectTransmissao.innerHTML = '<option value="">Qualquer Transmissão</option>';
-
-        const marcas = [...new Set(bancoDeDadosVeiculos.map(v => v.marca))].sort();
-        const categorias = [...new Set(bancoDeDadosVeiculos.map(v => v.categoria))].sort();
-        const transmissoes = [...new Set(bancoDeDadosVeiculos.map(v => v.transmissao))].sort();
-
-        marcas.forEach(m => selectMarca.innerHTML += `<option value="${m}">${m}</option>`);
-        categorias.forEach(c => selectCategoria.innerHTML += `<option value="${c}">${c}</option>`);
-        transmissoes.forEach(t => selectTransmissao.innerHTML += `<option value="${t}">${t}</option>`);
-    }
-
     function renderizarDestaque() {
-        if (!featuredCarContainer || bancoDeDadosVeiculos.length === 0) return;
+        if (!featuredCarContainer) return;
+        if (bancoDeDadosVeiculos.length === 0) {
+            featuredCarContainer.innerHTML = "";
+            return;
+        }
 
-        const principal = bancoDeDadosVeiculos.find(v => v.destaquePrincipal) || bancoDeDadosVeiculos[0];
+        const principal = bancoDeDadosVeiculos.find((v) => v.destaquePrincipal) || bancoDeDadosVeiculos[0];
+        const nomeCompleto = `${principal.marca_nome} ${principal.modelo_nome}`.trim();
+
         featuredCarContainer.innerHTML = `
-            <img src="${principal.imagem}" alt="${principal.nome}">
+            <img src="${sanitizarSrcImagem(principal.imagem)}" alt="${escapeHTML(nomeCompleto)}">
             <div class="featured-info">
-                ${principal.ano} ${principal.nome} | <span class="price">${formatarMoeda(principal.preco)}</span>
+                <span>${escapeHTML(String(principal.ano))} · ${escapeHTML(nomeCompleto)}</span>
+                <span class="price">${formatarMoeda(principal.preco)}</span>
             </div>
         `;
     }
 
     function renderizarCardsCatalogo(lista) {
         if (!carsGrid) return;
+        carsGrid.innerHTML = "";
 
-        let containerGrid = carsGrid.querySelector('.grid-veiculos');
-        if (!containerGrid) {
-            containerGrid = document.createElement('div');
-            containerGrid.className = 'grid-veiculos';
-            containerGrid.style.display = 'grid';
-            containerGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-            containerGrid.style.gap = '20px';
-            containerGrid.style.marginTop = '15px';
-            carsGrid.appendChild(containerGrid);
-        } else {
-            containerGrid.innerHTML = '';
+        if (resultCount) {
+            resultCount.textContent = `${lista.length} veículo${lista.length === 1 ? "" : "s"} encontrado${lista.length === 1 ? "" : "s"}`;
         }
 
         if (lista.length === 0) {
-            containerGrid.innerHTML = `<p style="grid-column: 1/-1; padding: 40px; text-align: center; color: #aaa;">Nenhum veículo encontrado.</p>`;
+            const vazio = document.createElement("p");
+            vazio.className = "empty-state";
+            vazio.textContent = "Nenhum veículo encontrado com os filtros selecionados.";
+            carsGrid.appendChild(vazio);
             return;
         }
 
-        // Recupera favoritos salvos no navegador
-        const favoritosIds = JSON.parse(localStorage.getItem("favoritos_veiculos")) || [];
+        const favoritosIds = lerLocalStorageSeguro("favoritos_veiculos") || [];
 
-        lista.ico = lista.forEach(veiculo => {
-            const isFavorito = favoritosIds.includes(veiculo.id);
+        lista.forEach((veiculo) => {
+            const isFavorito = Array.isArray(favoritosIds) && favoritosIds.includes(veiculo.id);
+            const nomeCompleto = `${veiculo.marca_nome} ${veiculo.modelo_nome}`.trim();
 
-            const card = document.createElement('div');
-            card.className = 'card-item-catalogo';
-            card.style.cssText = 'border: 1px solid #222; border-radius: 8px; overflow: hidden; background: #000; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative;';
+            const card = document.createElement("div");
+            card.className = "card-item-catalogo";
 
+            // Todo dado dinâmico passa por escapeHTML antes de ir para innerHTML.
             card.innerHTML = `
-                <div class="card-img-wrapper" style="width: 100%; height: 180px; overflow: hidden; background-color: #000; position: relative;">
-                    <img src="${veiculo.imagem}" alt="${veiculo.modelo_nome}" style="width: 100%; height: 100%; object-fit: cover;">
-                    
-                    <!-- Botão de Favoritar no canto superior direito da imagem -->
-                    <button type="button" class="btn-favoritar" data-id="${veiculo.id}" title="Favoritar veículo" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;">
-                        <span style="font-size: 18px; color: ${isFavorito ? '#ff0000' : '#ffffff'};">${isFavorito ? '❤️' : '🤍'}</span>
+                <div class="card-img-wrapper">
+                    <img src="${sanitizarSrcImagem(veiculo.imagem)}" alt="${escapeHTML(nomeCompleto)}" loading="lazy">
+                    <button type="button" class="btn-favoritar" data-id="${veiculo.id}" title="Favoritar veículo" aria-pressed="${isFavorito}">
+                        <span aria-hidden="true">${isFavorito ? "❤️" : "🤍"}</span>
                     </button>
                 </div>
-                <div class="card-corpo" style="background-color: #000000; padding: 15px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
-                    <h3 style="color: #ff0000; font-size: 16px; margin-bottom: 10px; font-weight: bold;">${veiculo.marca_nome} ${veiculo.modelo_nome}</h3>
-                    
-                    <div style="margin-bottom: 8px;">
-                        <p style="color: #aaa; font-size: 13px; margin-bottom: 4px;">${veiculo.versao || ''}</p>
-                        <p style="color: #888; font-size: 12px; margin-bottom: 4px;">Ano: ${veiculo.ano_fabricacao}/${veiculo.ano} | ${veiculo.quilometragem}</p>
-                    </div>
-
-                    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid #1a1a1a;">
+                <div class="card-corpo">
+                    <h3>${escapeHTML(nomeCompleto)}</h3>
+                    <p class="card-versao">${escapeHTML(veiculo.versao)}</p>
+                    <p class="card-detalhes">Ano ${escapeHTML(String(veiculo.ano_fabricacao))}/${escapeHTML(String(veiculo.ano))} · ${escapeHTML(veiculo.quilometragem.toLocaleString("pt-BR"))} km</p>
+                    <div class="card-footer">
                         <div>
-                            <span style="font-size: 11px; color: #ff4d4d; display: block; margin-bottom: 2px;">Valor Total</span>
-                            <span class="card-preco" style="font-size: 18px; font-weight: 800; color: #ff0000;">${formatarMoeda(veiculo.preco)}</span>
+                            <span class="rotulo-preco">Valor total</span>
+                            <span class="card-preco">${formatarMoeda(veiculo.preco)}</span>
                         </div>
-                        <a href="/pages/detalhes.html?id=${veiculo.id}" class="btn-detalhes" style="background-color: #ff0000; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none;">Ver</a>
+                        <a href="/pages/detalhes.html?id=${encodeURIComponent(veiculo.id)}" class="btn-detalhes">Ver detalhes</a>
                     </div>
                 </div>
             `;
 
-            // Ação de clique no botão de favoritar
-            const btnFav = card.querySelector('.btn-favoritar');
-            btnFav.addEventListener('click', (e) => {
+            const btnFav = card.querySelector(".btn-favoritar");
+            btnFav.addEventListener("click", (e) => {
                 e.preventDefault();
                 e.stopPropagation();
 
-                let favsAtuais = JSON.parse(localStorage.getItem("favoritos_veiculos")) || [];
-                const vId = veiculo.id;
-
-                if (favsAtuais.includes(vId)) {
-                    // Remove dos favoritos
-                    favsAtuais = favsAtuais.filter(id => id !== vId);
-                    btnFav.querySelector('span').textContent = '🤍';
-                    btnFav.querySelector('span').style.color = '#ffffff';
-                } else {
-                    // Adiciona aos favoritos
-                    favsAtuais.push(vId);
-                    btnFav.querySelector('span').textContent = '❤️';
-                    btnFav.querySelector('span').style.color = '#ff0000';
+                const usuarioLogado = lerLocalStorageSeguro("usuario");
+                if (!usuarioLogado || !usuarioLogado.id) {
+                    mostrarAvisoRedirecionarLogin("Para favoritar veículos e gerenciar suas preferências, é necessário acessar sua conta no sistema.");
+                    return;
                 }
 
+                let favsAtuais = lerLocalStorageSeguro("favoritos_veiculos") || [];
+                if (!Array.isArray(favsAtuais)) favsAtuais = [];
+
+                const jaFavoritado = favsAtuais.includes(veiculo.id);
+                favsAtuais = jaFavoritado
+                    ? favsAtuais.filter((id) => id !== veiculo.id)
+                    : [...favsAtuais, veiculo.id];
+
+                btnFav.querySelector("span").textContent = jaFavoritado ? "🤍" : "❤️";
+                btnFav.setAttribute("aria-pressed", String(!jaFavoritado));
                 localStorage.setItem("favoritos_veiculos", JSON.stringify(favsAtuais));
             });
 
-            containerGrid.appendChild(card);
+            carsGrid.appendChild(card);
         });
     }
 
     function renderizarTopDeals() {
         if (!topDealsContainer) return;
-
         topDealsContainer.innerHTML = "";
-        bancoDeDadosVeiculos.slice(0, 4).forEach(carro => {
-            topDealsContainer.innerHTML += `
-                <div class="deal-item">
-                    <img src="${carro.imagem}" alt="${carro.nome}">
-                    <div class="deal-info">
-                        <div class="deal-title">${carro.nome}</div>
-                        <div style="color: var(--text-muted); font-size: 0.72rem;">${carro.ano} • ${carro.condicao}</div>
-                        <div class="deal-price">${formatarMoeda(carro.preco)}</div>
-                    </div>
+
+        bancoDeDadosVeiculos.slice(0, 4).forEach((carro) => {
+            const nomeCompleto = `${carro.marca_nome} ${carro.modelo_nome}`.trim();
+            const item = document.createElement("div");
+            item.className = "deal-item";
+            item.innerHTML = `
+                <img src="${sanitizarSrcImagem(carro.imagem)}" alt="${escapeHTML(nomeCompleto)}" loading="lazy">
+                <div class="deal-info">
+                    <div class="deal-title">${escapeHTML(nomeCompleto)}</div>
+                    <div style="color:var(--text-faint); font-size:0.72rem;">${escapeHTML(String(carro.ano))} · ${escapeHTML(carro.condicao)}</div>
+                    <div class="deal-price">${formatarMoeda(carro.preco)}</div>
                 </div>
             `;
+            topDealsContainer.appendChild(item);
         });
     }
 
     function executarBusca() {
-        const termo = inputPesquisa ? inputPesquisa.value.toLowerCase().trim() : "";
-        const marca = selectMarca ? selectMarca.value : "";
-        const categoriaSelect = selectCategoria ? selectCategoria.value : "";
-        const transmissao = selectTransmissao ? selectTransmissao.value : "";
+        const termo = inputBusca ? inputBusca.value.trim().toLowerCase().slice(0, 60) : "";
+        const precoMax = inputPrecoMax && inputPrecoMax.value !== "" ? Number(inputPrecoMax.value) : null;
+        const anoMin = inputAnoMin && inputAnoMin.value !== "" ? Number(inputAnoMin.value) : null;
+        const combustivel = selectCombustivel ? selectCombustivel.value : "";
+        const cambio = selectCambio ? selectCambio.value : "";
+        const carroceria = selectCarroceria ? selectCarroceria.value : "";
 
-        const filtrados = bancoDeDadosVeiculos.filter(v => {
-            const bateTexto = v.nome.toLowerCase().includes(termo) || v.marca.toLowerCase().includes(termo);
-            const bateMarca = marca === "" || v.marca === marca;
-            const bateCategoriaSelect = categoriaSelect === "" || v.categoria === categoriaSelect;
-            const bateTransmissao = transmissao === "" || v.transmissao === transmissao;
-            const bateAbaCat = categoriaAbaAtiva === "todos" || v.categoria.toLowerCase() === categoriaAbaAtiva.toLowerCase();
+        const filtrados = bancoDeDadosVeiculos.filter((v) => {
+            const nomeCompleto = `${v.marca_nome} ${v.modelo_nome} ${v.versao}`.toLowerCase();
+            const bateTexto = termo === "" || nomeCompleto.includes(termo);
+            const batePreco = precoMax === null || Number.isNaN(precoMax) || v.preco <= precoMax;
+            const bateAno = anoMin === null || Number.isNaN(anoMin) || v.ano >= anoMin;
+            const bateCombustivel = combustivel === "" || v.combustivel === combustivel;
+            const bateCambio = cambio === "" || v.transmissao === cambio;
+            const bateCarroceria = carroceria === "" || v.categoria === carroceria;
 
-            return bateTexto && bateMarca && bateCategoriaSelect && bateTransmissao && bateAbaCat;
+            return bateTexto && batePreco && bateAno && bateCombustivel && bateCambio && bateCarroceria;
         });
 
         renderizarCardsCatalogo(filtrados);
     }
 
-    catTabBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            catTabBtns.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            categoriaAbaAtiva = btn.getAttribute("data-categoria");
+    if (formFiltro) {
+        formFiltro.addEventListener("submit", (e) => {
+            e.preventDefault();
             executarBusca();
         });
-    });
+    }
 
-    function limparFiltros() {
-        if (inputPesquisa) inputPesquisa.value = "";
-        if (selectMarca) selectMarca.value = "";
-        if (selectCategoria) selectCategoria.value = "";
-        if (selectTransmissao) selectTransmissao.value = "";
-        categoriaAbaAtiva = "todos";
-        catTabBtns.forEach(b => b.classList.remove("active"));
-        if (catTabBtns[0]) catTabBtns[0].classList.add("active");
-        executarBusca();
+    if (btnLimpar) {
+        btnLimpar.addEventListener("click", () => {
+            setTimeout(executarBusca, 0); // aguarda o reset nativo do form
+        });
+    }
+
+    if (inputBusca) {
+        let debounce;
+        inputBusca.addEventListener("input", () => {
+            clearTimeout(debounce);
+            debounce = setTimeout(executarBusca, 250);
+        });
     }
 
     // ==========================================
     // 3. UPLOAD, MINIATURA E MODAL DE PRÉ-VISUALIZAÇÃO
     // ==========================================
-    const inputImagem = document.getElementById('imagem');
-    const btnVerFoto = document.getElementById('btnVerFoto');
-    const nomeArquivo = document.getElementById('nomeArquivoSelecionado');
-    const modal = document.getElementById('modalVisualizarFoto');
-    const imgPreviewModal = document.getElementById('imgPreviewModal');
-    const miniaturaPreview = document.getElementById('miniaturaPreview');
+    const inputImagem = document.getElementById("imagem");
+    const btnVerFoto = document.getElementById("btnVerFoto");
+    const nomeArquivo = document.getElementById("nomeArquivoSelecionado");
+    const modal = document.getElementById("modalVisualizarFoto");
+    const imgPreviewModal = document.getElementById("imgPreviewModal");
+    const miniaturaPreview = document.getElementById("miniaturaPreview");
+    const erroImagem = document.getElementById("erroImagem");
+
+    const TIPOS_IMAGEM_ACEITOS = ["image/png", "image/jpeg", "image/webp"];
+    const TAMANHO_MAXIMO_MB = 5;
+
+    function limparSelecaoImagem() {
+        if (nomeArquivo) nomeArquivo.textContent = "Selecionar foto";
+        if (btnVerFoto) btnVerFoto.disabled = true;
+        if (imgPreviewModal) imgPreviewModal.src = "";
+        if (miniaturaPreview) {
+            miniaturaPreview.src = "";
+            miniaturaPreview.style.display = "none";
+        }
+    }
 
     if (inputImagem) {
-        inputImagem.addEventListener('change', function(event) {
+        inputImagem.addEventListener("change", function (event) {
             const arquivo = event.target.files[0];
-            
-            if (arquivo) {
-                if (nomeArquivo) nomeArquivo.textContent = arquivo.name;
-                if (btnVerFoto) btnVerFoto.disabled = false;
+            if (erroImagem) erroImagem.textContent = "";
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const urlResultado = e.target.result;
-                    if (imgPreviewModal) imgPreviewModal.src = urlResultado;
-                    if (miniaturaPreview) {
-                        miniaturaPreview.src = urlResultado;
-                        miniaturaPreview.style.display = 'block';
-                    }
-                }
-                reader.readAsDataURL(arquivo);
-            } else {
-                if (nomeArquivo) nomeArquivo.textContent = 'Selecionar Foto';
-                if (btnVerFoto) btnVerFoto.disabled = true;
-                if (imgPreviewModal) imgPreviewModal.src = '';
+            if (!arquivo) {
+                limparSelecaoImagem();
+                return;
+            }
+
+            if (!TIPOS_IMAGEM_ACEITOS.includes(arquivo.type)) {
+                if (erroImagem) erroImagem.textContent = "Envie uma imagem em PNG, JPEG ou WEBP.";
+                inputImagem.value = "";
+                limparSelecaoImagem();
+                return;
+            }
+
+            if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+                if (erroImagem) erroImagem.textContent = `A imagem deve ter até ${TAMANHO_MAXIMO_MB}MB.`;
+                inputImagem.value = "";
+                limparSelecaoImagem();
+                return;
+            }
+
+            if (nomeArquivo) nomeArquivo.textContent = arquivo.name.slice(0, 40);
+            if (btnVerFoto) btnVerFoto.disabled = false;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const urlResultado = e.target.result;
+                if (imgPreviewModal) imgPreviewModal.src = urlResultado;
                 if (miniaturaPreview) {
-                    miniaturaPreview.src = '';
-                    miniaturaPreview.style.display = 'none';
+                    miniaturaPreview.src = urlResultado;
+                    miniaturaPreview.style.display = "block";
                 }
-            }
+            };
+            reader.readAsDataURL(arquivo);
         });
     }
 
-    if (btnVerFoto) {
-        btnVerFoto.addEventListener('click', function() {
-            if (modal && imgPreviewModal && imgPreviewModal.src) {
-                modal.classList.add('ativo');
-            }
-        });
+    function abrirModalFoto() {
+        if (modal && imgPreviewModal && imgPreviewModal.src) {
+            modal.classList.add("ativo");
+            document.getElementById("btnFecharModal")?.focus();
+        }
     }
 
-    // ==========================================
-    // 4. ELEMENTOS DE ERRO E VALIDAÇÃO DO FORMULÁRIO
-    // ==========================================
-    const erroMarca = document.getElementById("erroMarca");
-    const erroModelo = document.getElementById("erroModelo");
-    const erroAnoFabricacao = document.getElementById("erroAnoFabricacao");
-    const erroAnoModelo = document.getElementById("erroAnoModelo");
-    const erroPreco = document.getElementById("erroPreco");
-
-    function limparErros() {
-        if (erroMarca) erroMarca.textContent = "";
-        if (erroModelo) erroModelo.textContent = "";
-        if (erroAnoFabricacao) erroAnoFabricacao.textContent = "";
-        if (erroAnoModelo) erroAnoModelo.textContent = "";
-        if (erroPreco) erroPreco.textContent = "";
+    function fecharModalFoto() {
+        if (modal) modal.classList.remove("ativo");
     }
 
+    if (btnVerFoto) btnVerFoto.addEventListener("click", abrirModalFoto);
+    document.getElementById("btnFecharModal")?.addEventListener("click", fecharModalFoto);
+    modal?.addEventListener("click", (e) => { if (e.target === modal) fecharModalFoto(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharModalFoto(); });
+
     // ==========================================
-    // 5. ENVIO REAL DO ANÚNCIO PARA O BANCO (POST)
+    // 4. VALIDAÇÃO E ENVIO DO ANÚNCIO
     // ==========================================
     const formAnuncio = document.getElementById("formAnuncio");
     const btnAnunciar = document.getElementById("btnAnunciar");
 
+    function definirErro(campoEl, erroEl, mensagem) {
+        if (erroEl) erroEl.textContent = mensagem;
+        if (campoEl) campoEl.setAttribute("aria-invalid", mensagem ? "true" : "false");
+    }
+
     if (formAnuncio) {
         formAnuncio.addEventListener("submit", async (e) => {
             e.preventDefault();
-            limparErros();
+
+            const usuarioLogado = lerLocalStorageSeguro("usuario");
+            if (!usuarioLogado || !usuarioLogado.id) {
+                mostrarAvisoRedirecionarLogin("Para publicar anúncios de veículos na plataforma, é necessário possuir uma conta ativa e estar autenticado.");
+                return;
+            }
 
             const marcaEl = document.getElementById("marca");
             const modeloEl = document.getElementById("modelo");
             const versaoEl = document.getElementById("versao");
             const precoEl = document.getElementById("preco");
-            const anoFabEl = document.getElementById("anoFabricacao") || document.getElementById("anoFab");
-            const anoModEl = document.getElementById("anoModelo") || document.getElementById("anoMod");
-            const kmEl = document.getElementById("quilometragem") || document.getElementById("km");
+            const anoFabEl = document.getElementById("anoFabricacao");
+            const anoModEl = document.getElementById("anoModelo");
+            const kmEl = document.getElementById("quilometragem");
             const combustivelEl = document.getElementById("combustivel");
             const cambioEl = document.getElementById("cambio");
             const corEl = document.getElementById("cor");
@@ -377,51 +497,62 @@ document.addEventListener("DOMContentLoaded", () => {
             const carroceriaEl = document.getElementById("carroceria");
             const descricaoEl = document.getElementById("descricao");
 
+            const anoAtual = new Date().getFullYear();
             let valido = true;
 
-            if (marcaEl && marcaEl.value.trim() === "") {
-                if (erroMarca) erroMarca.textContent = "Digite a marca.";
+            definirErro(marcaEl, document.getElementById("erroMarca"), "");
+            definirErro(modeloEl, document.getElementById("erroModelo"), "");
+            definirErro(anoFabEl, document.getElementById("erroAnoFabricacao"), "");
+            definirErro(anoModEl, document.getElementById("erroAnoModelo"), "");
+            definirErro(precoEl, document.getElementById("erroPreco"), "");
+
+            if (!marcaEl.value.trim()) {
+                definirErro(marcaEl, document.getElementById("erroMarca"), "Digite a marca.");
+                valido = false;
+            }
+            if (!modeloEl.value.trim()) {
+                definirErro(modeloEl, document.getElementById("erroModelo"), "Digite o modelo.");
                 valido = false;
             }
 
-            if (modeloEl && modeloEl.value.trim() === "") {
-                if (erroModelo) erroModelo.textContent = "Digite o modelo.";
+            const anoFab = Number(anoFabEl.value);
+            if (!anoFabEl.value || anoFab < 1950 || anoFab > anoAtual + 1) {
+                definirErro(anoFabEl, document.getElementById("erroAnoFabricacao"), `Informe um ano entre 1950 e ${anoAtual + 1}.`);
                 valido = false;
             }
 
-            if (anoFabEl && anoFabEl.value.trim() === "") {
-                if (erroAnoFabricacao) erroAnoFabricacao.textContent = "Digite o ano de fabricação.";
+            const anoMod = Number(anoModEl.value);
+            if (!anoModEl.value || anoMod < 1950 || anoMod > anoAtual + 1) {
+                definirErro(anoModEl, document.getElementById("erroAnoModelo"), `Informe um ano entre 1950 e ${anoAtual + 1}.`);
                 valido = false;
             }
 
-            if (anoModEl && anoModEl.value.trim() === "") {
-                if (erroAnoModelo) erroAnoModelo.textContent = "Digite o ano do modelo.";
+            const preco = Number(precoEl.value);
+            if (!precoEl.value || preco <= 0) {
+                definirErro(precoEl, document.getElementById("erroPreco"), "Informe um preço válido, maior que zero.");
                 valido = false;
             }
 
-            if (precoEl && precoEl.value.trim() === "") {
-                if (erroPreco) erroPreco.textContent = "Digite o preço.";
-                valido = false;
+            if (!valido) {
+                mostrarToast("Revise os campos destacados antes de publicar.", "erro");
+                return;
             }
-
-            if (!valido) return;
 
             const formData = new FormData();
-            formData.append("usuario_id", usuario.id || 1); 
-
-            formData.append("marca", marcaEl ? marcaEl.value.trim() : "");
-            formData.append("modelo", modeloEl ? modeloEl.value.trim() : "");
-            formData.append("versao", versaoEl ? versaoEl.value.trim() : "");
-            formData.append("preco", precoEl ? precoEl.value : 0);
-            formData.append("ano_fabricacao", anoFabEl ? anoFabEl.value : 2020);
-            formData.append("ano_modelo", anoModEl ? anoModEl.value : 2020);
-            formData.append("quilometragem", kmEl ? (kmEl.value || 0) : 0);
-            formData.append("combustivel", combustivelEl ? combustivelEl.value : "Gasolina");
-            formData.append("cambio", cambioEl ? cambioEl.value : "Automático");
-            formData.append("cor", corEl ? corEl.value.trim() : "");
-            formData.append("portas", portasEl ? portasEl.value : 2);
-            formData.append("carroceria", carroceriaEl ? carroceriaEl.value.trim() : "Coupé");
-            formData.append("descricao", descricaoEl ? descricaoEl.value.trim() : "");
+            formData.append("usuario_id", usuarioLogado.id);
+            formData.append("marca", marcaEl.value.trim());
+            formData.append("modelo", modeloEl.value.trim());
+            formData.append("versao", versaoEl.value.trim());
+            formData.append("preco", String(preco));
+            formData.append("ano_fabricacao", String(anoFab));
+            formData.append("ano_modelo", String(anoMod));
+            formData.append("quilometragem", kmEl.value ? String(Number(kmEl.value)) : "0");
+            formData.append("combustivel", combustivelEl.value);
+            formData.append("cambio", cambioEl.value);
+            formData.append("cor", corEl.value.trim());
+            formData.append("portas", portasEl.value ? String(Number(portasEl.value)) : "2");
+            formData.append("carroceria", carroceriaEl.value);
+            formData.append("descricao", descricaoEl.value.trim());
 
             if (inputImagem && inputImagem.files && inputImagem.files[0]) {
                 formData.append("imagem", inputImagem.files[0]);
@@ -433,38 +564,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             try {
-                const resposta = await fetch('/api/veiculos', {
-                    method: 'POST',
-                    body: formData
-                });
-
+                const resposta = await fetch("/api/veiculos", { method: "POST", body: formData });
                 const resultado = await resposta.json();
 
-                alert(resultado.mensagem || (resultado.sucesso ? "Anúncio publicado com sucesso!" : "Operação realizada."));
-
                 if (resposta.ok && resultado.sucesso) {
+                    mostrarToast(resultado.mensagem || "Anúncio publicado com sucesso!", "sucesso");
                     formAnuncio.reset();
-                    
-                    if (nomeArquivo) nomeArquivo.textContent = 'Selecionar Foto';
-                    if (btnVerFoto) btnVerFoto.disabled = true;
-                    if (miniaturaPreview) {
-                        miniaturaPreview.src = '';
-                        miniaturaPreview.style.display = 'none';
-                    }
-
+                    limparSelecaoImagem();
                     await carregarVeiculosDoBanco();
                     irParaCatalogo();
 
-                    if (usuario.tipo === "empresa") {
+                    if (usuarioLogado.tipo === "empresa") {
                         window.location.href = "/pages/painel-empresa.html";
-                    } else if (usuario.tipo === "cliente") {
+                    } else if (usuarioLogado.tipo === "cliente") {
                         window.location.href = "/pages/painel-cliente.html";
                     }
+                } else {
+                    mostrarToast(resultado.mensagem || "Não foi possível publicar o anúncio.", "erro");
                 }
-
             } catch (erro) {
                 console.error("Erro na requisição de cadastro:", erro);
-                alert("Erro de conexão com o servidor ao tentar enviar o anúncio.");
+                mostrarToast("Erro de conexão com o servidor ao tentar enviar o anúncio.", "erro");
             } finally {
                 if (btnAnunciar) {
                     btnAnunciar.textContent = "Publicar anúncio";
@@ -475,19 +595,129 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 6. EVENTOS AUXILIARES E INICIALIZAÇÃO
+    // 5. AVALIAÇÃO PROFISSIONAL (validação client-side)
     // ==========================================
-    if (btnBuscar) btnBuscar.addEventListener("click", executarBusca);
-    if (btnLimpar) btnLimpar.addEventListener("click", limparFiltros);
-    if (inputPesquisa) inputPesquisa.addEventListener("keyup", executarBusca);
+    const formAvaliacao = document.getElementById("formAvaliacao");
+    const avaPlacaEl = document.getElementById("avaPlaca");
 
+    if (avaPlacaEl) {
+        avaPlacaEl.addEventListener("input", () => {
+            avaPlacaEl.value = avaPlacaEl.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+        });
+    }
+
+    const avaTelefoneEl = document.getElementById("avaTelefone");
+    if (avaTelefoneEl) {
+        avaTelefoneEl.addEventListener("input", () => {
+            const digitos = avaTelefoneEl.value.replace(/\D/g, "").slice(0, 11);
+            let formatado = digitos;
+            if (digitos.length > 6) {
+                formatado = `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+            } else if (digitos.length > 2) {
+                formatado = `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+            }
+            avaTelefoneEl.value = formatado;
+        });
+    }
+
+    if (formAvaliacao) {
+        formAvaliacao.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const nomeEl = document.getElementById("avaNome");
+            const kmEl = document.getElementById("avaKm");
+
+            let valido = true;
+
+            definirErro(nomeEl, document.getElementById("erroAvaNome"), "");
+            definirErro(avaTelefoneEl, document.getElementById("erroAvaTelefone"), "");
+            definirErro(avaPlacaEl, document.getElementById("erroAvaPlaca"), "");
+            definirErro(kmEl, document.getElementById("erroAvaKm"), "");
+
+            if (!nomeEl.value.trim() || nomeEl.value.trim().length < 3) {
+                definirErro(nomeEl, document.getElementById("erroAvaNome"), "Digite seu nome completo.");
+                valido = false;
+            }
+
+            const digitosTelefone = avaTelefoneEl.value.replace(/\D/g, "");
+            if (digitosTelefone.length < 10) {
+                definirErro(avaTelefoneEl, document.getElementById("erroAvaTelefone"), "Informe um telefone válido com DDD.");
+                valido = false;
+            }
+
+            // Aceita placas no padrão antigo (ABC1234) e Mercosul (ABC1D23)
+            const padraoPlaca = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+            if (!padraoPlaca.test(avaPlacaEl.value)) {
+                definirErro(avaPlacaEl, document.getElementById("erroAvaPlaca"), "Informe uma placa válida (ex: ABC1D23).");
+                valido = false;
+            }
+
+            if (!kmEl.value || Number(kmEl.value) < 0) {
+                definirErro(kmEl, document.getElementById("erroAvaKm"), "Informe a quilometragem atual.");
+                valido = false;
+            }
+
+            if (!valido) {
+                mostrarToast("Revise os campos destacados no formulário.", "erro");
+                return;
+            }
+
+            mostrarToast("Solicitação enviada! Nossa equipe entrará em contato em breve.", "sucesso");
+            formAvaliacao.reset();
+        });
+    }
+
+    // ==========================================
+    // 6. SIMULADOR DE FINANCIAMENTO
+    // ==========================================
+    const btnSimular = document.getElementById("btnSimular");
+    const TAXAS_JUROS = { excelente: 0.0129, bom: 0.0159, regular: 0.0199 };
+
+    if (btnSimular) {
+        btnSimular.addEventListener("click", () => {
+            const finValorEl = document.getElementById("finValor");
+            const finEntradaEl = document.getElementById("finEntrada");
+            const finParcelasEl = document.getElementById("finParcelas");
+            const finScoreEl = document.getElementById("finScore");
+            const erroFin = document.getElementById("erroFinanciamento");
+            const resultado = document.getElementById("resultadoSimulacao");
+
+            if (erroFin) erroFin.textContent = "";
+
+            const valorVeiculo = Number(finValorEl.value);
+            const entrada = Number(finEntradaEl.value) || 0;
+            const parcelas = Number(finParcelasEl.value);
+            const taxa = TAXAS_JUROS[finScoreEl.value] ?? TAXAS_JUROS.bom;
+
+            if (!valorVeiculo || valorVeiculo <= 0) {
+                if (erroFin) erroFin.textContent = "Informe o valor do veículo para simular.";
+                resultado.style.display = "none";
+                return;
+            }
+
+            if (entrada < 0 || entrada >= valorVeiculo) {
+                if (erroFin) erroFin.textContent = "A entrada deve ser menor que o valor do veículo.";
+                resultado.style.display = "none";
+                return;
+            }
+
+            const valorFinanciado = valorVeiculo - entrada;
+
+            // Sistema Price (parcelas fixas): PMT = PV * i / (1 - (1+i)^-n)
+            const parcelaMensal = (valorFinanciado * taxa) / (1 - Math.pow(1 + taxa, -parcelas));
+            const custoTotal = parcelaMensal * parcelas + entrada;
+
+            document.getElementById("resFinanciado").textContent = formatarMoeda(valorFinanciado);
+            document.getElementById("resParcela").textContent = `${formatarMoeda(parcelaMensal)} /mês`;
+            document.getElementById("resTotal").textContent = formatarMoeda(custoTotal);
+            document.getElementById("resTaxa").textContent = `${(taxa * 100).toFixed(2).replace(".", ",")}% a.m.`;
+
+            resultado.style.display = "block";
+        });
+    }
+
+    // ==========================================
+    // 7. INICIALIZAÇÃO
+    // ==========================================
     carregarVeiculosDoBanco();
 });
-
-// Função global para fechar o modal da foto
-function fecharModalFoto() {
-    const modal = document.getElementById('modalVisualizarFoto');
-    if (modal) {
-        modal.classList.remove('ativo');
-    }
-}

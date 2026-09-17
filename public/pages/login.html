@@ -18,13 +18,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Google reCAPTCHA Script (Com carregamento explícito) -->
+    <script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit" async defer></script>
 </head>
 <body>
 
     <!-- Fundo: Dodge Challenger -->
     <div class="bg-image-overlay" aria-hidden="true"></div>
 
-    <!-- Camada de Nuvem 1 (Fundo/Intermediária) -->
+    <!-- Camada de Nuvem 1 -->
     <div class="neblina-layer neblina-fundo" aria-hidden="true"></div>
 
     <!-- Mensagem de Toast/Notificação -->
@@ -109,9 +112,10 @@
         </section>
     </main>
 
-    <!-- Camada de Nuvem 2 (Frontal - Passa por cima da tela trazendo efeito volumétrico) -->
+    <!-- Camada de Nuvem 2 -->
     <div class="neblina-layer neblina-frente" aria-hidden="true"></div>
 
+    <!-- Script Principal de Login (Contém a lógica do reCAPTCHA dinâmico) -->
     <script src="../js/login.js"></script>
 </body>
 </html>
