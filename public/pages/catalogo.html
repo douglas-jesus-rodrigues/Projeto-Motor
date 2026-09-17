@@ -3,49 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex - Portal & Serviços Automotivos</title>
+    <title>MotorFlex — Portal &amp; Serviços Automotivos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/catalogo.css">
     <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
 </head>
 <body>
 
 <div class="container">
+
+    <!-- Aviso simples para leitores de tela sobre trocas de aba -->
+    <div id="liveRegion" class="sr-only" role="status" aria-live="polite"></div>
+
     <!-- Menu de Navegação Superior -->
-    <nav class="navbar">
+    <nav class="navbar" aria-label="Navegação principal">
         <a href="/" class="nav-back-btn" title="Voltar para a Página Inicial">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M19 12H5M12 19l-7-7 7-7"></path>
             </svg>
             <span>Início</span>
         </a>
-        <a href="#" class="nav-link active" data-tab="tab-catalogo">Catálogo de Carros</a>
+        <a href="#" class="nav-link active" data-tab="tab-catalogo" aria-current="page">Catálogo</a>
         <a href="#" class="nav-link" data-tab="tab-cadastrar">Anunciar Veículo</a>
         <a href="#" class="nav-link" data-tab="tab-vender">Avaliação Profissional</a>
         <a href="#" class="nav-link" data-tab="tab-financiamento">Financiamento</a>
     </nav>
 
-    <!-- ABA 1: CATÁLOGO DE VEÍCULOS (LAYOUT LADO A LADO) -->
+    <!-- ABA 1: CATÁLOGO DE VEÍCULOS -->
     <div id="tab-catalogo" class="page-tab active">
         <div class="catalog-layout">
-            
-            <!-- COLUNA DA ESQUERDA: FILTROS LATERAIS -->
+
+            <!-- COLUNA DA ESQUERDA: FILTROS -->
             <aside class="sidebar-filter">
-                <h2 class="section-title">Filtrar Veículos</h2>
+                <h2 class="section-title">Filtrar veículos</h2>
                 <form id="formFiltro" class="filter-form">
                     <div class="filter-vertical-grid">
                         <div class="grupo">
-                            <label for="filtroBusca">Buscar por Marca/Modelo</label>
-                            <input type="text" id="filtroBusca" placeholder="Ex: Honda Civic">
+                            <label for="filtroBusca">Marca ou modelo</label>
+                            <input type="text" id="filtroBusca" placeholder="Ex: Honda Civic" autocomplete="off" maxlength="60">
                         </div>
 
                         <div class="grupo">
-                            <label for="filtroPrecoMax">Preço Máximo (R$)</label>
-                            <input type="number" id="filtroPrecoMax" placeholder="Ex: 100000">
+                            <label for="filtroPrecoMax">Preço máximo (R$)</label>
+                            <input type="number" id="filtroPrecoMax" placeholder="Ex: 100000" min="0" step="1000" inputmode="numeric">
                         </div>
 
                         <div class="grupo">
-                            <label for="filtroAnoMin">Ano Mínimo</label>
-                            <input type="number" id="filtroAnoMin" placeholder="Ex: 2018" min="1900" max="2030">
+                            <label for="filtroAnoMin">Ano mínimo</label>
+                            <input type="number" id="filtroAnoMin" placeholder="Ex: 2018" min="1950" max="2030" inputmode="numeric">
                         </div>
 
                         <div class="grupo">
@@ -85,8 +92,8 @@
                     </div>
 
                     <div class="filter-actions">
-                        <button type="submit" id="btnFiltrar" class="btn-anunciar">Aplicar Filtros</button>
-                        <button type="reset" id="btnLimparFiltros" class="btn-secundario">Limpar Filtros</button>
+                        <button type="submit" id="btnFiltrar" class="btn-primario">Aplicar filtros</button>
+                        <button type="reset" id="btnLimparFiltros" class="btn-secundario">Limpar filtros</button>
                     </div>
                 </form>
             </aside>
@@ -94,70 +101,79 @@
             <!-- COLUNA DA DIREITA: CONTEÚDO DO CATÁLOGO -->
             <main class="catalog-content">
                 <section class="featured-banner">
-                    <h2 class="section-title">Carros em Destaque</h2>
+                    <h2 class="section-title">Destaque da semana</h2>
+                    <div id="featuredCar" class="featured-car" aria-live="polite"></div>
                 </section>
 
                 <section class="catalog-section">
-                    <h2 class="section-title">Veículos Disponíveis</h2>
+                    <div class="section-header-row">
+                        <h2 class="section-title">Veículos disponíveis</h2>
+                        <span id="resultCount" class="result-count"></span>
+                    </div>
+                    <div id="carsGrid" class="cars-grid" aria-live="polite"></div>
                 </section>
 
                 <section class="top-deals-section">
-                    <h2 class="section-title">Principais Ofertas</h2>
+                    <h2 class="section-title">Principais ofertas</h2>
+                    <div id="topDeals" class="top-deals"></div>
                 </section>
             </main>
 
         </div>
     </div>
 
-    <!-- ABA 2: CADASTRAR / ANUNCIAR VEÍCULO (VERSÃO ULTRA COMPACTA) -->
+    <!-- ABA 2: CADASTRAR / ANUNCIAR VEÍCULO -->
     <div id="tab-cadastrar" class="page-tab">
         <section class="card-compacto">
             <div class="topo-compacto">
-                <span class="badge-novo">Novo Anúncio</span>
-                <h2>Cadastrar Veículo</h2>
-                <p>Preencha os dados do veículo abaixo.</p>
+                <span class="badge-novo">Novo anúncio</span>
+                <h2>Cadastrar veículo</h2>
+                <p>Preencha os dados do veículo abaixo. Campos com * são obrigatórios.</p>
             </div>
 
-            <form id="formAnuncio" enctype="multipart/form-data">
+            <form id="formAnuncio" enctype="multipart/form-data" novalidate>
                 <div class="form-grid-compacta">
                     <div class="grupo">
                         <label for="marca">Marca *</label>
-                        <input type="text" id="marca" name="marca" placeholder="Ex: Honda" required>
-                        <small id="erroMarca" class="erro-texto"></small>
+                        <input type="text" id="marca" name="marca" placeholder="Ex: Honda" maxlength="40" required>
+                        <small id="erroMarca" class="erro-texto" role="alert"></small>
                     </div>
 
                     <div class="grupo">
                         <label for="modelo">Modelo *</label>
-                        <input type="text" id="modelo" name="modelo" placeholder="Ex: Civic" required>
-                        <small id="erroModelo" class="erro-texto"></small>
+                        <input type="text" id="modelo" name="modelo" placeholder="Ex: Civic" maxlength="40" required>
+                        <small id="erroModelo" class="erro-texto" role="alert"></small>
                     </div>
 
                     <div class="grupo">
                         <label for="versao">Versão</label>
-                        <input type="text" id="versao" name="versao" placeholder="Ex: EXL 2.0">
+                        <input type="text" id="versao" name="versao" placeholder="Ex: EXL 2.0" maxlength="40">
                     </div>
 
                     <div class="grupo">
                         <label for="preco">Preço (R$) *</label>
                         <div class="input-money-wrapper">
                             <span class="prefixo">R$</span>
-                            <input type="number" id="preco" name="preco" placeholder="98000" step="0.01" min="0" required>
+                            <input type="number" id="preco" name="preco" placeholder="98000" step="0.01" min="1" max="10000000" required>
                         </div>
+                        <small id="erroPreco" class="erro-texto" role="alert"></small>
                     </div>
 
                     <div class="grupo">
-                        <label for="anoFabricacao">Ano Fab. *</label>
-                        <input type="number" id="anoFabricacao" name="ano_fabricacao" placeholder="2021" min="1900" max="2030" required>
+                        <label for="anoFabricacao">Ano fab. *</label>
+                        <input type="number" id="anoFabricacao" name="ano_fabricacao" placeholder="2021" min="1950" max="2030" required>
+                        <small id="erroAnoFabricacao" class="erro-texto" role="alert"></small>
                     </div>
 
                     <div class="grupo">
-                        <label for="anoModelo">Ano Mod. *</label>
-                        <input type="number" id="anoModelo" name="ano_modelo" placeholder="2022" min="1900" max="2030" required>
+                        <label for="anoModelo">Ano mod. *</label>
+                        <input type="number" id="anoModelo" name="ano_modelo" placeholder="2022" min="1950" max="2030" required>
+                        <small id="erroAnoModelo" class="erro-texto" role="alert"></small>
                     </div>
 
                     <div class="grupo">
-                        <label for="quilometragem">KM</label>
-                        <input type="number" id="quilometragem" name="quilometragem" placeholder="45000" min="0">
+                        <label for="quilometragem">Quilometragem</label>
+                        <input type="number" id="quilometragem" name="quilometragem" placeholder="45000" min="0" max="2000000">
                     </div>
 
                     <div class="grupo">
@@ -183,7 +199,7 @@
 
                     <div class="grupo">
                         <label for="cor">Cor</label>
-                        <input type="text" id="cor" name="cor" placeholder="Ex: Preto">
+                        <input type="text" id="cor" name="cor" placeholder="Ex: Preto" maxlength="25">
                     </div>
 
                     <div class="grupo">
@@ -203,33 +219,33 @@
                         </select>
                     </div>
 
-                    <div class="grupo">
-                        <label for="descricao">Descrição Detalhada</label>
-                        <textarea id="descricao" name="descricao" rows="2" placeholder="Opcionais, revisões, detalhes..."></textarea>
+                    <div class="grupo grupo-full">
+                        <label for="descricao">Descrição detalhada</label>
+                        <textarea id="descricao" name="descricao" rows="2" maxlength="600" placeholder="Opcionais, revisões, detalhes..."></textarea>
                     </div>
 
-                    <!-- CAMPO DE FOTO SLIM COM MINIATURA E BOTÃO VER -->
-                    <div class="grupo">
-                        <label>Foto Principal</label>
-                        <div class="upload-foto-container" style="display: flex; align-items: center; gap: 10px;">
-                            <label for="imagem" class="dropzone-compacta-mini" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                <span id="nomeArquivoSelecionado">Selecionar Foto</span>
-                                <input type="file" id="imagem" name="imagem" accept="image/*" style="display: none;">
+                    <!-- CAMPO DE FOTO COM MINIATURA E BOTÃO VER -->
+                    <div class="grupo grupo-full">
+                        <label id="labelFoto">Foto principal</label>
+                        <div class="upload-foto-container">
+                            <label for="imagem" class="dropzone-compacta-mini">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span id="nomeArquivoSelecionado">Selecionar foto</span>
+                                <input type="file" id="imagem" name="imagem" accept="image/png,image/jpeg,image/webp" aria-describedby="labelFoto erroImagem" style="display:none;">
                             </label>
-                            
-                            <!-- Miniatura da Imagem ao lado do botão -->
-                            <img id="miniaturaPreview" src="" alt="Miniatura" style="display: none; width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+
+                            <img id="miniaturaPreview" src="" alt="" style="display:none;">
 
                             <button type="button" id="btnVerFoto" class="btn-ver-foto" disabled title="Selecione uma foto para visualizar">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <span>Ver</span>
                             </button>
                         </div>
+                        <small id="erroImagem" class="erro-texto" role="alert"></small>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-anunciar btn-compacto" id="btnAnunciar">Publicar Anúncio</button>
+                <button type="submit" class="btn-primario btn-compacto" id="btnAnunciar">Publicar anúncio</button>
             </form>
         </section>
     </div>
@@ -238,81 +254,85 @@
     <div id="tab-vender" class="page-tab">
         <section class="card-anuncio">
             <div class="topo">
-                <span class="badge-novo">Venda Garantida</span>
-                <h2>Avaliação Técnica & Compra Rápida</h2>
+                <span class="badge-novo">Venda garantida</span>
+                <h2>Avaliação técnica &amp; compra rápida</h2>
                 <p>Nossa equipe realiza a precificação baseada na Tabela FIPE e análise de mercado.</p>
             </div>
 
-            <form id="formAvaliacao" class="custom-form">
+            <form id="formAvaliacao" class="custom-form" novalidate>
                 <div class="form-grid">
                     <div class="grupo">
-                        <label for="avaNome">Nome Completo *</label>
-                        <input type="text" id="avaNome" placeholder="Seu nome completo" required>
+                        <label for="avaNome">Nome completo *</label>
+                        <input type="text" id="avaNome" placeholder="Seu nome completo" maxlength="80" required>
+                        <small id="erroAvaNome" class="erro-texto" role="alert"></small>
                     </div>
                     <div class="grupo">
                         <label for="avaTelefone">Telefone / WhatsApp *</label>
-                        <input type="tel" id="avaTelefone" placeholder="(00) 00000-0000" required>
+                        <input type="tel" id="avaTelefone" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" required>
+                        <small id="erroAvaTelefone" class="erro-texto" role="alert"></small>
                     </div>
                     <div class="grupo">
-                        <label for="avaPlaca">Placa do Veículo *</label>
-                        <input type="text" id="avaPlaca" placeholder="ABC-1D23" maxlength="8" required style="text-transform:uppercase;">
+                        <label for="avaPlaca">Placa do veículo *</label>
+                        <input type="text" id="avaPlaca" placeholder="ABC1D23" maxlength="7" required style="text-transform:uppercase;">
+                        <small id="erroAvaPlaca" class="erro-texto" role="alert"></small>
                     </div>
                     <div class="grupo">
-                        <label for="avaKm">Quilometragem Atual *</label>
-                        <input type="number" id="avaKm" placeholder="Ex: 45000" required>
+                        <label for="avaKm">Quilometragem atual *</label>
+                        <input type="number" id="avaKm" placeholder="Ex: 45000" min="0" max="2000000" required>
+                        <small id="erroAvaKm" class="erro-texto" role="alert"></small>
                     </div>
                     <div class="grupo">
-                        <label for="avaEstado">Estado de Conservação</label>
+                        <label for="avaEstado">Estado de conservação</label>
                         <select id="avaEstado">
-                            <option value="Excelente">Excelente (Sem detalhes)</option>
-                            <option value="Bom">Bom (Pequenos detalhes de uso)</option>
-                            <option value="Regular">Regular (Necessita de reparos)</option>
+                            <option value="Excelente">Excelente (sem detalhes)</option>
+                            <option value="Bom">Bom (pequenos detalhes de uso)</option>
+                            <option value="Regular">Regular (necessita de reparos)</option>
                         </select>
                     </div>
                     <div class="grupo">
-                        <label for="avaPretensao">Pretensão de Valor (R$)</label>
-                        <input type="number" id="avaPretensao" placeholder="Ex: 85000">
+                        <label for="avaPretensao">Pretensão de valor (R$)</label>
+                        <input type="number" id="avaPretensao" placeholder="Ex: 85000" min="0" max="10000000">
                     </div>
                     <div class="grupo grupo-full">
-                        <label for="avaObservacoes">Observações ou Opcionais</label>
-                        <textarea id="avaObservacoes" rows="3" placeholder="Teto solar, bancos em couro, laudo aprovado..."></textarea>
+                        <label for="avaObservacoes">Observações ou opcionais</label>
+                        <textarea id="avaObservacoes" rows="3" maxlength="500" placeholder="Teto solar, bancos em couro, laudo aprovado..."></textarea>
                     </div>
                 </div>
-                <button type="submit" class="btn-anunciar">Solicitar Proposta de Compra</button>
+                <button type="submit" class="btn-primario">Solicitar proposta de compra</button>
             </form>
         </section>
     </div>
 
-    <!-- ABA 4: FINANCIAMENTO CORPORATIVO -->
+    <!-- ABA 4: FINANCIAMENTO -->
     <div id="tab-financiamento" class="page-tab">
         <section class="card-anuncio">
             <div class="topo">
-                <span class="badge-novo">Simulador Bancário</span>
-                <h2>Simulador de Financiamento Automotivo</h2>
-                <p>Calcule estimativas reais com taxas de juros competitivas.</p>
+                <span class="badge-novo">Simulador</span>
+                <h2>Simulador de financiamento automotivo</h2>
+                <p>Calcule estimativas com taxas de juros indicativas. Valores sujeitos a análise de crédito.</p>
             </div>
 
             <div class="fin-layout">
-                <form id="formFinanciamento" class="fin-form">
+                <form id="formFinanciamento" class="fin-form" novalidate>
                     <div class="form-grid">
                         <div class="grupo">
-                            <label for="finValor">Valor do Veículo (R$) *</label>
+                            <label for="finValor">Valor do veículo (R$) *</label>
                             <div class="input-money-wrapper">
                                 <span class="prefixo">R$</span>
-                                <input type="number" id="finValor" placeholder="100000" required>
+                                <input type="number" id="finValor" placeholder="100000" min="1" max="10000000" required>
                             </div>
                         </div>
 
                         <div class="grupo">
-                            <label for="finEntrada">Valor de Entrada (R$)</label>
+                            <label for="finEntrada">Valor de entrada (R$)</label>
                             <div class="input-money-wrapper">
                                 <span class="prefixo">R$</span>
-                                <input type="number" id="finEntrada" placeholder="30000">
+                                <input type="number" id="finEntrada" placeholder="30000" min="0" max="10000000">
                             </div>
                         </div>
 
                         <div class="grupo">
-                            <label for="finParcelas">Prazo de Financiamento</label>
+                            <label for="finParcelas">Prazo de financiamento</label>
                             <select id="finParcelas">
                                 <option value="12">12 parcelas</option>
                                 <option value="24">24 parcelas</option>
@@ -323,35 +343,35 @@
                         </div>
 
                         <div class="grupo">
-                            <label for="finScore">Perfil de Crédito (Score Estimado)</label>
+                            <label for="finScore">Perfil de crédito (score estimado)</label>
                             <select id="finScore">
-                                <option value="excelente">Excelente (Acima de 800) - Taxa 1.29% a.m.</option>
-                                <option value="bom" selected>Bom (600 a 799) - Taxa 1.59% a.m.</option>
-                                <option value="regular">Regular (Até 599) - Taxa 1.99% a.m.</option>
+                                <option value="excelente">Excelente (acima de 800) — 1,29% a.m.</option>
+                                <option value="bom" selected>Bom (600 a 799) — 1,59% a.m.</option>
+                                <option value="regular">Regular (até 599) — 1,99% a.m.</option>
                             </select>
                         </div>
                     </div>
-
-                    <button type="button" id="btnSimular" class="btn-anunciar">Calcular Simulação</button>
+                    <small id="erroFinanciamento" class="erro-texto" role="alert"></small>
+                    <button type="button" id="btnSimular" class="btn-primario">Calcular simulação</button>
                 </form>
 
-                <div id="resultadoSimulacao" class="fin-result-card" style="display: none;">
-                    <h3>Resumo da Simulação</h3>
+                <div id="resultadoSimulacao" class="fin-result-card" style="display: none;" aria-live="polite">
+                    <h3>Resumo da simulação</h3>
                     <div class="fin-summary-grid">
                         <div class="fin-item">
-                            <span>Valor Financiado:</span>
+                            <span>Valor financiado</span>
                             <strong id="resFinanciado">R$ 0,00</strong>
                         </div>
                         <div class="fin-item">
-                            <span>Valor das Parcelas:</span>
+                            <span>Valor das parcelas</span>
                             <strong id="resParcela" class="highlight-price">R$ 0,00 /mês</strong>
                         </div>
                         <div class="fin-item">
-                            <span>Custo Total Estimado:</span>
+                            <span>Custo total estimado</span>
                             <strong id="resTotal">R$ 0,00</strong>
                         </div>
                         <div class="fin-item">
-                            <span>Taxa Aplicada:</span>
+                            <span>Taxa aplicada</span>
                             <strong id="resTaxa">0% a.m.</strong>
                         </div>
                     </div>
@@ -362,16 +382,19 @@
 
 </div>
 
-<!-- MODAL POPUP PARA PRÉ-VISUALIZAÇÃO DA FOTO -->
-<div id="modalVisualizarFoto" class="modal-foto">
+<!-- MODAL DE PRÉ-VISUALIZAÇÃO DA FOTO -->
+<div id="modalVisualizarFoto" class="modal-foto" role="dialog" aria-modal="true" aria-labelledby="modalFotoTitulo">
     <div class="modal-conteudo">
-        <h3>Pré-visualização do Veículo</h3>
-        <img id="imgPreviewModal" src="" alt="Pré-visualização da Foto">
-        <button type="button" class="btn-fechar-modal" onclick="fecharModalFoto()">Fechar</button>
+        <h3 id="modalFotoTitulo">Pré-visualização do veículo</h3>
+        <img id="imgPreviewModal" src="" alt="Pré-visualização da foto selecionada">
+        <button type="button" class="btn-fechar-modal" id="btnFecharModal">Fechar</button>
     </div>
 </div>
+
+<!-- Região de notificações (substitui alert()) -->
+<div id="toastContainer" class="toast-container" aria-live="assertive"></div>
 
 <!-- Scripts -->
 <script src="/js/catalogo.js"></script>
 </body>
-</html>
+</html> 
