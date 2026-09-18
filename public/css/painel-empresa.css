@@ -101,12 +101,13 @@ button {
     display: flex;
     flex-direction: column;
     z-index: 100;
+    overflow-y: auto;
 }
 
 .logo {
     font-size: clamp(1.5rem, 2vw, 1.9rem);
     font-weight: 800;
-    margin-bottom: 40px;
+    margin-bottom: 25px;
     padding-left: 10px;
     letter-spacing: -0.5px;
 }
@@ -115,6 +116,99 @@ button {
     color: var(--primary);
 }
 
+/* =========================================
+   FOTO DE PERFIL NO PAINEL (AVATAR COM ÍCONES NAS BORDAS)
+========================================= */
+.perfil-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px;
+}
+
+.avatar-wrapper {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    overflow: visible; /* Permite que os ícones fiquem na linha/borda */
+    cursor: pointer;
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.foto-perfil-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.avatar-wrapper:hover .foto-perfil-preview {
+    transform: scale(1.04);
+}
+
+/* Ícone de Câmera (Canto Inferior Direito) */
+.avatar-overlay {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    border: 2px solid var(--bg-sidebar);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, background 0.2s ease;
+    pointer-events: none;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+    transform: scale(1.1);
+    background: var(--primary-hover);
+}
+
+.icone-camera {
+    font-size: 0.8rem;
+    color: #fff;
+    line-height: 1;
+}
+
+/* Botão de Lixeira (Canto Inferior Esquerdo) */
+.btn-lixeira-perfil {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background: #dc2626;
+    border: 2px solid var(--bg-sidebar);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+    z-index: 5;
+}
+
+.btn-lixeira-perfil:hover {
+    transform: scale(1.15);
+    background: #b91c1c;
+}
+
+/* =========================================
+   MENU LATERAL
+========================================= */
 .menu {
     display: flex;
     flex-direction: column;
@@ -147,6 +241,17 @@ button {
     transform: scale(0.97);
 }
 
+#btnSair {
+    color: #f87171;
+    margin-top: 10px;
+    border: 1px dashed rgba(220, 38, 38, 0.3);
+}
+
+#btnSair:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #fca5a5;
+}
+
 /* =========================================
    CONTEÚDO E SEÇÕES
 ========================================= */
@@ -161,7 +266,6 @@ button {
     display: none;
 }
 
-/* Animação suave ao trocar de aba */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -218,10 +322,6 @@ button {
     box-shadow: 0 6px 20px rgba(229, 9, 20, 0.35);
 }
 
-.btn-anunciar:active {
-    transform: scale(0.96);
-}
-
 /* =========================================
    CARD EMPRESA E BOX GERAL
 ========================================= */
@@ -240,12 +340,6 @@ button {
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
-}
-
-.empresa-card p {
-    color: var(--text-muted);
-    margin-top: 6px;
-    font-size: 0.95rem;
 }
 
 .status {
@@ -268,18 +362,6 @@ button {
 .box-topo h3 {
     font-size: 1.15rem;
     font-weight: 600;
-}
-
-.box-topo a {
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.95rem;
-    transition: color 0.2s;
-}
-
-.box-topo a:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
 }
 
 /* =========================================
@@ -317,11 +399,8 @@ button {
 
 .card strong {
     font-size: 2.2rem;
-    color: var(--text-main); /* Mudado para branco p/ destacar o número */
+    color: var(--text-main);
     font-weight: 700;
-}
-.card strong span {
-    color: var(--primary); /* Se quiser manter apenas uma parte do número/símbolo em vermelho */
 }
 
 /* =========================================
@@ -329,6 +408,7 @@ button {
 ========================================= */
 .dados-conta {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
 }
 
@@ -336,8 +416,12 @@ button {
     color: var(--text-muted);
     font-size: 0.95rem;
     display: flex;
-    flex-direction: column; /* Coloca o rótulo em cima do dado */
+    flex-direction: column;
     gap: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
 }
 
 .dados-conta strong {
@@ -412,7 +496,7 @@ button {
 
 .btn-editar {
     background: rgba(37, 99, 235, 0.15);
-    color: #60a5fa; /* Azul claro */
+    color: #60a5fa;
 }
 
 .btn-editar:hover {
@@ -422,7 +506,7 @@ button {
 
 .btn-excluir {
     background: rgba(220, 38, 38, 0.15);
-    color: #f87171; /* Vermelho claro */
+    color: #f87171;
 }
 
 .btn-excluir:hover {
@@ -430,8 +514,107 @@ button {
     color: white;
 }
 
-.btn-editar:active, .btn-excluir:active {
-    transform: scale(0.94);
+/* =========================================
+   MODAIS (RECORTE, CÂMERA E SAÍDA)
+========================================= */
+.modal-recorte-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-recorte-conteudo {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.modal-recorte-conteudo h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.modal-recorte-conteudo p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.img-container, .video-container {
+    width: 100%;
+    max-height: 320px;
+    margin-bottom: 20px;
+    background: #000;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--border-light);
+}
+
+.img-container img, .video-container video {
+    max-width: 100%;
+    max-height: 300px;
+    display: block;
+}
+
+.modal-recorte-botoes {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-acao {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all var(--transition);
+}
+
+.btn-secundario {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--border-light);
+}
+
+.btn-secundario:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-primario {
+    background: var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+}
+
+.btn-primario:hover {
+    background: var(--primary-hover);
+}
+
+.btn-perigo {
+    background: var(--danger-bg);
+    color: white;
+}
+
+.btn-perigo:hover {
+    background: var(--danger-hover);
 }
 
 /* =========================================
@@ -442,9 +625,27 @@ button {
     padding: 30px 0;
     text-align: center;
     font-style: italic;
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-md);
     border: 1px dashed var(--border-solid);
+    grid-column: 1 / -1;
+}
+
+/* =========================================
+   MÁSCARA CIRCULAR DO CROPPER (Estilo WhatsApp)
+========================================= */
+.cropper-view-box,
+.cropper-face {
+    border-radius: 50% !important;
+}
+
+.cropper-view-box {
+    outline: 2px solid #fff;
+    outline-color: rgba(255, 255, 255, 0.85);
+}
+
+.cropper-modal {
+    background-color: rgba(0, 0, 0, 0.75);
 }
 
 /* =========================================
@@ -471,16 +672,18 @@ button {
     }
 
     .logo {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         text-align: center;
     }
 
-    /* Menu vira horizontal e rolável no celular/tablet */
+    .perfil-sidebar {
+        margin-bottom: 20px;
+    }
+
     .menu {
         flex-direction: row;
         overflow-x: auto;
         padding-bottom: 5px;
-        /* Esconde a barra de rolagem mas mantém o scroll */
         scrollbar-width: none; 
     }
     .menu::-webkit-scrollbar {
@@ -488,7 +691,7 @@ button {
     }
 
     .menu a {
-        white-space: nowrap; /* Impede os botões do menu de quebrarem linha */
+        white-space: nowrap;
     }
 
     .topo, .empresa-card {
