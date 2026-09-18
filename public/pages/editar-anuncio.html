@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex - Editar Anúncio</title>
+    <link rel="stylesheet" href="/css/editar-anuncio.css">
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Editar Anúncio</h2>
+        
+        <form id="form-editar-anuncio">
+            <input type="hidden" id="veiculo-id">
+
+            <div class="input-group">
+                <label for="marca">Marca</label>
+                <input type="text" id="marca" required>
+            </div>
+
+            <div class="input-group">
+                <label for="modelo">Modelo</label>
+                <input type="text" id="modelo" required>
+            </div>
+
+            <div class="input-group">
+                <label for="versao">Versão</label>
+                <input type="text" id="versao">
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="ano_fabricacao">Ano Fabricação</label>
+                    <input type="number" id="ano_fabricacao" required>
+                </div>
+                <div class="input-group">
+                    <label for="ano_modelo">Ano Modelo</label>
+                    <input type="number" id="ano_modelo" required>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="quilometragem">Quilometragem (km)</label>
+                    <input type="number" id="quilometragem">
+                </div>
+                <div class="input-group">
+                    <label for="preco">Valor Total (R$)</label>
+                    <input type="number" step="0.01" id="preco" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-salvar">Atualizar Anúncio</button>
+            <a href="/pages/meus-anuncios.html" class="btn-voltar">Voltar para Meus Anúncios</a>
+        </form>
+    </div>
+
+    <script src="/js/editar-anuncio.js"></script>
+</body>
+</html>
