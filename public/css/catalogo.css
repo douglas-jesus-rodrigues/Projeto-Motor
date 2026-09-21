@@ -256,7 +256,7 @@ h1, h2, h3 {
 
 .card-img-wrapper {
     width: 100%;
-    height: 172px;
+    height: 190px;
     overflow: hidden;
     background: var(--surface-2);
     position: relative;
@@ -267,25 +267,39 @@ h1, h2, h3 {
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.3s ease;
 }
 
+.card-item-catalogo:hover .card-img-wrapper img {
+    transform: scale(1.03);
+}
+
+/* BOTÃO DE FAVORITAR NO CATÁLOGO (IDÊNTICO AO DE DETALHES) */
 .btn-favoritar {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(10, 12, 15, 0.72);
-    border: 1px solid var(--border);
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    width: 34px;
-    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    z-index: 10;
+    transition: all 0.2s ease;
 }
 
-.btn-favoritar:hover { background: rgba(10, 12, 15, 0.9); }
+.btn-favoritar:hover {
+    background: rgba(229, 9, 20, 0.85);
+    transform: scale(1.08);
+    border-color: #ff0000;
+}
 
 .card-corpo {
     padding: 16px;

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex - Detalhes do Veículo</title>
+    <link rel="icon" href="/imagens/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/detalhes-veiculo.css">
+</head>
+<body>
+
+    <!-- HEADER DO SITE -->
+    <header class="header">
+        <div class="logo">
+            <h1>Motor<span>Flex</span></h1>
+        </div>
+        <nav class="nav-menu">
+            <a href="javascript:history.back()"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+            <a href="/pages/catalogo.html"><i class="fa-solid fa-car"></i> Catálogo</a>
+        </nav>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL DO VEÍCULO -->
+    <main class="detalhes-container">
+        
+        <!-- ESTADO DE CARREGAMENTO -->
+        <div id="loading" class="loading-state">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>Carregando informações do veículo...</p>
+        </div>
+
+        <!-- ESTRUTURA DOS DETALHES (Oculta até carregar) -->
+        <div id="conteudoVeiculo" class="conteudo-principal" style="display: none;">
+            
+            <!-- SEÇÃO ESQUERDA: FOTOS E DESCRIÇÃO -->
+            <div class="coluna-esquerda">
+                <div class="galeria-card">
+                    <div class="foto-principal-wrapper">
+                        <img id="fotoPrincipal" src="" alt="Foto do Veículo" onclick="abrirModalImagem(this.src)">
+                        
+                        <!-- BOTÃO DE FAVORITAR NO CANTO DA IMAGEM -->
+                        <button type="button" id="btnFavoritarDetalhe" class="btn-favoritar-detalhe" title="Favoritar veículo" aria-pressed="false">
+                            <i id="iconeFavorito" class="fa-regular fa-heart"></i>
+                        </button>
+
+                        <div class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Clique para ampliar</div>
+                    </div>
+                </div>
+
+                <div class="info-card descricao-card">
+                    <h3><i class="fa-solid fa-align-left"></i> Descrição do Vendedor</h3>
+                    <p id="descricaoVeiculo">O proprietário não adicionou uma descrição detalhada para este veículo.</p>
+                </div>
+            </div>
+
+            <!-- SEÇÃO DIREITA: PREÇO, FICHA TÉCNICA E CONTATO -->
+            <div class="coluna-direita">
+                
+                <!-- CABEÇALHO DO ANÚNCIO -->
+                <div class="info-card header-anuncio-card">
+                    <span id="marcaModeloBadge" class="badge-marca">Marca / Modelo</span>
+                    <h1 id="tituloVeiculo">Nome do Veículo</h1>
+                    <p id="versaoVeiculo" class="versao-texto">Versão detalhada</p>
+                    <div id="precoVeiculo" class="preco-destaque">R$ 0,00</div>
+                </div>
+
+                <!-- ESPECIFICAÇÕES TÉCNICAS (GRID) -->
+                <div class="info-card specs-card">
+                    <h3><i class="fa-solid fa-gauge-high"></i> Especificações Técnicas</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <div>
+                                <span class="spec-label">Ano Fab/Mod</span>
+                                <span id="specAno" class="spec-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="spec-item">
+                            <i class="fa-solid fa-road"></i>
+                            <div>
+                                <span class="spec-label">Quilometragem</span>
+                                <span id="specQuilometragem" class="spec-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="spec-item">
+                            <i class="fa-solid fa-gas-pump"></i>
+                            <div>
+                                <span class="spec-label">Combustível</span>
+                                <span id="specCombustivel" class="spec-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="spec-item">
+                            <i class="fa-solid fa-gears"></i>
+                            <div>
+                                <span class="spec-label">Câmbio</span>
+                                <span id="specCambio" class="spec-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="spec-item">
+                            <i class="fa-solid fa-palette"></i>
+                            <div>
+                                <span class="spec-label">Cor</span>
+                                <span id="specCor" class="spec-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="spec-item">
+                            <i class="fa-solid fa-door-open"></i>
+                            <div>
+                                <span class="spec-label">Portas</span>
+                                <span id="specPortas" class="spec-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD DE CONTATO / PROPOSTA -->
+                <div class="info-card contato-card">
+                    <h3><i class="fa-solid fa-headset"></i> Interessado neste carro?</h3>
+                    <p>Entre em contacto com o anunciante ou faça uma proposta diretamente pela plataforma.</p>
+                    <button class="btn-proposta" onclick="enviarPropostaModal()">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Proposta
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO DE IMAGEM (LIGHTBOX) -->
+    <div id="modalImagem" class="modal-imagem-overlay" onclick="fecharModalImagem()">
+        <div class="modal-imagem-conteudo" onclick="event.stopPropagation()">
+            <button class="modal-fechar" onclick="fecharModalImagem()">&times;</button>
+            <img id="imagemAmpliada" src="" alt="Veículo Ampliado">
+        </div>
+    </div>
+
+    <!-- ESTILOS EXCLUSIVOS PARA O BOTÃO DE FAVORITO NA IMAGEM -->
+    <style>
+        .btn-favoritar-detalhe {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+
+        .btn-favoritar-detalhe:hover {
+            background: rgba(229, 9, 20, 0.8);
+            transform: scale(1.08);
+            border-color: #e50914;
+        }
+
+        .btn-favoritar-detalhe i.fa-solid.fa-heart {
+            color: #e50914;
+        }
+
+        .btn-favoritar-detalhe:hover i.fa-solid.fa-heart {
+            color: #fff;
+        }
+    </style>
+
+    <script src="/js/detalhes-veiculo.js"></script>
+</body>
+</html>

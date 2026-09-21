@@ -4,16 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // 0. UTILITÁRIOS DE SEGURANÇA
     // ==========================================
 
-    // Escapa qualquer texto antes de inseri-lo via innerHTML, prevenindo XSS
-    // caso dados vindos da API contenham marcação maliciosa.
     function escapeHTML(valor) {
         return String(valor ?? "").replace(/[&<>"']/g, (c) => ({
             "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
         }[c]));
     }
 
-    // Só aceita imagens de origem relativa ao próprio site ou https,
-    // bloqueando esquemas como "javascript:" ou "data:" vindos da API.
     function sanitizarSrcImagem(src) {
         if (typeof src !== "string") return "/imagens/sem-foto.jpg";
         if (src.startsWith("/") || src.startsWith("https://")) return src;
@@ -28,11 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Nota de segurança: o objeto "usuario" no localStorage é usado aqui
-    // apenas para conveniência de navegação (mostrar/ocultar abas). Ele NÃO
-    // deve ser tratado como prova de autenticação — qualquer chamada de API
-    // que dependa disso precisa validar a sessão/token no servidor, pois
-    // dados em localStorage podem ser alterados livremente pelo usuário.
     const usuario = lerLocalStorageSeguro("usuario") || { id: 1, tipo: "cliente" };
 
     const btnPainel = document.getElementById("btnPainel");
@@ -55,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!toastContainer) { return; }
         const toast = document.createElement("div");
         toast.className = `toast ${tipo}`;
-        toast.textContent = mensagem; // textContent: nunca interpreta HTML
+        toast.textContent = mensagem;
         toastContainer.appendChild(toast);
         setTimeout(() => toast.remove(), 4500);
     }
@@ -91,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const paragrafo = document.createElement("p");
         paragrafo.style.cssText = "color:#8b93a1; font-size:13.5px; line-height:1.6; margin-bottom:22px;";
-        paragrafo.textContent = mensagem; // texto sempre tratado como dado, não HTML
+        paragrafo.textContent = mensagem;
 
         const rodape = document.createElement("div");
         rodape.style.cssText = "color:#5b6270; font-size:11px; letter-spacing:1px;";
@@ -259,21 +250,25 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const usuarioLogado = lerLocalStorageSeguro("usuario");
+        const temLoginValido = usuarioLogado && usuarioLogado.id;
         const favoritosIds = lerLocalStorageSeguro("favoritos_veiculos") || [];
 
         lista.forEach((veiculo) => {
-            const isFavorito = Array.isArray(favoritosIds) && favoritosIds.includes(veiculo.id);
+            const isFavorito = temLoginValido && Array.isArray(favoritosIds) && favoritosIds.includes(veiculo.id);
             const nomeCompleto = `${veiculo.marca_nome} ${veiculo.modelo_nome}`.trim();
 
             const card = document.createElement("div");
             card.className = "card-item-catalogo";
 
-            // Todo dado dinâmico passa por escapeHTML antes de ir para innerHTML.
+            const iconeClasse = isFavorito ? "fa-solid fa-heart" : "fa-regular fa-heart";
+            const corIcone = isFavorito ? "color: #ff0000;" : "color: #ffffff;";
+
             card.innerHTML = `
                 <div class="card-img-wrapper">
                     <img src="${sanitizarSrcImagem(veiculo.imagem)}" alt="${escapeHTML(nomeCompleto)}" loading="lazy">
-                    <button type="button" class="btn-favoritar" data-id="${veiculo.id}" title="Favoritar veículo" aria-pressed="${isFavorito}">
-                        <span aria-hidden="true">${isFavorito ? "❤️" : "🤍"}</span>
+                    <button type="button" class="btn-favoritar" data-id="${veiculo.id}" title="${isFavorito ? 'Remover dos favoritos' : 'Favoritar veículo'}" aria-pressed="${isFavorito}">
+                        <i class="${iconeClasse}" style="${corIcone}"></i>
                     </button>
                 </div>
                 <div class="card-corpo">
@@ -285,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="rotulo-preco">Valor total</span>
                             <span class="card-preco">${formatarMoeda(veiculo.preco)}</span>
                         </div>
-                        <a href="/pages/detalhes.html?id=${encodeURIComponent(veiculo.id)}" class="btn-detalhes">Ver detalhes</a>
+                        <a href="/pages/detalhes-veiculo.html?id=${encodeURIComponent(veiculo.id)}" class="btn-detalhes">Ver detalhes</a>
                     </div>
                 </div>
             `;
@@ -295,8 +290,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const usuarioLogado = lerLocalStorageSeguro("usuario");
-                if (!usuarioLogado || !usuarioLogado.id) {
+                const usuarioAtual = lerLocalStorageSeguro("usuario");
+                if (!usuarioAtual || !usuarioAtual.id) {
                     mostrarAvisoRedirecionarLogin("Para favoritar veículos e gerenciar suas preferências, é necessário acessar sua conta no sistema.");
                     return;
                 }
@@ -309,8 +304,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? favsAtuais.filter((id) => id !== veiculo.id)
                     : [...favsAtuais, veiculo.id];
 
-                btnFav.querySelector("span").textContent = jaFavoritado ? "🤍" : "❤️";
+                const icone = btnFav.querySelector("i");
+                if (icone) {
+                    icone.className = jaFavoritado ? "fa-regular fa-heart" : "fa-solid fa-heart";
+                    icone.style.color = jaFavoritado ? "#ffffff" : "#ff0000";
+                }
                 btnFav.setAttribute("aria-pressed", String(!jaFavoritado));
+                btnFav.title = jaFavoritado ? "Favoritar veículo" : "Remover dos favoritos";
+
                 localStorage.setItem("favoritos_veiculos", JSON.stringify(favsAtuais));
             });
 
@@ -370,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnLimpar) {
         btnLimpar.addEventListener("click", () => {
-            setTimeout(executarBusca, 0); // aguarda o reset nativo do form
+            setTimeout(executarBusca, 0);
         });
     }
 
@@ -595,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 5. AVALIAÇÃO PROFISSIONAL (validação client-side)
+    // 5. AVALIAÇÃO PROFISSIONAL
     // ==========================================
     const formAvaliacao = document.getElementById("formAvaliacao");
     const avaPlacaEl = document.getElementById("avaPlaca");
@@ -645,7 +646,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 valido = false;
             }
 
-            // Aceita placas no padrão antigo (ABC1234) e Mercosul (ABC1D23)
             const padraoPlaca = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
             if (!padraoPlaca.test(avaPlacaEl.value)) {
                 definirErro(avaPlacaEl, document.getElementById("erroAvaPlaca"), "Informe uma placa válida (ex: ABC1D23).");
@@ -702,8 +702,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const valorFinanciado = valorVeiculo - entrada;
-
-            // Sistema Price (parcelas fixas): PMT = PV * i / (1 - (1+i)^-n)
             const parcelaMensal = (valorFinanciado * taxa) / (1 - Math.pow(1 + taxa, -parcelas));
             const custoTotal = parcelaMensal * parcelas + entrada;
 
@@ -717,7 +715,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 7. INICIALIZAÇÃO
+    // 7. SINCRONIZAÇÃO DE FAVORITOS EM TEMPO REAL
+    // ==========================================
+    window.addEventListener("storage", (event) => {
+        if (event.key === "favoritos_veiculos") {
+            let novosFavoritos = [];
+            try {
+                novosFavoritos = JSON.parse(event.newValue) || [];
+            } catch {
+                novosFavoritos = [];
+            }
+
+            const usuarioAtual = lerLocalStorageSeguro("usuario");
+            const temLoginAtual = usuarioAtual && usuarioAtual.id;
+
+            document.querySelectorAll(".btn-favoritar").forEach((btn) => {
+                const idVeiculo = Number(btn.getAttribute("data-id"));
+                const ehFav = temLoginAtual && novosFavoritos.includes(idVeiculo);
+                
+                const icone = btn.querySelector("i");
+                if (icone) {
+                    icone.className = ehFav ? "fa-solid fa-heart" : "fa-regular fa-heart";
+                    icone.style.color = ehFav ? "#ff0000" : "#ffffff";
+                }
+                btn.setAttribute("aria-pressed", String(ehFav));
+                btn.title = ehFav ? "Remover dos favoritos" : "Favoritar veículo";
+            });
+        }
+    });
+
+    // ==========================================
+    // 8. INICIALIZAÇÃO
     // ==========================================
     carregarVeiculosDoBanco();
 });

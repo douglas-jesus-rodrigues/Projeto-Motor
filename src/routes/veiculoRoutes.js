@@ -282,12 +282,43 @@ router.post("/:id/visualizar", async (req, res) => {
     }
 
     try {
+        // 1. Verifica se o usuário que está a visualizar é um administrador
+        const [usuarios] = await db.query("SELECT tipo FROM usuarios WHERE id = ?", [usuario_id]);
+        
+        if (usuarios.length > 0 && usuarios[0].tipo === 'admin') {
+            return res.status(200).json({ 
+                sucesso: true, 
+                ignorado: true, 
+                mensagem: "Visualização de administrador ignorada." 
+            });
+        }
+
+        // 2. Identifica quem é o dono do anúncio
+        const [veiculos] = await db.query("SELECT usuario_id FROM veiculos WHERE id = ?", [id]);
+        
+        if (veiculos.length === 0) {
+            return res.status(404).json({ sucesso: false, mensagem: "Veículo não encontrado." });
+        }
+
+        const donoId = Number(veiculos[0].usuario_id);
+        const visitanteId = Number(usuario_id);
+
+        // 3. Se o dono do anúncio estiver a ver o próprio carro, ignora
+        if (donoId === visitanteId) {
+            return res.status(200).json({ 
+                sucesso: true, 
+                ignorado: true, 
+                mensagem: "Visualização do próprio proprietário ignorada." 
+            });
+        }
+
+        // 4. Regista a visualização única se for um comprador válido
         await db.query(
             `INSERT IGNORE INTO visualizacoes_anuncios (veiculo_id, usuario_id) VALUES (?, ?)`,
-            [id, usuario_id]
+            [id, visitanteId]
         );
 
-        return res.status(200).json({ sucesso: true });
+        return res.status(200).json({ sucesso: true, mensagem: "Visualização registada com sucesso." });
     } catch (erro) {
         console.error("❌ Erro ao registar visualização:", erro);
         return res.status(500).json({ sucesso: false, mensagem: "Erro interno ao registar visualização." });
@@ -491,7 +522,6 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Opcional: remover fotos associadas antes ou confiar no ON DELETE CASCADE da base de dados
         await db.query("DELETE FROM fotos_veiculos WHERE veiculo_id = ?", [id]);
         await db.query("DELETE FROM visualizacoes_anuncios WHERE veiculo_id = ?", [id]);
         
