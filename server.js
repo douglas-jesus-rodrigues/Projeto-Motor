@@ -80,6 +80,10 @@ app.use("/api/moderacao", moderacaoRoutes);
 const perfilRoutes = require("./src/routes/perfilRoutes");
 app.use("/api/perfil", perfilRoutes);
 
+// Rotas auxiliares (Combustíveis e Câmbios do Banco de Dados)
+const auxiliaresRoutes = require("./src/routes/auxiliaresRoutes");
+app.use("/api", auxiliaresRoutes);
+
 // ==========================================
 // ENDPOINTS AUXILIARES E TRATAMENTO
 // ==========================================
@@ -107,4 +111,3 @@ const PROD = process.env.PROD || "http://localhost";
 app.listen(PORT, () => {
     console.log(`🚀 Servidor MotorFlex rodando em ${PROD}:${PORT}`);
 });
-
