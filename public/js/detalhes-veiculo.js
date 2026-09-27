@@ -1,4 +1,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    
+    // ==========================================
+    // 0. CORREÇÃO DE CACHE E ESTADO AO VOLTAR (BFCACHE)
+    // ==========================================
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted || performance.navigation.type === 2) {
+            window.location.reload();
+        }
+    });
+
     // 1. Pega o ID do veículo na URL (ex: detalhes-veiculo.html?id=3)
     const urlParams = new URLSearchParams(window.location.search);
     const veiculoId = urlParams.get('id');
@@ -271,7 +281,6 @@ async function enviarPropostaModal() {
     const tituloVeiculo = document.getElementById("tituloVeiculo")?.textContent || "este veículo";
     const precoVeiculo = document.getElementById("precoVeiculo")?.textContent || "";
 
-    // Mensagem automática inteligente com os dados exatos do carro
     const mensagemAutomatica = `Olá! Tenho interesse no ${tituloVeiculo} anunciado por ${precoVeiculo}. Gostaria de negociar.`;
 
     try {
