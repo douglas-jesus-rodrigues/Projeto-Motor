@@ -5,54 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MotorFlex - Editar Anúncio</title>
     <link rel="stylesheet" href="/css/editar-anuncio.css">
+    <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
 </head>
 <body>
 
     <div class="form-container">
-        <h2>Editar Anúncio</h2>
+        <header class="form-header">
+            <div class="header-badge">Painel de Gestão</div>
+            <h2>Editar Anúncio</h2>
+            <p>Atualize as especificações técnicas e comerciais do seu veículo no marketplace</p>
+        </header>
         
         <form id="form-editar-anuncio">
             <input type="hidden" id="veiculo-id">
 
-            <div class="input-group">
-                <label for="marca">Marca</label>
-                <input type="text" id="marca" required>
-            </div>
-
-            <div class="input-group">
-                <label for="modelo">Modelo</label>
-                <input type="text" id="modelo" required>
-            </div>
-
-            <div class="input-group">
-                <label for="versao">Versão</label>
-                <input type="text" id="versao">
-            </div>
-
-            <div class="input-row">
-                <div class="input-group">
-                    <label for="ano_fabricacao">Ano Fabricação</label>
-                    <input type="number" id="ano_fabricacao" required>
+            <!-- SECÇÃO 1: IDENTIFICAÇÃO -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-icon">🏷️</span>
+                    <h3>Identificação do Veículo</h3>
                 </div>
-                <div class="input-group">
-                    <label for="ano_modelo">Ano Modelo</label>
-                    <input type="number" id="ano_modelo" required>
-                </div>
-            </div>
+                
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="marca">Marca</label>
+                        <input type="text" id="marca" placeholder="Ex: Chevrolet" required>
+                    </div>
 
-            <div class="input-row">
-                <div class="input-group">
-                    <label for="quilometragem">Quilometragem (km)</label>
-                    <input type="number" id="quilometragem">
-                </div>
-                <div class="input-group">
-                    <label for="preco">Valor Total (R$)</label>
-                    <input type="number" step="0.01" id="preco" required>
+                    <div class="input-group">
+                        <label for="modelo">Modelo</label>
+                        <input type="text" id="modelo" placeholder="Ex: Camaro SS" required>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="versao">Versão Detalhada</label>
+                        <input type="text" id="versao" placeholder="Ex: 6.2 V8 16V Coupé">
+                    </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-salvar">Atualizar Anúncio</button>
-            <a href="/pages/meus-anuncios.html" class="btn-voltar">Voltar para Meus Anúncios</a>
+            <!-- SECÇÃO 2: CARACTERÍSTICAS TÉCNICAS -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    <h3>Características Técnicas</h3>
+                </div>
+
+                <div class="input-grid">
+                    <!-- Ano Fabricação com Stepper Compacto -->
+                    <div class="input-group">
+                        <label for="ano_fabricacao">Ano Fabricação</label>
+                        <div class="stepper-wrapper">
+                            <input type="text" id="ano_fabricacao" maxlength="4" placeholder="Ex: 2017" required>
+                            <div class="stepper-btns">
+                                <button type="button" class="btn-step" onclick="ajustarValor('ano_fabricacao', 1, 1900)">▲</button>
+                                <button type="button" class="btn-step" onclick="ajustarValor('ano_fabricacao', -1, 1900)">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ano Modelo com Stepper Compacto -->
+                    <div class="input-group">
+                        <label for="ano_modelo">Ano Modelo</label>
+                        <div class="stepper-wrapper">
+                            <input type="text" id="ano_modelo" maxlength="4" placeholder="Ex: 2017" required>
+                            <div class="stepper-btns">
+                                <button type="button" class="btn-step" onclick="ajustarValor('ano_modelo', 1, 1900)">▲</button>
+                                <button type="button" class="btn-step" onclick="ajustarValor('ano_modelo', -1, 1900)">▼</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="combustivel">Combustível</label>
+                        <select id="combustivel" required>
+                            <option value="">A carregar do sistema...</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cambio">Câmbio / Transmissão</label>
+                        <select id="cambio" required>
+                            <option value="">A carregar do sistema...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECÇÃO 3: VALORES E ESTADO -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span class="section-icon">💰</span>
+                    <h3>Valores e Estado</h3>
+                </div>
+
+                <div class="input-grid">
+                    <!-- Quilometragem com Stepper Compacto -->
+                    <div class="input-group">
+                        <label for="quilometragem">Quilometragem (km)</label>
+                        <div class="stepper-wrapper">
+                            <input type="text" id="quilometragem" placeholder="Ex: 45000">
+                            <div class="stepper-btns">
+                                <button type="button" class="btn-step" onclick="ajustarValor('quilometragem', 1000, 0)">▲</button>
+                                <button type="button" class="btn-step" onclick="ajustarValor('quilometragem', -1000, 0)">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group destaque-preco">
+                        <label for="preco">Valor do Veículo (R$)</label>
+                        <input type="text" id="preco" placeholder="Ex: 150.000,00" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO -->
+            <div class="form-actions">
+                <a href="/pages/meus-anuncios.html" class="btn-secundario">Cancelar</a>
+                <button type="submit" class="btn-primario"><span>Salvar Alterações</span></button>
+            </div>
         </form>
     </div>
 

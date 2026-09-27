@@ -1,25 +1,28 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. Verificação de segurança: garante que o usuário está logado
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
-    if (!usuario) {
+document.addEventListener("DOMContentLoaded", async () => {
+    const chaveSessao = localStorage.getItem("usuario") ? "usuario" : "usuario_logado";
+    const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario_logado");
+    
+    if (!usuarioSalvo) {
         window.location.href = "/pages/login.html";
         return;
     }
 
-    // 2. Pega o ID do veículo passado na URL
     const urlParams = new URLSearchParams(window.location.search);
     const veiculoId = urlParams.get('id');
 
     if (!veiculoId) {
-        alert("ID do veículo não foi encontrado na URL!");
-        window.location.href = "/pages/meus-anuncios.html";
+        mostrarNotificacao("ID do veículo não encontrado!", "erro");
+        setTimeout(() => window.location.href = "/pages/meus-anuncios.html", 2000);
         return;
     }
 
-    // 3. Busca as informações reais do carro no banco de dados e preenche o formulário
-    carregarInformacoesDoCarro(veiculoId);
+    await carregarOpcoesDoBanco();
+    await carregarInformacoesDoCarro(veiculoId);
 
-    // 4. Configura o formulário para enviar as alterações quando clicar em atualizar
+    inicializarMascaraPreco();
+    inicializarMascaraAnos();
+    inicializarValidacoesVisuais();
+
     const form = document.getElementById('form-editar-anuncio');
     if (form) {
         form.addEventListener('submit', (e) => {
@@ -29,7 +32,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Função responsável por buscar os dados no back-end e preencher os inputs
+async function carregarOpcoesDoBanco() {
+    try {
+        const resCombustivel = await fetch('/api/combustiveis');
+        const selectCombustivel = document.getElementById('combustivel');
+        if (resCombustivel.ok) {
+            const combustiveis = await resCombustivel.json();
+            if (selectCombustivel) {
+                selectCombustivel.innerHTML = '<option value="">Selecione o combustível...</option>';
+                combustiveis.forEach(comb => {
+                    const opt = document.createElement('option');
+                    opt.value = comb.id;
+                    opt.textContent = comb.nome;
+                    selectCombustivel.appendChild(opt);
+                });
+            }
+        }
+
+        const resCambio = await fetch('/api/cambios');
+        const selectCambio = document.getElementById('cambio');
+        if (resCambio.ok) {
+            const cambios = await resCambio.json();
+            if (selectCambio) {
+                selectCambio.innerHTML = '<option value="">Selecione o câmbio...</option>';
+                cambios.forEach(cambio => {
+                    const opt = document.createElement('option');
+                    opt.value = cambio.id;
+                    opt.textContent = cambio.nome;
+                    selectCambio.appendChild(opt);
+                });
+            }
+        }
+    } catch (erro) {
+        console.error("Erro ao carregar opções:", erro);
+    }
+}
+
 async function carregarInformacoesDoCarro(id) {
     try {
         const resposta = await fetch(`/api/veiculos/${id}`);
@@ -37,68 +75,108 @@ async function carregarInformacoesDoCarro(id) {
         const veiculo = data.veiculo || data;
 
         if (veiculo) {
-            const inputId = document.getElementById('veiculo-id');
-            if (inputId) inputId.value = veiculo.id || id;
-            
+            document.getElementById('veiculo-id').value = veiculo.id || id;
             atribuirValorSeExistir('marca', veiculo.marca || veiculo.marca_nome);
             atribuirValorSeExistir('modelo', veiculo.modelo || veiculo.modelo_nome);
             atribuirValorSeExistir('versao', veiculo.versao);
             atribuirValorSeExistir('ano_fabricacao', veiculo.ano_fabricacao || veiculo.ano);
             atribuirValorSeExistir('ano_modelo', veiculo.ano_modelo);
             atribuirValorSeExistir('quilometragem', veiculo.quilometragem);
-            atribuirValorSeExistir('preco', veiculo.preco);
+            
+            if (veiculo.preco) {
+                const inputPreco = document.getElementById('preco');
+                if (inputPreco) {
+                    inputPreco.value = Number(veiculo.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+            }
+            
             atribuirValorSeExistir('combustivel', veiculo.combustivel || veiculo.tipo_combustivel_id);
             atribuirValorSeExistir('cambio', veiculo.cambio || veiculo.tipo_transmissao_id);
-            atribuirValorSeExistir('cor', veiculo.cor);
-            atribuirValorSeExistir('portas', veiculo.portas);
-            atribuirValorSeExistir('carroceria', veiculo.carroceria);
-            atribuirValorSeExistir('descricao', veiculo.descricao);
 
+            dispararValidacaoPreenchidos();
         } else {
-            alert("Veículo não encontrado no banco de dados.");
-            window.location.href = "/pages/meus-anuncios.html";
+            mostrarNotificacao("Veículo não encontrado.", "erro");
+            setTimeout(() => window.location.href = "/pages/meus-anuncios.html", 2000);
         }
     } catch (erro) {
-        console.error("Erro ao buscar dados do veículo:", erro);
-        alert("Erro de conexão ao tentar carregar as informações do veículo.");
+        console.error("Erro ao carregar veículo:", erro);
     }
 }
 
-function atribuirValorSeExistir(idDoElemento, valor) {
-    const elemento = document.getElementById(idDoElemento);
-    if (elemento) {
-        elemento.value = valor !== undefined && valor !== null ? valor : '';
-    }
+// ==========================================
+// FUNÇÃO DE AJUSTE DOS BOTÕES (+ / -)
+// ==========================================
+function ajustarValor(idDoCampo, passo, valorMinimo = 0) {
+    const input = document.getElementById(idDoCampo);
+    if (!input) return;
+
+    let valorAtual = parseInt(input.value.replace(/\D/g, "")) || (valorMinimo === 1900 ? 2024 : 0);
+    let novoValor = valorAtual + passo;
+    if (novoValor < valorMinimo) novoValor = valorMinimo;
+
+    input.value = novoValor;
+    input.dispatchEvent(new Event('input'));
+}
+
+function inicializarMascaraPreco() {
+    const inputPreco = document.getElementById('preco');
+    if (!inputPreco) return;
+
+    inputPreco.addEventListener('input', (e) => {
+        let valor = e.target.value.replace(/\D/g, "");
+        if (valor === "") { e.target.value = ""; return; }
+        valor = (Number(valor) / 100).toFixed(2) + "";
+        let partes = valor.split(".");
+        let inteiros = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        let centavos = partes[1];
+        e.target.value = `${inteiros},${centavos}`;
+    });
+}
+
+function inicializarMascaraAnos() {
+    ['ano_fabricacao', 'ano_modelo'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4);
+            });
+        }
+    });
 }
 
 async function salvarAlteracoesDoCarro(id) {
     const precoInput = document.getElementById('preco')?.value;
+    const btnSalvar = document.querySelector('.btn-primario');
 
-    // Limpeza rigorosa do preço (remove "R$", pontos de milhar e troca vírgula por ponto decimal)
-    const precoLimpo = precoInput ? precoInput.toString().replace('R$', '').trim().replace(/\./g, '').replace(',', '.') : '';
+    let precoLimpo = null;
+    if (precoInput) {
+        precoLimpo = Number(precoInput.replace(/\./g, '').replace(',', '.'));
+    }
+    
+    if (btnSalvar) {
+        btnSalvar.innerHTML = `<span>Salvando...</span>`;
+        btnSalvar.disabled = true;
+    }
 
     const dadosModificados = {
-        marca: document.getElementById('marca')?.value || '',
-        modelo: document.getElementById('modelo')?.value || '',
-        versao: document.getElementById('versao')?.value || '',
+        marca: document.getElementById('marca')?.value.trim() || '',
+        modelo: document.getElementById('modelo')?.value.trim() || '',
+        versao: document.getElementById('versao')?.value.trim() || '',
         ano_fabricacao: document.getElementById('ano_fabricacao')?.value || '',
         ano_modelo: document.getElementById('ano_modelo')?.value || '',
         quilometragem: document.getElementById('quilometragem')?.value || 0,
-        // Envia o número limpo ou null se estiver vazio
-        preco: precoLimpo !== '' ? Number(precoLimpo) : null,
+        preco: !isNaN(precoLimpo) ? precoLimpo : null,
         combustivel: document.getElementById('combustivel')?.value || '',
-        cambio: document.getElementById('cambio')?.value || '',
-        cor: document.getElementById('cor')?.value || '',
-        portas: document.getElementById('portas')?.value || '',
-        carroceria: document.getElementById('carroceria')?.value || '',
-        descricao: document.getElementById('descricao')?.value || ''
+        cambio: document.getElementById('cambio')?.value || ''
     };
 
     try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         const resposta = await fetch(`/api/veiculos/${id}`, {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                ...(token && { "Authorization": `Bearer ${token}` })
             },
             body: JSON.stringify(dadosModificados)
         });
@@ -106,13 +184,75 @@ async function salvarAlteracoesDoCarro(id) {
         const resultado = await resposta.json();
 
         if (resposta.ok || resultado.sucesso) {
-            alert("Anúncio atualizado com sucesso!");
-            window.location.href = "/pages/meus-anuncios.html";
+            mostrarNotificacao("✨ Anúncio atualizado com sucesso!", "sucesso");
+            setTimeout(() => window.location.href = "/pages/meus-anuncios.html", 1400);
         } else {
-            alert(resultado.mensagem || "Erro ao atualizar o anúncio.");
+            mostrarNotificacao(resultado.mensagem || "Erro ao atualizar.", "erro");
+            resetarBotaoSalvar(btnSalvar);
         }
     } catch (erro) {
-        console.error("Erro ao enviar atualizações:", erro);
-        alert("Erro de conexão com o servidor ao salvar.");
+        console.error("Erro:", erro);
+        mostrarNotificacao("Erro de conexão.", "erro");
+        resetarBotaoSalvar(btnSalvar);
     }
+}
+
+function resetarBotaoSalvar(btn) {
+    if (btn) {
+        btn.innerHTML = `<span>Salvar Alterações</span>`;
+        btn.disabled = false;
+    }
+}
+
+function atribuirValorSeExistir(idDoElemento, valor) {
+    const elemento = document.getElementById(idDoElemento);
+    if (elemento && valor !== undefined && valor !== null) {
+        elemento.value = valor;
+    }
+}
+
+function inicializarValidacoesVisuais() {
+    document.querySelectorAll('input, select').forEach(campo => {
+        campo.addEventListener('input', () => {
+            if (campo.value.trim() !== '') campo.classList.add('preenchido');
+            else campo.classList.remove('preenchido');
+        });
+    });
+}
+
+function dispararValidacaoPreenchidos() {
+    document.querySelectorAll('input, select').forEach(campo => {
+        if (campo.value.trim() !== '') campo.classList.add('preenchido');
+    });
+}
+
+function mostrarNotificacao(mensagem, tipo = 'sucesso') {
+    const toastAntigo = document.querySelector('.toast-notificacao');
+    if (toastAntigo) toastAntigo.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notificacao ${tipo}`;
+    toast.textContent = mensagem;
+    
+    toast.style.position = 'fixed';
+    toast.style.bottom = '30px';
+    toast.style.right = '30px';
+    toast.style.backgroundColor = tipo === 'sucesso' ? '#16a34a' : '#e50914';
+    toast.style.color = '#fff';
+    toast.style.padding = '14px 24px';
+    toast.style.borderRadius = '10px';
+    toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
+    toast.style.zIndex = '99999';
+    toast.style.fontWeight = '600';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    toast.style.transition = 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; }, 10);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3200);
 }

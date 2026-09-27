@@ -59,7 +59,11 @@
                     <div class="quick-search-bar">
                         <div class="search-input-group">
                             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                            <input type="text" id="inputBuscaRapida" placeholder="Qual carro você procura? (ex: Porsche, Civic, SUV...)">
+                            <!-- Desligamos o autocomplete nativo do navegador para usar o nosso customizado -->
+                            <input type="text" id="inputBuscaRapida" placeholder="Qual carro você procura? (ex: Porsche, Civic, SUV...)" autocomplete="off">
+                            
+                            <!-- Lista onde as sugestões do Banco de Dados vão aparecer -->
+                            <ul id="sugestoesBusca" class="sugestoes-busca" hidden></ul>
                         </div>
                         <button type="button" class="btn-quick-search" id="btnBuscarRapido">Buscar</button>
                     </div>
@@ -74,7 +78,7 @@
             </div>
         </section>
 
-        <!-- SEÇÃO SOBRE NÍVEL PRO (COM O "MOLHO" CERTO) -->
+        <!-- SEÇÃO SOBRE -->
         <section id="sec-sobre" class="page-section">
             <div class="container section-compact">
                 <div class="about-hero-header">
@@ -136,6 +140,7 @@
             </div>
         </section>
 
+        <!-- SEÇÃO CONTATO -->
         <section id="sec-contato" class="page-section">
             <div class="container section-compact">
                 <div class="contact-header">
@@ -147,13 +152,13 @@
                     <div class="contact-card">
                         <div class="icon-wrapper"><i class="fa-solid fa-location-dot"></i></div>
                         <h3>Nosso Endereço</h3>
-                        <p>Av. Premium, 1000 — São Paulo, SP</p>
+                        <p>Av. Premium, 1000 — Campinas, SP</p>
                         <small>Atendimento presencial com agendamento</small>
                     </div>
                     <div class="contact-card featured">
                         <div class="icon-wrapper"><i class="fa-solid fa-phone"></i></div>
                         <h3>Central de Atendimento</h3>
-                        <p class="highlight-text">(11) 99999-8888</p>
+                        <p class="highlight-text">(19) 99999-8888</p>
                         <small>Segunda a Sexta, das 8h às 18h</small>
                     </div>
                     <div class="contact-card">
@@ -169,7 +174,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nomeContato">Nome Completo</label>
-                                <input type="text" id="nomeContato" placeholder="Ex: Douglas Silva" required>
+                                <input type="text" id="nomeContato" placeholder="Ex: Douglas Rodrigues" required>
                             </div>
                             <div class="form-group">
                                 <label for="emailContato">E-mail de Contato</label>
@@ -194,4 +199,4 @@
     </main>
     <script src="../js/index.js"></script>
 </body>
-</html> 
+</html>

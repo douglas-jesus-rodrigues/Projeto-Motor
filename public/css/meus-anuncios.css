@@ -1,10 +1,10 @@
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body{
+body {
     font-family: Arial, Helvetica, sans-serif;
     background: #0b0b0b;
     color: white;
@@ -12,7 +12,7 @@ body{
 }
 
 /* --- HEADER --- */
-.header{
+.header {
     background: rgba(17, 17, 17, 0.95);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #222;
@@ -30,17 +30,17 @@ body{
     letter-spacing: 0.5px;
 }
 
-.header h1 span{
+.header h1 span {
     color: #e50914;
 }
 
-.header nav{
+.header nav {
     display: flex;
     gap: 20px;
     align-items: center;
 }
 
-.header a{
+.header a {
     color: #ccc;
     text-decoration: none;
     font-size: 0.95rem;
@@ -50,7 +50,7 @@ body{
     transition: all 0.3s ease;
 }
 
-.header a:hover{
+.header a:hover {
     color: #e50914;
 }
 
@@ -68,7 +68,7 @@ body{
     color: white !important;
 }
 
-.sair{
+.sair {
     background: #e50914;
     padding: 10px 16px;
     border-radius: 8px;
@@ -77,20 +77,20 @@ body{
     box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
 }
 
-.sair:hover{
+.sair:hover {
     background: #b80710;
     transform: translateY(-2px);
 }
 
 /* --- CONTAINER PRINCIPAL --- */
-.container{
-    max-width: 1100px;
+.container {
+    max-width: 1150px;
     margin: auto;
     padding: 40px 20px;
 }
 
 /* --- TÍTULO DA SEÇÃO --- */
-.titulo-secao{
+.titulo-secao {
     background: linear-gradient(135deg, #161616, #0e0e0e);
     padding: 30px 35px;
     border-radius: 20px;
@@ -111,7 +111,7 @@ body{
     background: #e50914;
 }
 
-.titulo-secao h2{
+.titulo-secao h2 {
     font-size: 1.8rem;
     margin-bottom: 8px;
     display: flex;
@@ -123,7 +123,7 @@ body{
     color: #e50914;
 }
 
-.titulo-secao p{
+.titulo-secao p {
     color: #a3a3a3;
     font-size: 1rem;
 }
@@ -133,7 +133,7 @@ body{
     background: #141414;
     border: 1px solid #222;
     border-radius: 18px;
-    overflow: hidden;
+    overflow: visible !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
 
@@ -144,7 +144,8 @@ table {
 }
 
 th, td {
-    padding: 18px 20px;
+    padding: 15px 20px;
+    vertical-align: middle;
 }
 
 th {
@@ -170,47 +171,188 @@ tr:hover td {
     background: #181818;
 }
 
-/* --- BOTÕES DE AÇÃO NA TABELA --- */
-td button {
+/* Miniatura da Foto com Zoom */
+.tabela-foto {
+    width: 65px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #333;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.tabela-foto:hover {
+    transform: scale(1.08);
+    border-color: #e50914;
+}
+
+.sem-foto {
+    width: 65px;
+    height: 45px;
+    background: #222;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+/* =========================================
+   MENU DROPDOWN DE AÇÕES (TRÊS PONTINHOS)
+========================================= */
+.acoes-container {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-acoes-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ccc;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-acoes-toggle:hover {
+    background: #e50914;
+    color: #fff;
+    border-color: #e50914;
+}
+
+.menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: #1a1a1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    width: 180px;
+    display: none;
+    z-index: 999;
+    overflow: hidden;
+    animation: fadeInMenu 0.2s ease;
+}
+
+.menu-dropdown.ativo {
+    display: block;
+}
+
+@keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.menu-dropdown button {
+    width: 100%;
     background: transparent;
     border: none;
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 6px;
+    color: #ddd;
+    padding: 12px 16px;
+    text-align: left;
     font-size: 0.9rem;
-    transition: 0.3s;
-    margin-right: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.2s;
 }
 
-td button.editar {
-    color: #457b9d;
-    background: rgba(69, 123, 157, 0.1);
+.menu-dropdown button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
 }
 
-td button.editar:hover {
-    background: #457b9d;
-    color: white;
+.menu-dropdown button.btn-excluir-opt:hover {
+    background: rgba(229, 9, 20, 0.15);
+    color: #ff4d4d;
 }
 
-td button.excluir {
+.menu-dropdown hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+}
+
+/* --- MODAL / LIGHTBOX DE IMAGEM AMPLIADA --- */
+.modal-imagem-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-imagem-overlay.ativo {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-imagem-conteudo {
+    position: relative;
+    max-width: 85%;
+    max-height: 85%;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-imagem-overlay.ativo .modal-imagem-conteudo {
+    transform: scale(1);
+}
+
+.modal-imagem-conteudo img {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);
+}
+
+.modal-fechar {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 2.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-fechar:hover {
     color: #e50914;
-    background: rgba(229, 9, 20, 0.1);
-}
-
-td button.excluir:hover {
-    background: #e50914;
-    color: white;
 }
 
 /* --- RESPONSIVIDADE --- */
-@media(max-width: 768px){
-    .header{
+@media(max-width: 768px) {
+    .header {
         flex-direction: column;
         gap: 15px;
         padding: 15px 20px;
     }
 
-    .header nav{
+    .header nav {
         flex-wrap: wrap;
         justify-content: center;
         gap: 12px;
@@ -221,6 +363,6 @@ td button.excluir:hover {
     }
 
     table {
-        min-width: 600px;
+        min-width: 750px;
     }
 }

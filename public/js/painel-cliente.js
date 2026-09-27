@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Recupera os dados do usuário salvos no navegador no momento do login
+    // 1. Recupera os dados do usuário salvos no navegador no momento do login (Com Try/Catch seguro)
     const chaveSessao = localStorage.getItem("usuario") ? "usuario" : "usuario_logado";
     const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario") || sessionStorage.getItem("usuario_logado");
     
@@ -8,9 +8,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const usuario = JSON.parse(usuarioSalvo);
+    let usuario;
+    try {
+        usuario = JSON.parse(usuarioSalvo);
+    } catch (e) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "/pages/login.html";
+        return;
+    }
 
-    // 2. Preenche o Nome do Usuário
+    // 2. Preenche o Nome do Usuário de forma segura
     const elNome = document.getElementById("nomeUsuario");
     if (elNome && usuario.nome) {
         elNome.textContent = usuario.nome;
@@ -225,6 +233,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const arquivo = e.target.files[0];
             if (!arquivo) return;
 
+            // Validação rigorosa de MIME-type (Segurança contra arquivos maliciosos)
+            const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
+            if (!tiposPermitidos.includes(arquivo.type)) {
+                mostrarNotificacao("Por favor, selecione uma imagem válida (JPEG, PNG ou WEBP).", "erro");
+                inputFoto.value = "";
+                return;
+            }
+
             const tamanhoMaximo = 5 * 1024 * 1024;
             if (arquivo.size > tamanhoMaximo) {
                 mostrarNotificacao("A foto selecionada deve ter no máximo 5MB.", "erro");
@@ -237,13 +253,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 imagemParaCortar.src = eventoLeitura.target.result;
                 modalRecorte.style.display = "flex";
 
-                // Inicializa o Cropper.js com limites de tamanho e formato circular
                 if (cropper) {
                     cropper.destroy();
                 }
                 
                 cropper = new Cropper(imagemParaCortar, {
-                    aspectRatio: 1, // Quadrado perfeito para o círculo
+                    aspectRatio: 1,
                     viewMode: 1,
                     dragMode: 'move',
                     autoCropArea: 0.8,
@@ -272,10 +287,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Botão Confirmar Recorte
+        // Botão Confirmar Recorte (Com Proteção contra Cliques Duplos / Race Conditions)
         if (btnConfirmarRecorte) {
             btnConfirmarRecorte.addEventListener("click", () => {
                 if (!cropper) return;
+
+                // Desativa o botão temporariamente para evitar cliques duplos
+                btnConfirmarRecorte.disabled = true;
+                const textoOriginalBotao = btnConfirmarRecorte.textContent;
+                btnConfirmarRecorte.textContent = "A salvar...";
 
                 cropper.getCroppedCanvas({
                     width: 400,
@@ -330,6 +350,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         URL.revokeObjectURL(previewUrl);
                         if (cropper) cropper.destroy();
                         inputFoto.value = "";
+                        // Restaura o botão
+                        btnConfirmarRecorte.disabled = false;
+                        btnConfirmarRecorte.textContent = textoOriginalBotao;
                     }
                 }, "image/png");
             });
@@ -360,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         throw new Error(dados.mensagem || "Não foi possível remover a foto no servidor.");
                     }
 
-                    if (dados.sucesso !== false) { // Aceita tanto sucesso true quanto ausência de flag de erro
+                    if (dados.sucesso !== false) {
                         const avatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
                         
                         if (imgPerfil) {

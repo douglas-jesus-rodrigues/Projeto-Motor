@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meus Anúncios | MotorFlex</title>
-
     <link rel="icon" href="/imagens/favicon.ico">
-    <!-- Importação do Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/meus-anuncios.css">
 </head>
@@ -16,7 +14,6 @@
         <div class="logo">
             <h1>Motor<span>Flex</span></h1>
         </div>
-
         <nav class="nav-menu">
             <a href="/pages/painel-cliente.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Painel</a>
             <a href="/pages/catalogo.html?tab=cadastrar" class="btn-novo"><i class="fa-solid fa-plus"></i> Novo Anúncio</a>
@@ -27,31 +24,40 @@
     <main class="container">
         <section class="titulo-secao">
             <h2><i class="fa-solid fa-car-side"></i> Meus Veículos Anunciados</h2>
-            <p>Gerencie todos os carros que você colocou à venda no MotorFlex.</p>
+            <p>Gerencie todos os carros que você colocou à venda e acompanhe o desempenho.</p>
         </section>
 
-        <!-- Tabela ou Grid de Anúncios -->
+        <!-- Tabela de Anúncios -->
         <section class="tabela-container">
             <table>
                 <thead>
                     <tr>
+                        <th>Foto</th>
                         <th>Veículo</th>
                         <th>Modelo</th>
                         <th>Ano</th>
                         <th>Preço</th>
+                        <th>Visualizações</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaMeusAnuncios">
-                    <!-- Os anúncios serão injetados dinamicamente via JavaScript -->
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #888;">Carregando seus anúncios...</td>
+                        <td colspan="8" style="text-align: center; color: #888;">Carregando seus anúncios...</td>
                     </tr>
                 </tbody>
             </table>
         </section>
     </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO DE IMAGEM (LIGHTBOX) -->
+    <div id="modalImagem" class="modal-imagem-overlay" onclick="fecharModalImagem()">
+        <div class="modal-imagem-conteudo" onclick="event.stopPropagation()">
+            <button class="modal-fechar" onclick="fecharModalImagem()">&times;</button>
+            <img id="imagemAmpliada" src="" alt="Veículo Ampliado">
+        </div>
+    </div>
 
     <script src="/js/meus-anuncios.js"></script>
 </body>

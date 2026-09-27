@@ -6,33 +6,59 @@
     <title>Painel Empresa | MotorFlex</title>
 
     <link rel="icon" href="/imagens/favicon.ico">
+    <!-- Cropper.js CSS para o recorte de imagens -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <!-- Seus estilos principais -->
     <link rel="stylesheet" href="/css/painel-empresa.css">
 </head>
 <body>
 
 <div class="painel">
 
+    <!-- Sidebar / Menu Lateral -->
     <aside class="sidebar">
         <h1 class="logo">
-    <a href="/pages/index.html">
-        Motor<span>Flex</span>
-    </a>
-</h1>
+            <a href="/pages/index.html">
+                Motor<span>Flex</span>
+            </a>
+        </h1>
+
+        <!-- Perfil / Foto da Empresa (Ícones nas bordas da bolinha) -->
+        <div class="perfil-sidebar">
+            <div class="avatar-wrapper" id="avatarWrapper" title="Clique para ver ou alterar a foto">
+                <img id="fotoPerfilPreview" src="/imagens/sem-foto.png" alt="Foto de Perfil" class="foto-perfil-preview">
+                
+                <!-- Ícone de Câmera (Direita) -->
+                <div class="avatar-overlay">
+                    <span class="icone-camera">📷</span>
+                </div>
+
+                <!-- Ícone de Lixeira (Esquerda - aparece apenas se houver foto personalizada) -->
+                <button type="button" id="btnRemoverFoto" class="btn-lixeira-perfil" title="Remover foto" style="display: none;">
+                    🗑️
+                </button>
+            </div>
+            
+            <!-- Input de arquivo oculto para o upload -->
+            <input type="file" id="inputFotoPerfil" accept="image/png, image/jpeg, image/jpg" style="display: none;">
+        </div>
 
         <nav class="menu">
-    <a href="#" class="ativo" data-section="painel">Painel</a>
-    <a href="/pages/anunciar.html">Cadastrar veículo</a>
-    <a href="#" data-section="veiculos">Meus veículos</a>
-    <a href="#" data-section="propostas">Propostas</a>
-    <a href="#" data-section="conversas">Conversas</a>
-    <a href="#" data-section="agendamentos">Agendamentos</a>
-    <a href="#" data-section="empresa">Dados da empresa</a>
-    <a href="#" id="btnSair">Sair</a>
-</nav>
+            <a href="#" class="ativo" data-section="painel">Painel</a>
+            <a href="#" data-section="cadastrar">Anunciar veículo</a>
+            <a href="#" data-section="veiculos">Meus veículos</a>
+            <a href="#" data-section="propostas">Propostas</a>
+            <a href="#" data-section="conversas">Conversas</a>
+            <a href="#" data-section="agendamentos">Agendamentos</a>
+            <a href="#" data-section="empresa">Dados da empresa</a>
+            <a href="#" id="btnSair">Sair</a>
+        </nav>
     </aside>
 
+    <!-- Conteúdo Principal -->
     <main class="conteudo">
 
+        <!-- SEÇÃO: PAINEL (DASHBOARD) -->
         <section id="painelSection" class="secao ativa">
             <header class="topo">
                 <div>
@@ -44,7 +70,6 @@
             <section class="empresa-card">
                 <div>
                     <h3 id="nomeEmpresa">Minha Empresa</h3>
-                    
                 </div>
 
                 <span class="status">Conta ativa</span>
@@ -73,10 +98,11 @@
             </section>
         </section>
 
+        <!-- SEÇÃO: ANUNCIAR VEÍCULOS -->
         <section id="cadastrarSection" class="secao">
             <header class="topo">
                 <div>
-                    <h2>Cadastrar veículo</h2>
+                    <h2>Anunciar veículo</h2>
                     <p>Adicione um novo veículo ao catálogo da empresa.</p>
                 </div>
             </header>
@@ -86,6 +112,7 @@
             </a>
         </section>
 
+        <!-- SEÇÃO: MEUS VEÍCULOS -->
         <section id="veiculosSection" class="secao">
             <header class="topo">
                 <div>
@@ -105,6 +132,7 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: PROPOSTAS -->
         <section id="propostasSection" class="secao">
             <header class="topo">
                 <div>
@@ -118,6 +146,7 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: CONVERSAS -->
         <section id="conversasSection" class="secao">
             <header class="topo">
                 <div>
@@ -131,6 +160,7 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: AGENDAMENTOS -->
         <section id="agendamentosSection" class="secao">
             <header class="topo">
                 <div>
@@ -144,6 +174,7 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: DADOS DA EMPRESA -->
         <section id="empresaSection" class="secao">
             <header class="topo">
                 <div>
@@ -158,12 +189,12 @@
                 </div>
 
                 <div class="dados-conta">
-                    <p><strong>Nome:</strong> <span id="dadoNome"></span></p>
-                    <p><strong>Sobrenome:</strong> <span id="dadoSobrenome"></span></p>
-                    <p><strong>E-mail:</strong> <span id="dadoEmail"></span></p>
-                    <p><strong>Telefone:</strong> <span id="dadoTelefone"></span></p>
-                    <p><strong>CPF:</strong> <span id="dadoCpf"></span></p>
-                    <p><strong>Tipo:</strong> <span id="dadoTipo"></span></p>
+                    <p><strong>Nome:</strong> <span id="dadoNome">-</span></p>
+                    <p><strong>Sobrenome:</strong> <span id="dadoSobrenome">-</span></p>
+                    <p><strong>E-mail:</strong> <span id="dadoEmail">-</span></p>
+                    <p><strong>Telefone:</strong> <span id="dadoTelefone">-</span></p>
+                    <p><strong>CPF:</strong> <span id="dadoCpf">-</span></p>
+                    <p><strong>Tipo:</strong> <span id="dadoTipo">-</span></p>
                 </div>
             </div>
 
@@ -173,11 +204,11 @@
                 </div>
 
                 <div class="dados-conta">
-                    <p><strong>Empresa:</strong> <span id="dadoEmpresa"></span></p>
-                    <p><strong>CNPJ:</strong> <span id="dadoCnpj"></span></p>
-                    <p><strong>Razão social:</strong> <span id="dadoRazaoSocial"></span></p>
-                    <p><strong>Inscrição estadual:</strong> <span id="dadoInscricao"></span></p>
-                    <p><strong>Site:</strong> <span id="dadoSite"></span></p>
+                    <p><strong>Empresa:</strong> <span id="dadoEmpresa">-</span></p>
+                    <p><strong>CNPJ:</strong> <span id="dadoCnpj">-</span></p>
+                    <p><strong>Razão social:</strong> <span id="dadoRazaoSocial">-</span></p>
+                    <p><strong>Inscrição estadual:</strong> <span id="dadoInscricao">-</span></p>
+                    <p><strong>Site:</strong> <span id="dadoSite">-</span></p>
                 </div>
             </div>
         </section>
@@ -186,6 +217,56 @@
 
 </div>
 
+<!-- MODAL DE RECORTE (CROPPER.JS) -->
+<div id="modalRecorte" class="modal-recorte-overlay" style="display: none;">
+    <div class="modal-recorte-conteudo">
+        <h3>Ajustar Foto de Perfil</h3>
+        <p>Arraste e redimensione a área desejada.</p>
+        
+        <div class="img-container">
+            <img id="imagemParaCortar" src="" alt="Para recortar">
+        </div>
+
+        <div class="modal-recorte-botoes">
+            <button type="button" id="btnCancelarRecorte" class="btn-acao btn-secundario">Cancelar</button>
+            <button type="button" id="btnConfirmarRecorte" class="btn-acao btn-primario">Salvar Foto</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CAPTURA VIA CÂMERA (WEBCAM) -->
+<div id="modalCamera" class="modal-recorte-overlay" style="display: none;">
+    <div class="modal-recorte-conteudo modal-camera-box">
+        <h3>Tirar Foto com a Câmera</h3>
+        <p>Posicione-se em frente à câmera e clique em capturar.</p>
+        
+        <div class="video-container">
+            <video id="videoCamera" autoplay playsinline></video>
+            <canvas id="canvasCamera" style="display: none;"></canvas>
+        </div>
+
+        <div class="modal-recorte-botoes">
+            <button type="button" id="btnFecharCamera" class="btn-acao btn-secundario">Cancelar</button>
+            <button type="button" id="btnCapturarFoto" class="btn-acao btn-primario">🔴 Capturar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE SAÍDA -->
+<div id="modalSairContainer" class="modal-recorte-overlay" style="display: none;">
+    <div class="modal-recorte-conteudo">
+        <h3>Deseja mesmo sair?</h3>
+        <p>Sua sessão será encerrada e você precisará entrar novamente.</p>
+        <div class="modal-recorte-botoes">
+            <button type="button" id="btnCancelarSair" class="btn-acao btn-secundario">Cancelar</button>
+            <button type="button" id="btnSair" class="btn-acao btn-perigo">Sair</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper.js Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<!-- Seu script do painel -->
 <script src="/js/painel-empresa.js"></script>
 </body>
 </html>
