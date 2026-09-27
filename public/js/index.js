@@ -1,8 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    // --- NAVEGAÇÃO SPA (Single Page Application) ---
+    // ==========================================
+    // 0. CORREÇÃO DO BUG DO BOTÃO "VOLTAR" (BFCACHE)
+    // ==========================================
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            document.body.classList.remove('page-exit');
+        }
+    });
+
+    // --- 1. NAVEGAÇÃO SPA (Single Page Application) ---
     const linksSpa = document.querySelectorAll(".nav-link[data-target]");
     const secoes = document.querySelectorAll(".page-section");
+    const menuNavegacao = document.getElementById("menuNavegacao");
+    const btnMobile = document.getElementById("btnMobile");
     
     const itemAnunciar = document.getElementById("itemAnunciar");
     if (itemAnunciar) {
@@ -11,22 +22,30 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function alternarSecao(targetId) {
         secoes.forEach(sec => sec.classList.remove("active"));
-        document.getElementById(`sec-${targetId}`)?.classList.add("active");
+        const secaoAlvo = document.getElementById(`sec-${targetId}`);
+        if (secaoAlvo) secaoAlvo.classList.add("active");
+        
         linksSpa.forEach(link => link.classList.toggle("active", link.dataset.target === targetId));
     }
     
     linksSpa.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            alternarSecao(link.dataset.target);
-            window.location.hash = link.dataset.target;
+            const targetId = link.dataset.target;
+            alternarSecao(targetId);
+            window.location.hash = targetId;
+
+            if (menuNavegacao && menuNavegacao.classList.contains("active")) {
+                menuNavegacao.classList.remove("active");
+                if (btnMobile) btnMobile.classList.remove("active");
+            }
         });
     });
     
     const hash = window.location.hash.replace("#", "") || "home";
     alternarSecao(document.getElementById(`sec-${hash}`) ? hash : "home");
     
-    // --- CONTROLE DE SESSÃO E PERFIL DO USUÁRIO ---
+    // --- 2. CONTROLE DE SESSÃO E PERFIL DO USUÁRIO ---
     const usuarioLogado = localStorage.getItem("usuario");
     const acoesDeslogado = document.getElementById("acoesDeslogado");
     const dropdownUsuario = document.getElementById("dropdownUsuario");
@@ -50,8 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (usuario.tipo === "admin" || usuario.cargo === "admin" || usuario.tipo === "super_admin") {
                 rotaPainel = "/pages/painel-admin.html";
             }
-            if (irPainel) {
-                irPainel.href = rotaPainel;
+            if (irPainel) irPainel.href = rotaPainel;
+
+            if (itemAnunciar && (usuario.tipo === "empresa" || usuario.tipo === "cliente")) {
+                itemAnunciar.style.display = "inline-block";
             }
             
             let nomeExibicao = "Minha Conta";
@@ -75,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dropdownUsuario) dropdownUsuario.style.display = "none";
     }
     
-    // --- MENU DE CONFIGURAÇÃO / DROPDOWN ---
+    // --- 3. MENU DE CONFIGURAÇÃO / DROPDOWN ---
     const btnConfig = document.getElementById("btnConfig");
     const menuConfig = document.getElementById("menuConfig");
     if (btnConfig && menuConfig) {
@@ -93,43 +114,150 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // --- BOTÃO DE SAIR (LOGOUT SEGURO) ---
+    // --- 4. BOTÃO DE SAIR (LOGOUT SEGURO) ---
     const btnSair = document.getElementById("btnSair");
     if (btnSair) {
         btnSair.addEventListener("click", (e) => {
             e.preventDefault();
             localStorage.removeItem("usuario");
-            // Usa replace para evitar voltar para a sessão anterior pelo histórico
             window.location.replace("/pages/login.html");
         });
     }
     
-    // --- BUSCA RÁPIDA ---
+    // --- 5. BUSCA RÁPIDA (COM SUGESTÕES EM TEMPO REAL E IMAGENS) ---
     const btnBuscarRapido = document.getElementById("btnBuscarRapido");
     const inputBuscaRapida = document.getElementById("inputBuscaRapida");
-    function buscar() {
+    const sugestoesBusca = document.getElementById("sugestoesBusca");
+    
+    let veiculosBancoDeDados = [];
+
+    function sanitizarSrcImagem(src) {
+        if (typeof src !== "string" || !src) return "/imagens/sem-foto.jpg";
+        if (src.startsWith("/") || src.startsWith("https://") || src.startsWith("http://")) return src;
+        return `/uploads/${src}`;
+    }
+
+    async function carregarVeiculosParaSugestao() {
+        try {
+            const resposta = await fetch("/api/veiculos");
+            if (resposta.ok) {
+                const dados = await resposta.json();
+                if (dados.sucesso && Array.isArray(dados.veiculos)) {
+                    veiculosBancoDeDados = dados.veiculos;
+                }
+            }
+        } catch (erro) {
+            console.log("Sistema de sugestão indisponível temporariamente.");
+        }
+    }
+    carregarVeiculosParaSugestao();
+
+    function executarBusca() {
         if (!inputBuscaRapida) return;
         const termo = inputBuscaRapida.value.trim();
-        location.href = termo ? `/pages/catalogo.html?busca=${encodeURIComponent(termo)}` : "/pages/catalogo.html";
+        const destino = termo ? `/pages/catalogo.html?busca=${encodeURIComponent(termo)}` : "/pages/catalogo.html";
+        
+        document.body.classList.add('page-exit');
+        setTimeout(() => {
+            window.location.href = destino;
+        }, 300);
     }
-    btnBuscarRapido?.addEventListener("click", buscar);
-    inputBuscaRapida?.addEventListener("keypress", (e) => e.key === "Enter" && buscar());
     
-    // --- MENU MOBILE E CABEÇALHO DINÂMICO (SCROLL) ---
-    const btnMobile = document.getElementById("btnMobile");
-    const menuNavegacao = document.getElementById("menuNavegacao");
+    btnBuscarRapido?.addEventListener("click", executarBusca);
+    inputBuscaRapida?.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if(sugestoesBusca) sugestoesBusca.hidden = true;
+            executarBusca();
+        }
+    });
+
+    inputBuscaRapida?.addEventListener("input", (e) => {
+        if (!sugestoesBusca) return;
+        
+        const textoDigitado = e.target.value.trim().toLowerCase();
+        
+        if (textoDigitado.length < 2) {
+            sugestoesBusca.hidden = true;
+            return;
+        }
+
+        const resultados = [];
+        const nomesUnicos = new Set(); 
+
+        for (const carro of veiculosBancoDeDados) {
+            const marca = carro.marca_nome || carro.marca || "";
+            const modelo = carro.modelo_nome || carro.modelo || "";
+            const nomeCompletoPesquisa = `${marca} ${modelo} ${carro.versao || ""}`.toLowerCase();
+            const nomeLimpoParaExibicao = `${marca} ${modelo}`.trim();
+
+            if (nomeCompletoPesquisa.includes(textoDigitado) && !nomesUnicos.has(nomeLimpoParaExibicao)) {
+                nomesUnicos.add(nomeLimpoParaExibicao);
+                
+                resultados.push({
+                    nome: nomeLimpoParaExibicao,
+                    imagemUrl: sanitizarSrcImagem(carro.imagem)
+                });
+            }
+
+            if (resultados.length >= 6) break;
+        }
+
+        if (resultados.length > 0) {
+            sugestoesBusca.innerHTML = resultados.map(item => `
+                <li class="sugestao-item" data-nome="${escapeHTML(item.nome)}">
+                    <img src="${item.imagemUrl}" alt="Foto de ${escapeHTML(item.nome)}" class="sugestao-img" onerror="this.src='/imagens/sem-foto.jpg'">
+                    <span>${escapeHTML(item.nome)}</span>
+                </li>
+            `).join("");
+            sugestoesBusca.hidden = false;
+        } else {
+            sugestoesBusca.hidden = true;
+        }
+    });
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    sugestoesBusca?.addEventListener("click", (e) => {
+        const itemClicado = e.target.closest(".sugestao-item");
+        if (itemClicado) {
+            inputBuscaRapida.value = itemClicado.getAttribute("data-nome");
+            sugestoesBusca.hidden = true;
+            executarBusca();
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (inputBuscaRapida && sugestoesBusca) {
+            if (!inputBuscaRapida.contains(e.target) && !sugestoesBusca.contains(e.target)) {
+                sugestoesBusca.hidden = true;
+            }
+        }
+    });
+    
+    // --- 6. MENU MOBILE E CABEÇALHO DINÂMICO (SCROLL) ---
     const header = document.querySelector("header");
 
-    btnMobile?.addEventListener("click", () => menuNavegacao?.classList.toggle("ativo"));
+    btnMobile?.addEventListener("click", () => {
+        menuNavegacao?.classList.toggle("active");
+        btnMobile.classList.toggle("active");
+    });
     
     window.addEventListener("scroll", () => {
         if (header) {
             header.style.background = window.scrollY > 50 ? "rgba(4,4,5,0.95)" : "rgba(8,8,10,0.85)";
             header.style.boxShadow = window.scrollY > 50 ? "0 10px 30px rgba(0,0,0,0.7)" : "none";
+            header.style.transition = "all 0.3s ease";
         }
     });
     
-    // --- CARROSSEL DE CARROS EM DESTAQUE ---
+    // --- 7. CARROSSEL DE CARROS EM DESTAQUE ---
     const carros = [
         { nome: "Porsche 911 Turbo", marca: "Porsche", ano: "2024", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=500" },
         { nome: "Chevrolet Corvette", marca: "Chevrolet", ano: "2024", img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=500" },
@@ -141,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const track = document.getElementById("carsTrack");
     if (track) {
         track.innerHTML = [...carros, ...carros].map(c => `
-            <a href="/pages/catalogo.html" class="car-card">
+            <a href="/pages/catalogo.html?busca=${encodeURIComponent(c.nome)}" class="car-card">
                 <div class="car-imagem"><img src="${c.img}" alt="${c.nome}"></div>
                 <div class="car-info">
                     <h3 class="car-nome">${c.nome}</h3>
@@ -151,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `).join("");
     }
     
-    // --- ANIMAÇÃO DE FUMAÇA NO BOTÃO DO CATÁLOGO ---
+    // --- 8. ANIMAÇÃO DE FUMAÇA NO BOTÃO DO CATÁLOGO ---
     const btnVerCatalogo = document.getElementById("btnVerCatalogo");
     btnVerCatalogo?.addEventListener("click", (e) => {
         const r = e.target.getBoundingClientRect();
@@ -163,5 +291,24 @@ document.addEventListener("DOMContentLoaded", () => {
             document.body.appendChild(p);
             setTimeout(() => p.remove(), 1200);
         }
+    });
+
+    // --- 9. ANIMAÇÃO DE TRANSIÇÃO ENTRE PÁGINAS (FADE OUT) ---
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            const target = this.getAttribute('target');
+            
+            if (target === '_blank') return;
+            if (href.startsWith('#')) return;
+            if (href === '' || href.startsWith('javascript:')) return;
+            
+            e.preventDefault();
+            document.body.classList.add('page-exit');
+            
+            setTimeout(() => {
+                window.location.href = href;
+            }, 300); 
+        });
     });
 });

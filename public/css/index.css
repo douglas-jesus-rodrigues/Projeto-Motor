@@ -252,3 +252,93 @@ a { text-decoration: none; color: inherit; }
     .car-card { flex: 0 0 220px; }
     .car-imagem { height: 120px; }
 }
+
+/* ==========================================================================
+   CAIXA DE SUGESTÕES DE BUSCA (AUTOCOMPLETE COM IMAGEM)
+   ========================================================================== */
+.search-input-group {
+    position: relative;
+}
+
+.sugestoes-busca {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 8px;
+    background: rgba(20, 24, 31, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    list-style: none;
+    padding: 8px 0;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.sugestao-item {
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #eef1f5;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, padding-left 0.2s ease;
+}
+
+.sugestao-item:hover {
+    background: rgba(255, 0, 0, 0.15);
+    color: #fff;
+    padding-left: 25px; /* Efeito de avançar ligeiramente ao passar o rato */
+}
+
+/* Nova formatação para a miniatura do carro */
+.sugestao-img {
+    width: 46px;
+    height: 34px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: var(--surface-2);
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   ANIMAÇÃO DE TRANSIÇÃO DE PÁGINAS (ENTRADA E SAÍDA)
+   ========================================================================== */
+body {
+    /* A página começa invisível e aparece em 0.4s */
+    opacity: 0;
+    animation: pageFadeIn 0.4s ease-out forwards;
+}
+
+body.page-exit {
+    /* Classe adicionada pelo JavaScript quando clicamos para sair */
+    animation: pageFadeOut 0.3s ease-in forwards !important;
+}
+
+@keyframes pageFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(15px); /* Começa ligeiramente para baixo */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0); /* Sobe para o lugar normal */
+    }
+}
+
+@keyframes pageFadeOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-15px); /* Sobe e desaparece */
+    }
+}
