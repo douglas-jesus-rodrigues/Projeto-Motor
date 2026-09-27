@@ -46,7 +46,7 @@ async function carregarDetalhesDoCarro(id) {
         // Foto Principal
         const fotoEl = document.getElementById("fotoPrincipal");
         if (v.imagem) {
-            fotoEl.src = `/uploads/${v.imagem}`;
+            fotoEl.src = v.imagem.startsWith('/') ? v.imagem : `/uploads/${v.imagem}`;
         } else {
             fotoEl.src = "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
         }
@@ -63,6 +63,26 @@ async function carregarDetalhesDoCarro(id) {
         document.getElementById("specCambio").textContent = v.cambio_nome || v.cambio || "Manual";
         document.getElementById("specCor").textContent = v.cor || "Não informada";
         document.getElementById("specPortas").textContent = v.portas ? `${v.portas} portas` : "Não informado";
+
+        // ==========================================
+        // IDENTIFICAÇÃO DO PROPRIETÁRIO (DONO DO CARRO)
+        // ==========================================
+        const contatoCard = document.querySelector(".contato-card");
+        const usuarioLogado = JSON.parse(localStorage.getItem("usuario") || sessionStorage.getItem("usuario") || "null");
+        
+        const idDonoVeiculo = Number(v.usuario_id || v.proprietario_id || 0);
+        const idUsuarioAtual = usuarioLogado ? Number(usuarioLogado.id) : null;
+
+        if (contatoCard && idUsuarioAtual && idDonoVeiculo > 0 && idUsuarioAtual === idDonoVeiculo) {
+            // É o dono do veículo! Substitui o card de proposta com o texto exato pedido
+            contatoCard.innerHTML = `
+                <h3><i class="fa-solid fa-circle-user" style="color: var(--accent);"></i> Gestão do Anúncio</h3>
+                <p>Você é o proprietário deste veículo registado na plataforma. Clique aqui embaixo caso queira editar</p>
+                <a href="/pages/painel-cliente.html" class="btn-proposta" style="text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; background: var(--surface-2); border: 1px solid var(--border-strong); color: #fff;">
+                    <i class="fa-solid fa-gear"></i> Gerir / Editar Anúncio
+                </a>
+            `;
+        }
 
         // Exibe o conteúdo e esconde o loader
         loadingEl.style.display = "none";
@@ -128,8 +148,7 @@ function configurarBotaoFavorito(veiculoId) {
         // Bloqueio rigoroso se não estiver logado
         const usuarioAtual = JSON.parse(localStorage.getItem("usuario") || sessionStorage.getItem("usuario"));
         if (!usuarioAtual || !usuarioAtual.id) {
-            alert("Para favoritar veículos, é necessário acessar sua conta no sistema.");
-            window.location.href = "/pages/login.html";
+            abrirModalLoginNecessario();
             return;
         }
 
@@ -193,6 +212,19 @@ window.addEventListener("storage", (event) => {
 });
 
 // ==========================================
+// CONTROLO DO MODAL DE LOGIN NECESSÁRIO
+// ==========================================
+function abrirModalLoginNecessario() {
+    const modal = document.getElementById("modalLoginNecessario");
+    if (modal) modal.style.display = "flex";
+}
+
+function fecharModalLoginNecessario() {
+    const modal = document.getElementById("modalLoginNecessario");
+    if (modal) modal.style.display = "none";
+}
+
+// ==========================================
 // FUNÇÕES AUXILIARES E LIGHTBOX
 // ==========================================
 function abrirModalImagem(url) {
@@ -210,9 +242,59 @@ function fecharModalImagem() {
 }
 
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") fecharModalImagem();
+    if (e.key === "Escape") {
+        fecharModalImagem();
+        fecharModalLoginNecessario();
+    }
 });
 
-function enviarPropostaModal() {
-    alert("Funcionalidade de envio de proposta em desenvolvimento!");
+// ==========================================
+// ENVIAR PROPOSTA / REDIRECIONAR PARA MENSAGENS COM MENSAGEM AUTOMÁTICA
+// ==========================================
+async function enviarPropostaModal() {
+    const usuarioSalvo = localStorage.getItem("usuario") || sessionStorage.getItem("usuario");
+    if (!usuarioSalvo) {
+        abrirModalLoginNecessario();
+        return;
+    }
+
+    let usuarioAtual;
+    try {
+        usuarioAtual = JSON.parse(usuarioSalvo);
+    } catch {
+        abrirModalLoginNecessario();
+        return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const veiculoId = urlParams.get('id');
+    const tituloVeiculo = document.getElementById("tituloVeiculo")?.textContent || "este veículo";
+    const precoVeiculo = document.getElementById("precoVeiculo")?.textContent || "";
+
+    // Mensagem automática inteligente com os dados exatos do carro
+    const mensagemAutomatica = `Olá! Tenho interesse no ${tituloVeiculo} anunciado por ${precoVeiculo}. Gostaria de negociar.`;
+
+    try {
+        const resposta = await fetch("/api/mensagens/iniciar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                remetente_id: usuarioAtual.id,
+                veiculo_id: veiculoId,
+                texto_inicial: mensagemAutomatica
+            })
+        });
+
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            const conversaId = dados.conversa_id || dados.id;
+            window.location.href = `/pages/mensagens.html?conversa=${conversaId}`;
+        } else {
+            window.location.href = `/pages/mensagens.html?veiculo=${veiculoId}&msg=${encodeURIComponent(mensagemAutomatica)}`;
+        }
+
+    } catch (erro) {
+        console.error("Erro ao iniciar chat:", erro);
+        window.location.href = `/pages/mensagens.html?veiculo=${veiculoId}&msg=${encodeURIComponent(mensagemAutomatica)}`;
+    }
 }

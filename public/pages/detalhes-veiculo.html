@@ -140,7 +140,22 @@
         </div>
     </div>
 
-    <!-- ESTILOS EXCLUSIVOS PARA O BOTÃO DE FAVORITO NA IMAGEM -->
+    <!-- MODAL DE ALERTA MODERNO (LOGIN NECESSÁRIO) -->
+    <div id="modalLoginNecessario" class="modal-aviso-overlay" style="display: none;">
+        <div class="modal-aviso-conteudo">
+            <div class="modal-aviso-icone">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3>Autenticação Necessária</h3>
+            <p>Para enviar uma proposta e conversar com o vendedor, é necessário entrar na sua conta no sistema MotorFlex.</p>
+            <div class="modal-aviso-acoes">
+                <button type="button" class="btn-modal-cancelar" onclick="fecharModalLoginNecessario()">Cancelar</button>
+                <a href="/pages/login.html" class="btn-modal-entrar">Fazer Login Agora</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESTILOS EXCLUSIVOS (BOTÃO DE FAVORITO E MODAL DE AVISO) -->
     <style>
         .btn-favoritar-detalhe {
             position: absolute;
@@ -174,6 +189,116 @@
 
         .btn-favoritar-detalhe:hover i.fa-solid.fa-heart {
             color: #fff;
+        }
+
+        /* Estilos do Modal de Login */
+        .modal-aviso-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 5, 6, 0.82);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInModal 0.3s ease-out forwards;
+        }
+
+        .modal-aviso-conteudo {
+            background: var(--surface, #14181f);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            transform: translateY(10px);
+            animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .modal-aviso-icone {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 0, 0, 0.14);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            color: #ff0000;
+            font-size: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .modal-aviso-conteudo h3 {
+            color: #fff;
+            font-size: 1.2rem;
+            font-family: var(--font-display, 'Oswald', sans-serif);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-aviso-conteudo p {
+            color: var(--text-muted, #8b93a1);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .modal-aviso-acoes {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-modal-cancelar {
+            flex: 1;
+            background: var(--surface-2, #1b2029);
+            color: var(--text, #eef1f5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-modal-cancelar:hover {
+            background: var(--surface-3, #232a35);
+        }
+
+        .btn-modal-entrar {
+            flex: 1;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-modal-entrar:hover {
+            background: #ff3333;
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleUpModal {
+            from { transform: translateY(15px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
     </style>
 

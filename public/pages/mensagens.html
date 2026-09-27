@@ -1,11 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>MotorFlex - Mensagens e Negociações</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="../css/mensagens.css">
+    <link rel="icon" type="image/x-icon" href="/imagens/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <h1>Mensagens</h1>
+    <header class="header">
+        <nav class="navbar">
+            <div class="logo">
+                <a href="/index.html" class="nav-link">Motor<span>Flex</span></a>
+            </div>
+            <a href="/pages/catalogo.html" class="nav-back-btn"><i class="fa-solid fa-arrow-left"></i> Voltar ao Catálogo</a>
+        </nav>
+    </header>
+
+    <main class="container chat-main-container">
+        <div class="chat-wrapper">
+            <!-- LISTA DE CONVERSAS (BARRA LATERAL) -->
+            <aside class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <h2>Conversas</h2>
+                    <span class="chat-badge-count" id="totalConversas">0</span>
+                </div>
+                <div class="chat-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="inputPesquisaConversa" placeholder="Pesquisar conversa...">
+                </div>
+                <div class="conversas-list" id="conversasList">
+                    <!-- Preenchido dinamicamente pelo JavaScript -->
+                    <div class="chat-loading">A carregar conversas...</div>
+                </div>
+            </aside>
+
+            <!-- ÁREA DA CONVERSA ATIVA -->
+            <section class="chat-content-area" id="chatContentArea">
+                <!-- Estado Vazio (Nenhuma conversa selecionada) -->
+                <div class="chat-empty-state" id="chatEmptyState">
+                    <i class="fa-solid fa-comments"></i>
+                    <h3>Suas Negociações</h3>
+                    <p>Selecione uma conversa ao lado para ver as mensagens ou inicie um contato através de um anúncio no catálogo.</p>
+                </div>
+
+                <!-- Painel de Chat Ativo (Escondido por padrão até selecionar um chat) -->
+                <div class="chat-active-box" id="chatActiveBox" style="display: none;">
+                    <div class="chat-header-info">
+                        <img src="/imagens/sem-foto.jpg" alt="Avatar" id="chatDestinatarioFoto">
+                        <div>
+                            <h3 id="chatDestinatarioNome">Nome do Utilizador</h3>
+                            <span class="chat-veiculo-ref" id="chatVeiculoRef">Ref: Veículo em negociação</span>
+                        </div>
+                    </div>
+
+                    <div class="chat-messages-scroll" id="chatMessagesScroll">
+                        <!-- As mensagens entram aqui via JS -->
+                    </div>
+
+                    <form class="chat-input-form" id="chatForm">
+                        <input type="text" id="inputMensagem" placeholder="Escreva a sua mensagem..." autocomplete="off" required>
+                        <button type="submit" id="btnEnviarMensagem" aria-label="Enviar Mensagem">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/mensagens.js"></script>
 </body>
 </html>
