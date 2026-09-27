@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Recupera os dados do usuário salvos no navegador no momento do login (Com Try/Catch seguro)
+    // =========================================================================
+    // 1. RECUPERAÇÃO E VALIDAÇÃO SEGURA DA SESSÃO
+    // =========================================================================
     const chaveSessao = localStorage.getItem("usuario") ? "usuario" : "usuario_logado";
     const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario") || sessionStorage.getItem("usuario_logado");
     
@@ -18,36 +20,48 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // 2. Preenche o Nome do Usuário de forma segura
+    // =========================================================================
+    // 2. ELEMENTOS DA DOM E DADOS DO UTILIZADOR
+    // =========================================================================
     const elNome = document.getElementById("nomeUsuario");
     if (elNome && usuario.nome) {
         elNome.textContent = usuario.nome;
     }
 
-    // Elementos da foto
     const imgPerfil = document.getElementById("imgPerfil");
     const btnRemoverFoto = document.getElementById("btnRemoverFoto");
 
-    // Função para atualizar a visibilidade do botão de remover
     function atualizarVisibilidadeBotaoRemover(temFotoPersonalizada) {
         if (btnRemoverFoto) {
             btnRemoverFoto.style.display = temFotoPersonalizada ? "flex" : "none";
         }
     }
 
-    // 3. Preenche a Foto de Perfil inicial (Verifica fotoUrl ou foto_perfil do banco)
+    function aplicarAvatarPadrao(nomeUsuario) {
+        if (!imgPerfil) return;
+        imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeUsuario || "Cliente")}&background=181824&color=ff1e27&size=150`;
+        atualizarVisibilidadeBotaoRemover(false);
+    }
+
+    // Carregamento inicial da foto com fallback seguro caso a imagem falhe
     if (imgPerfil) {
         const fotoAtual = usuario.fotoUrl || usuario.foto_perfil;
         if (fotoAtual) {
             imgPerfil.src = fotoAtual;
             atualizarVisibilidadeBotaoRemover(true);
-        } else if (usuario.nome) {
-            imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome)}&background=181824&color=ff1e27&size=150`;
-            atualizarVisibilidadeBotaoRemover(false);
+            
+            // Fallback automático se a imagem externa falhar ao carregar
+            imgPerfil.onerror = () => {
+                aplicarAvatarPadrao(usuario.nome);
+            };
+        } else {
+            aplicarAvatarPadrao(usuario.nome);
         }
     }
 
-    // Função auxiliar para exibir notificações elegantes (Toast)
+    // =========================================================================
+    // 3. SISTEMA DE NOTIFICAÇÕES (TOAST)
+    // =========================================================================
     function mostrarNotificacao(mensagem, tipo = 'sucesso') {
         const toastAntigo = document.querySelector('.toast-notificacao');
         if (toastAntigo) toastAntigo.remove();
@@ -85,7 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3500);
     }
 
-    // Função customizada para confirmar a remoção da foto
+    // =========================================================================
+    // 4. MODAL CUSTOMIZADO DE CONFIRMAÇÃO DE REMOÇÃO DE FOTO
+    // =========================================================================
     function abrirModalConfirmacaoFoto(onConfirm) {
         const modalAntigo = document.getElementById('modalCustomFoto');
         if (modalAntigo) modalAntigo.remove();
@@ -156,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 4. GERENCIAMENTO DO MENU DROPDOWN DE CONFIGURAÇÕES
+    // 5. MENU DROPDOWN DE CONFIGURAÇÕES
     // =========================================================================
     const btnConfig = document.getElementById('btnConfig');
     const menuConfig = document.getElementById('menuConfig');
@@ -177,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 5. GERENCIAMENTO DO MODAL DE SAÍDA / LOGOUT
+    // 6. GESTÃO DO MODAL DE LOGOUT
     // =========================================================================
     const gatilhoSair = document.getElementById('gatilhoSair');
     const modalSairContainer = document.getElementById('modalSairContainer');
@@ -218,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 6. GERENCIAMENTO DE UPLOAD COM RECORTE ESTILO WHATSAPP (CROPPER.JS)
+    // 7. UPLOAD DE FOTO DE PERFIL COM CROPPER.JS (BLINDADO)
     // =========================================================================
     const inputFoto = document.getElementById("inputFotoPerfil");
     const modalRecorte = document.getElementById("modalRecorte");
@@ -233,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const arquivo = e.target.files[0];
             if (!arquivo) return;
 
-            // Validação rigorosa de MIME-type (Segurança contra arquivos maliciosos)
+            // Validação rigorosa de MIME-type
             const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
             if (!tiposPermitidos.includes(arquivo.type)) {
                 mostrarNotificacao("Por favor, selecione uma imagem válida (JPEG, PNG ou WEBP).", "erro");
@@ -241,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const tamanhoMaximo = 5 * 1024 * 1024;
+            const tamanhoMaximo = 5 * 1024 * 1024; // 5MB
             if (arquivo.size > tamanhoMaximo) {
                 mostrarNotificacao("A foto selecionada deve ter no máximo 5MB.", "erro");
                 inputFoto.value = "";
@@ -278,7 +294,6 @@ document.addEventListener("DOMContentLoaded", () => {
             reader.readAsDataURL(arquivo);
         });
 
-        // Botão Cancelar Recorte
         if (btnCancelarRecorte) {
             btnCancelarRecorte.addEventListener("click", () => {
                 modalRecorte.style.display = "none";
@@ -287,12 +302,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Botão Confirmar Recorte (Com Proteção contra Cliques Duplos / Race Conditions)
         if (btnConfirmarRecorte) {
             btnConfirmarRecorte.addEventListener("click", () => {
                 if (!cropper) return;
 
-                // Desativa o botão temporariamente para evitar cliques duplos
                 btnConfirmarRecorte.disabled = true;
                 const textoOriginalBotao = btnConfirmarRecorte.textContent;
                 btnConfirmarRecorte.textContent = "A salvar...";
@@ -350,7 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         URL.revokeObjectURL(previewUrl);
                         if (cropper) cropper.destroy();
                         inputFoto.value = "";
-                        // Restaura o botão
                         btnConfirmarRecorte.disabled = false;
                         btnConfirmarRecorte.textContent = textoOriginalBotao;
                     }
@@ -360,7 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 7. GERENCIAMENTO DE REMOÇÃO DA FOTO DE PERFIL
+    // 8. REMOÇÃO DA FOTO DE PERFIL
     // =========================================================================
     if (btnRemoverFoto) {
         btnRemoverFoto.addEventListener("click", () => {
@@ -384,17 +396,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     if (dados.sucesso !== false) {
-                        const avatarPadrao = `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario.nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
-                        
-                        if (imgPerfil) {
-                            imgPerfil.src = avatarPadrao;
-                        }
+                        aplicarAvatarPadrao(usuario.nome);
                         
                         usuario.fotoUrl = null;
                         usuario.foto_perfil = null;
                         localStorage.setItem(chaveSessao, JSON.stringify(usuario));
 
-                        atualizarVisibilidadeBotaoRemover(false);
                         mostrarNotificacao("🗑️ Foto de perfil removida com sucesso!");
                     } else {
                         mostrarNotificacao(dados.mensagem || "Não foi possível remover a foto.", "erro");
@@ -407,4 +414,16 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+
+    // =========================================================================
+    // 9. SINCRONIZAÇÃO EM TEMPO REAL ENTRE ABAS DO NAVEGADOR
+    // =========================================================================
+    window.addEventListener("storage", (event) => {
+        if (event.key === chaveSessao) {
+            if (!event.newValue) {
+                // Se a sessão foi limpa noutra aba, redireciona para o login
+                window.location.href = "/pages/login.html";
+            }
+        }
+    });
 });
