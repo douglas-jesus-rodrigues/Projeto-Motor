@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorFlex - Apresentação</title>
+    
+    <!-- ROTAS CSS E FONTE -->
+    <link rel="stylesheet" href="../css/animacao.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="introOverlay" class="intro-overlay">
+        <!-- NOVO FUNDO NOCTURNO CINEMATOGRÁFICO COM SILHUETA DA CIDADE -->
+        <div class="sky-background"></div>
+        <div class="city-silhouettes"></div>
+        <div class="horizon-glow"></div>
+        
+        <div class="lightning-flash" id="lightning"></div>
+        <canvas id="lightningCanvas"></canvas>
+
+        <!-- PISTA DE ASFALTO COM ILUMINAÇÃO DE NEON -->
+        <div class="wet-road">
+            <div class="road-line"></div>
+            <div class="road-reflections"></div>
+            <div class="drift-skidmarks"></div>
+        </div>
+        
+        <!-- FUMAÇA DO DRIFT -->
+        <div class="smoke-container">
+            <div class="smoke-cloud smoke-left"></div>
+            <div class="smoke-cloud smoke-center"></div>
+            <div class="smoke-cloud smoke-right"></div>
+        </div>
+
+        <!-- CONTAINER DO SEU CARRO (IMAGEM CORRIGIDA) -->
+        <div class="car-wrapper">
+            <div class="car-image">
+                <div class="neon-underglow"></div>
+            </div>
+        </div>
+
+        <!-- TEXTO DE BOAS-VINDAS -->
+        <div class="welcome-box">
+            <h1 class="welcome-title">SEJA BEM-VINDO</h1>
+            <h2 class="welcome-brand">MOTOR<span>FLEX</span></h2>
+        </div>
+
+        <!-- BOTÃO PULAR -->
+        <button id="btnPular" class="btn-pular">Pular Intro ✕</button>
+    </div>
+
+    <!-- ROTA DO JS -->
+    <script src="../js/animacao.js"></script>
+</body>
+</html>
