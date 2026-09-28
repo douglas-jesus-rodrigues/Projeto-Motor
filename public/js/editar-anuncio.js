@@ -86,7 +86,11 @@ async function carregarInformacoesDoCarro(id) {
             if (veiculo.preco) {
                 const inputPreco = document.getElementById('preco');
                 if (inputPreco) {
-                    inputPreco.value = Number(veiculo.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    // MODIFICADO: Formata o preço vindo do banco sem as casas decimais
+                    inputPreco.value = Number(veiculo.preco).toLocaleString('pt-BR', { 
+                        minimumFractionDigits: 0, 
+                        maximumFractionDigits: 0 
+                    });
                 }
             }
             
@@ -118,18 +122,25 @@ function ajustarValor(idDoCampo, passo, valorMinimo = 0) {
     input.dispatchEvent(new Event('input'));
 }
 
+// MODIFICADO: Máscara ajustada para lidar apenas com números inteiros
 function inicializarMascaraPreco() {
     const inputPreco = document.getElementById('preco');
     if (!inputPreco) return;
 
     inputPreco.addEventListener('input', (e) => {
+        // Remove tudo o que não for dígito
         let valor = e.target.value.replace(/\D/g, "");
-        if (valor === "") { e.target.value = ""; return; }
-        valor = (Number(valor) / 100).toFixed(2) + "";
-        let partes = valor.split(".");
-        let inteiros = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        let centavos = partes[1];
-        e.target.value = `${inteiros},${centavos}`;
+        
+        if (valor === "") { 
+            e.target.value = ""; 
+            return; 
+        }
+        
+        // Remove zeros à esquerda adicionais (ex: "0150" -> "150")
+        valor = parseInt(valor, 10).toString();
+
+        // Adiciona apenas o ponto de milhar a cada 3 dígitos
+        e.target.value = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     });
 }
 
@@ -150,7 +161,8 @@ async function salvarAlteracoesDoCarro(id) {
 
     let precoLimpo = null;
     if (precoInput) {
-        precoLimpo = Number(precoInput.replace(/\./g, '').replace(',', '.'));
+        // MODIFICADO: Como não temos mais vírgula (centavos), removemos apenas os pontos de formatação
+        precoLimpo = Number(precoInput.replace(/\./g, ''));
     }
     
     if (btnSalvar) {

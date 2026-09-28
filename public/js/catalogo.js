@@ -38,6 +38,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
+    // 0.1. MÁSCARA AUTOMÁTICA DE PREÇO (CORRIGIDA)
+    // O "R$" já aparece no <span class="prefixo">, então a máscara
+    // formata apenas o número inteiro, sem centavos: 150.000
+    // O input do HTML precisa ser type="text".
+    // ==========================================
+    const precoInput = document.getElementById("preco");
+    if (precoInput) {
+        // Garante que o campo aceite a máscara mesmo se o HTML ainda estiver com type="number"
+        precoInput.type = "text";
+        precoInput.removeAttribute("min");
+        precoInput.removeAttribute("max");
+        precoInput.removeAttribute("step");
+        precoInput.setAttribute("inputmode", "numeric");
+        precoInput.setAttribute("autocomplete", "off");
+        precoInput.setAttribute("maxlength", "10");
+        precoInput.placeholder = "0";
+
+        precoInput.addEventListener("input", (e) => {
+            // Só dígitos, limitado a 8 (até 10.000.000)
+            const digitos = e.target.value.replace(/\D/g, "").slice(0, 8);
+
+            if (digitos === "") {
+                e.target.value = "";
+                return;
+            }
+
+            // Sem centavos: 150000 -> "150.000"
+            e.target.value = Number(digitos).toLocaleString("pt-BR");
+        });
+    }
+
+    // ==========================================
     // TOASTS (substitui alert())
     // ==========================================
     const toastContainer = document.getElementById("toastContainer");
@@ -98,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================
-    // 1. NAVEGAÇÃO ENTRE ABAS (com suporte a ?tab=...)
+    // 1. NAVEGAÇÃO ENTRE ABAS
     // ==========================================
     const navLinks = document.querySelectorAll(".nav-link");
     const pageTabs = document.querySelectorAll(".page-tab");
@@ -177,8 +209,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const formFiltro = document.getElementById("formFiltro");
     const btnLimpar = document.getElementById("btnLimparFiltros");
 
-    const formatarMoeda = (valor) =>
-        (Number(valor) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    // Remove o ",00" quando o valor é inteiro (R$ 150.000). Só mostra centavos se existirem.
+    const formatarMoeda = (valor) => {
+        const numero = Number(valor) || 0;
+        const temCentavos = Math.round(numero * 100) % 100 !== 0;
+        return numero.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            minimumFractionDigits: temCentavos ? 2 : 0,
+            maximumFractionDigits: temCentavos ? 2 : 0,
+        });
+    };
 
     async function carregarVeiculosDoBanco() {
         try {
@@ -469,9 +510,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const formAnuncio = document.getElementById("formAnuncio");
     const btnAnunciar = document.getElementById("btnAnunciar");
 
+    const PRECO_MAXIMO = 10000000;
+
     function definirErro(campoEl, erroEl, mensagem) {
         if (erroEl) erroEl.textContent = mensagem;
         if (campoEl) campoEl.setAttribute("aria-invalid", mensagem ? "true" : "false");
+    }
+
+    // Converte "150.000" (ou "R$ 150.000") para o número 150000
+    function limparPrecoParaBanco(valorBruto) {
+        if (typeof valorBruto === "number") return valorBruto;
+        if (!valorBruto) return 0;
+
+        let limpo = String(valorBruto).replace(/[^\d,]/g, ""); // Mantém apenas números e a vírgula decimal
+        limpo = limpo.replace(",", "."); // Troca a vírgula por ponto para o banco de dados
+        return Number(limpo) || 0;
     }
 
     if (formAnuncio) {
@@ -528,9 +581,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 valido = false;
             }
 
-            const preco = Number(precoEl.value);
+            const preco = limparPrecoParaBanco(precoEl.value);
             if (!precoEl.value || preco <= 0) {
                 definirErro(precoEl, document.getElementById("erroPreco"), "Informe um preço válido, maior que zero.");
+                valido = false;
+            } else if (preco > PRECO_MAXIMO) {
+                definirErro(precoEl, document.getElementById("erroPreco"), "O preço máximo é R$ 10.000.000,00.");
                 valido = false;
             }
 
@@ -732,7 +788,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll(".btn-favoritar").forEach((btn) => {
                 const idVeiculo = Number(btn.getAttribute("data-id"));
                 const ehFav = temLoginAtual && novosFavoritos.includes(idVeiculo);
-                
+
                 const icone = btn.querySelector("i");
                 if (icone) {
                     icone.className = ehFav ? "fa-solid fa-heart" : "fa-regular fa-heart";

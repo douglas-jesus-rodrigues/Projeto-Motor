@@ -45,9 +45,12 @@ async function carregarMeusAnuncios(usuarioId) {
         data.veiculos.forEach(veiculo => {
             const tr = document.createElement("tr");
 
+            // Formatação corrigida para remover os zeros da casa decimal
             const precoFormatado = Number(veiculo.preco).toLocaleString('pt-BR', {
                 style: 'currency',
-                currency: 'BRL'
+                currency: 'BRL',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
 
             const anoExibicao = veiculo.ano_fabricacao && veiculo.ano_modelo 
