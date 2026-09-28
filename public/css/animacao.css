@@ -1,0 +1,308 @@
+:root {
+    --primary: #e50914;
+    --bg-dark: #030206;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg-dark);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* OVERLAY PRINCIPAL */
+.intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #030206;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.intro-overlay.saindo {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* --- NOVO FUNDO DE CIDADE E CÉU NOCTURNO --- */
+.sky-background {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 20%, #1a082e 0%, #0c0418 60%, #030206 100%);
+    z-index: 1;
+}
+
+.horizon-glow {
+    position: absolute;
+    bottom: 180px;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(to top, rgba(229, 9, 20, 0.25) 0%, rgba(157, 0, 255, 0.15) 50%, transparent 100%);
+    filter: blur(20px);
+    z-index: 2;
+}
+
+.city-silhouettes {
+    position: absolute;
+    bottom: 175px;
+    width: 100%;
+    height: 160px;
+    z-index: 3;
+    background-image: repeating-linear-gradient(
+        90deg,
+        #06030c 0px,
+        #06030c 25px,
+        transparent 25px,
+        transparent 35px,
+        #090412 35px,
+        #090412 70px
+    );
+    clip-path: polygon(
+        0% 100%, 0% 30%, 3% 30%, 3% 50%, 6% 50%, 6% 15%, 10% 15%, 10% 60%,
+        14% 60%, 14% 20%, 18% 20%, 18% 55%, 22% 55%, 22% 10%, 27% 10%, 27% 65%,
+        32% 65%, 32% 25%, 36% 25%, 36% 50%, 40% 50%, 40% 5%, 45% 5%, 45% 60%,
+        50% 60%, 50% 18%, 55% 18%, 55% 55%, 60% 55%, 60% 12%, 65% 12%, 65% 65%,
+        70% 65%, 70% 22%, 75% 22%, 75% 50%, 80% 50%, 80% 8%, 86% 8%, 86% 60%,
+        92% 60%, 92% 28%, 100% 28%, 100% 100%
+    );
+    opacity: 0.85;
+}
+
+/* FLASH E CANVAS DOS RAIOS */
+.lightning-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(229, 9, 20, 0.25);
+    mix-blend-mode: screen;
+    opacity: 0;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.lightning-flash.flash-active {
+    animation: flashTrigger 0.3s ease-out;
+}
+
+@keyframes flashTrigger {
+    0% { opacity: 0; }
+    30% { opacity: 1; background: rgba(0, 210, 255, 0.5); }
+    60% { opacity: 0.8; background: rgba(229, 9, 20, 0.6); }
+    100% { opacity: 0; }
+}
+
+#lightningCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+}
+
+/* PISTA DE ASFALTO COM ILUMINAÇÃO DE PISTA */
+.wet-road {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(to bottom, #100a1c 0%, #05020a 100%);
+    border-top: 2px solid rgba(229, 9, 20, 0.6);
+    box-shadow: 0 -12px 35px rgba(229, 9, 20, 0.3);
+    z-index: 5;
+}
+
+.road-line {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0px, rgba(255, 255, 255, 0.4) 40px, transparent 40px, transparent 80px);
+}
+
+.road-reflections {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(229, 9, 20, 0.3) 0%, rgba(0, 210, 255, 0.15) 50%, transparent 80%);
+}
+
+.drift-skidmarks {
+    position: absolute;
+    bottom: 35px;
+    left: 15%;
+    width: 70%;
+    height: 18px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 50%;
+    filter: blur(5px);
+}
+
+/* --- CARRO COM SUA ROTA CORRIGIDA --- */
+.car-wrapper {
+    position: absolute;
+    bottom: 25px;
+    left: -600px;
+    width: 520px;
+    height: 260px;
+    z-index: 8;
+    animation: bugattiDriftSequence 12s cubic-bezier(0.25, 1, 0.35, 1) forwards;
+}
+
+.car-image {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* ROTA DA SUA IMAGEM */
+    background-image: url('../imagens/carro-ilustrado.jpeg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.9)) brightness(1.08) contrast(1.1);
+}
+
+.neon-underglow {
+    position: absolute;
+    bottom: 15px;
+    left: 10%;
+    width: 80%;
+    height: 25px;
+    background: radial-gradient(ellipse at center, rgba(229, 9, 20, 0.9) 0%, rgba(0, 210, 255, 0.6) 50%, transparent 80%);
+    filter: blur(10px);
+    border-radius: 50%;
+}
+
+/* ANIMAÇÃO DRIFT DE 12 SEGUNDOS */
+@keyframes bugattiDriftSequence {
+    0% {
+        left: -600px;
+        transform: scale(0.65) rotate(0deg);
+    }
+    20% {
+        left: 18%;
+        transform: scale(0.9) rotate(-4deg);
+    }
+    40% {
+        left: 32%;
+        transform: scale(1.05) rotate(35deg);
+    }
+    60% {
+        left: 45%;
+        transform: scale(1.15) rotate(180deg);
+    }
+    80% {
+        left: 50%;
+        transform: scale(1.05) rotate(360deg);
+        opacity: 1;
+    }
+    92% {
+        left: 110%;
+        transform: scale(0.85) rotate(360deg);
+        opacity: 1;
+    }
+    100% {
+        left: 135%;
+        transform: scale(0.7) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* FUMAÇA DO DRIFT */
+.smoke-container {
+    position: absolute;
+    bottom: 10px;
+    left: 15%;
+    width: 700px;
+    height: 260px;
+    z-index: 6;
+    pointer-events: none;
+}
+
+.smoke-cloud {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 9, 20, 0.35) 0%, rgba(120, 0, 255, 0.2) 50%, transparent 75%);
+    filter: blur(35px);
+    opacity: 0;
+    animation: smokeDrift 12s ease-in-out forwards;
+}
+
+.smoke-left { width: 300px; height: 180px; left: 0; bottom: 20px; animation-delay: 1.8s; }
+.smoke-center { width: 400px; height: 220px; left: 150px; bottom: 10px; animation-delay: 3.8s; }
+.smoke-right { width: 350px; height: 200px; left: 300px; bottom: 30px; animation-delay: 5.8s; }
+
+@keyframes smokeDrift {
+    0% { opacity: 0; transform: scale(0.2); }
+    30% { opacity: 0.85; transform: scale(1.6); }
+    60% { opacity: 0.9; transform: scale(2.8); }
+    85% { opacity: 0.3; transform: scale(3.6); }
+    100% { opacity: 0; transform: scale(4.2); }
+}
+
+/* TEXTO DE BOAS-VINDAS */
+.welcome-box {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    opacity: 0;
+    animation: welcomeFade 12s ease-in-out forwards;
+}
+
+.welcome-title {
+    font-size: clamp(2.5rem, 6vw, 4.8rem);
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 25px #e50914, 0 0 50px rgba(229, 9, 20, 0.8), 0 0 75px #00d2ff;
+    letter-spacing: 6px;
+}
+
+.welcome-brand {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 8px;
+    margin-top: 5px;
+}
+
+.welcome-brand span { color: var(--primary); }
+
+@keyframes welcomeFade {
+    0%, 68% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+    80%, 93% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* BOTÃO PULAR INTRO */
+.btn-pular {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    z-index: 20;
+    background: rgba(18, 18, 22, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 10px 22px;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.btn-pular:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
