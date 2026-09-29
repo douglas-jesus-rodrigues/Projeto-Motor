@@ -1,308 +1,156 @@
-:root {
-    --primary: #e50914;
-    --bg-dark: #030206;
+/* ==========================================================
+   MOTORFLEX — Intro cinematográfica (vídeo como cenário)
+   1 Variables 2 Reset 3 Shell 4 Film 5 Atmosphere + Lightning light
+   6 FX 7 Typography 8 Brand 9 Controls 10 Animations
+   11 Responsive 12 Accessibility
+   ========================================================== */
+
+/* 1. VARIABLES */
+:root{
+    --red:#e50914; --black:#000; --white:#fff;
+    --flash:0;                      /* 0..1, intensidade do clarão (escrita pelo JS a cada frame) */
+    --bx1:27%; --bx2:73%;           /* x dos dois raios dentro da cena do vídeo (escrito pelo JS) */
+    --ease-cine:cubic-bezier(.16,.7,.2,1);
+
+    /* Recorte do vídeo. O MP4 é quadrado e tem barras pretas embutidas:
+       --bars = fração da altura do arquivo que é barra, em CADA lado (80/368 ≈ .22).
+       --A    = proporção da cena visível = 1 / (1 - 2*bars).
+       Se reexportar o vídeo já em 16:9 sem barras: --bars:0 e --A:1.7778. */
+    --bars:.22;
+    --A:1.7857;
+    --px:52%;                       /* foco horizontal (carro) */
+    --py:50%;                       /* foco vertical */
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* 2. RESET */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--black);overflow:hidden}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--white);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* 3. SHELL */
+.intro{position:fixed;inset:0;background:var(--black);overflow:hidden;isolation:isolate}
+.intro>*{position:absolute}
+.stage{inset:0;transition:opacity .9s ease-in}
+.stage>*{position:absolute;pointer-events:none}
+/* Fim da tempestade: a cena mergulha no preto (JS só libera a marca depois de ~900ms + pausa) */
+.is-dark .stage{opacity:0}
+
+/* 4. FILM — equivalente a object-fit:cover, já descontando as barras do arquivo */
+.film{left:var(--px);top:var(--py);
+    width:max(100vw,calc(100vh*var(--A)));
+    height:max(100vh,calc(100vw/var(--A)));
+    transform:translate(calc(-1*var(--px)),calc(-1*var(--py)));
+    overflow:hidden;opacity:0;isolation:isolate}
+.film>*{position:absolute;pointer-events:none}
+@supports (height:100dvh){
+    .film{width:max(100vw,calc(100dvh*var(--A)));height:max(100dvh,calc(100vw/var(--A)))}
+}
+/* Durante o clarão o próprio vídeo ganha brilho/contraste e perde um pouco de cor (luz fria) */
+.film__video{display:block;left:0;width:100%;object-fit:fill;background:#000;
+    height:calc(100% / (1 - 2*var(--bars)));
+    top:calc(-100% * var(--bars) / (1 - 2*var(--bars)));
+    filter:brightness(calc(1 + var(--flash)*.6)) contrast(calc(1 + var(--flash)*.14)) saturate(calc(1 - var(--flash)*.35))}
+.is-scene .film{opacity:1;transition:opacity 1.8s ease-out}
+
+.fallback{inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;opacity:0}
+.is-fallback .fallback{opacity:1;transition:opacity 1.8s ease-out}
+.is-fallback .film{display:none}
+
+/* 5. ATMOSFERA + LUZ DOS RAIOS */
+.atmos{inset:0;opacity:0;transition:opacity 2.4s ease;mix-blend-mode:screen;
+    background:radial-gradient(ellipse 70% 20% at 50% 50%,rgba(229,9,20,.18),transparent 70%)}
+.is-glow .atmos{opacity:.7}
+
+/* .dimmer "abre" durante o clarão (opacity = 1 - flash): a cena volta a ser vista, em vez de ser coberta de branco */
+.dimmer{inset:0;opacity:calc(1 - var(--flash)*.9)}
+.dim{position:absolute;inset:0;background:#000;opacity:0}
+.is-fade .dim{opacity:.55;transition:opacity 1.6s ease-in}
+.is-storm .dim{opacity:.9;transition:opacity 1s ease}
+
+/* Luz fria vinda do céu, centrada nos dois raios. soft-light realça contornos e brilhos da carroceria e do céu */
+.lit{inset:0;mix-blend-mode:soft-light;opacity:calc(var(--flash)*1.2);
+    background:
+        radial-gradient(ellipse 40% 42% at var(--bx1) 14%,rgba(232,239,250,.95),transparent 72%),
+        radial-gradient(ellipse 40% 42% at var(--bx2) 14%,rgba(232,239,250,.95),transparent 72%),
+        linear-gradient(to bottom,rgba(214,226,244,.55),rgba(214,226,244,.25) 60%,rgba(214,226,244,.45))}
+/* Asfalto molhado: listras verticais sob cada raio (reflexo do céu) + brilho geral do chão */
+.wet{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.65);
+    background:
+        radial-gradient(ellipse 5% 26% at var(--bx1) 86%,rgba(214,226,244,.55),transparent 75%),
+        radial-gradient(ellipse 5% 26% at var(--bx2) 86%,rgba(214,226,244,.55),transparent 75%),
+        linear-gradient(to bottom,transparent 58%,rgba(210,225,245,.24) 78%,rgba(210,225,245,.05))}
+/* Neblina do horizonte acende com o clarão */
+.mist{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.5);
+    background:linear-gradient(to bottom,transparent 38%,rgba(190,205,228,.32) 52%,transparent 66%)}
+/* Lift global contido (nunca vira tela branca) */
+.flash-lift{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.4);
+    background:radial-gradient(ellipse 90% 60% at 50% 12%,rgba(222,232,246,.9),rgba(205,218,238,.3) 60%,rgba(205,218,238,.05))}
+
+/* 6. FX */
+.fx{inset:0;width:100%;height:100%;pointer-events:none}
+.vignette{inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%)}
+.grain{inset:-50%;width:200%;height:200%;pointer-events:none;opacity:.05;background-image:var(--grain);animation:grain .9s steps(6) infinite}
+
+/* 7. TIPOGRAFIA (kicker no céu, para não competir com o carro) */
+.kicker{left:0;right:0;top:12vh;margin:0 auto;max-width:88vw;text-align:center;font-weight:600;font-size:clamp(9px,1.05vw,14px);
+    letter-spacing:.55em;opacity:0;color:#d9d9d9;text-shadow:0 2px 18px rgba(0,0,0,.8);
+    transition:opacity 1.6s ease,letter-spacing 2.8s var(--ease-cine)}
+.is-kicker .kicker{opacity:.75;letter-spacing:.34em}
+.is-kicker-out .kicker{opacity:0;transition:opacity 1s ease}
+
+/* 8. MARCA — nada aparece antes de o JS liberar (visibility) */
+.brand{inset:0;display:grid;grid-template-rows:1fr 1fr;justify-items:center;text-align:center;pointer-events:none}
+.brand__line{position:absolute;top:50%;left:50%;width:0;height:1px;opacity:0;transform:translate(-50%,-50%);
+    background:linear-gradient(90deg,transparent,var(--red) 30%,#fff 50%,var(--red) 70%,transparent);
+    box-shadow:0 0 14px 1px rgba(229,9,20,.45);transition:width 1.1s cubic-bezier(.7,0,.2,1),opacity .4s ease}
+.is-brand-line .brand__line{width:min(72vw,760px);opacity:1}
+.is-brand .brand__line{opacity:.35;transition:opacity 1.5s ease}
+.brand__name{visibility:hidden;align-self:end;padding-bottom:1.8vh;font-weight:900;font-size:clamp(38px,9vw,132px);line-height:1}
+.is-brand .brand__name{visibility:visible}
+.brand__mask{display:inline-block;opacity:0;letter-spacing:.2em;margin-right:-.2em;filter:blur(10px);transform:scale(.94);
+    clip-path:inset(-15% 50% -15% 50%);
+    transition:clip-path 1.5s cubic-bezier(.7,0,.15,1),filter 1.5s ease,opacity 1s ease,transform 2.6s ease-out,letter-spacing 2.6s var(--ease-cine)}
+.brand__mask em{font-style:normal;color:var(--red);text-shadow:0 0 24px rgba(229,9,20,.28)}
+.is-brand .brand__mask{opacity:1;letter-spacing:.12em;margin-right:-.12em;filter:blur(0);transform:scale(1);clip-path:inset(-15% 0 -15% 0)}
+.brand__sub{visibility:hidden;align-self:start;padding-top:2.4vh;font-weight:600;font-size:clamp(10px,1.3vw,17px);letter-spacing:.6em;margin-right:-.6em;color:#ddd;
+    opacity:0;transition:opacity 1.6s ease,letter-spacing 2.4s var(--ease-cine)}
+.is-sub .brand__sub{visibility:visible;opacity:.85;letter-spacing:.46em}
+
+/* 9. CONTROLES */
+.veil{inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;transition:opacity 1s ease}
+.is-out .veil{opacity:1}
+.is-skipping .veil{transition-duration:.45s}
+.skip{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:60;display:flex;gap:10px;align-items:center;
+    padding:8px 14px;font-size:10px;font-weight:600;letter-spacing:.22em;color:rgba(255,255,255,.6);
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:999px;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .25s,color .25s,box-shadow .25s,opacity .4s}
+.skip i{font-style:normal;font-size:14px;line-height:1}
+.skip:hover{color:#fff;border-color:var(--red);box-shadow:0 0 14px rgba(229,9,20,.3)}
+.skip:focus-visible{outline:2px solid var(--red);outline-offset:3px;color:#fff}
+.is-out .skip{opacity:0}
+
+/* 10. ANIMAÇÕES */
+@keyframes grain{
+    0%{transform:translate(0,0)}20%{transform:translate(-4%,3%)}40%{transform:translate(3%,-5%)}
+    60%{transform:translate(-5%,-2%)}80%{transform:translate(4%,4%)}100%{transform:translate(0,0)}}
+
+/* 11. RESPONSIVO */
+@media (max-width:720px){
+    :root{--px:55%}                 /* telas verticais: mantém a frente do carro no quadro */
+    .kicker{font-size:9px;letter-spacing:.3em;top:14vh}
+    .is-kicker .kicker{letter-spacing:.22em}
+    .grain{animation:none}
+    .brand__sub{letter-spacing:.3em}
+    .is-sub .brand__sub{letter-spacing:.3em}
+}
+@media (max-height:480px) and (orientation:landscape){
+    .kicker{top:8vh}
 }
 
-body {
-    background: var(--bg-dark);
-    font-family: 'Inter', sans-serif;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-}
-
-/* OVERLAY PRINCIPAL */
-.intro-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: #030206;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
-}
-
-.intro-overlay.saindo {
-    opacity: 0;
-    visibility: hidden;
-}
-
-/* --- NOVO FUNDO DE CIDADE E CÉU NOCTURNO --- */
-.sky-background {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 20%, #1a082e 0%, #0c0418 60%, #030206 100%);
-    z-index: 1;
-}
-
-.horizon-glow {
-    position: absolute;
-    bottom: 180px;
-    width: 100%;
-    height: 120px;
-    background: linear-gradient(to top, rgba(229, 9, 20, 0.25) 0%, rgba(157, 0, 255, 0.15) 50%, transparent 100%);
-    filter: blur(20px);
-    z-index: 2;
-}
-
-.city-silhouettes {
-    position: absolute;
-    bottom: 175px;
-    width: 100%;
-    height: 160px;
-    z-index: 3;
-    background-image: repeating-linear-gradient(
-        90deg,
-        #06030c 0px,
-        #06030c 25px,
-        transparent 25px,
-        transparent 35px,
-        #090412 35px,
-        #090412 70px
-    );
-    clip-path: polygon(
-        0% 100%, 0% 30%, 3% 30%, 3% 50%, 6% 50%, 6% 15%, 10% 15%, 10% 60%,
-        14% 60%, 14% 20%, 18% 20%, 18% 55%, 22% 55%, 22% 10%, 27% 10%, 27% 65%,
-        32% 65%, 32% 25%, 36% 25%, 36% 50%, 40% 50%, 40% 5%, 45% 5%, 45% 60%,
-        50% 60%, 50% 18%, 55% 18%, 55% 55%, 60% 55%, 60% 12%, 65% 12%, 65% 65%,
-        70% 65%, 70% 22%, 75% 22%, 75% 50%, 80% 50%, 80% 8%, 86% 8%, 86% 60%,
-        92% 60%, 92% 28%, 100% 28%, 100% 100%
-    );
-    opacity: 0.85;
-}
-
-/* FLASH E CANVAS DOS RAIOS */
-.lightning-flash {
-    position: absolute;
-    inset: 0;
-    background: rgba(229, 9, 20, 0.25);
-    mix-blend-mode: screen;
-    opacity: 0;
-    z-index: 4;
-    pointer-events: none;
-}
-
-.lightning-flash.flash-active {
-    animation: flashTrigger 0.3s ease-out;
-}
-
-@keyframes flashTrigger {
-    0% { opacity: 0; }
-    30% { opacity: 1; background: rgba(0, 210, 255, 0.5); }
-    60% { opacity: 0.8; background: rgba(229, 9, 20, 0.6); }
-    100% { opacity: 0; }
-}
-
-#lightningCanvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 4;
-    pointer-events: none;
-}
-
-/* PISTA DE ASFALTO COM ILUMINAÇÃO DE PISTA */
-.wet-road {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 180px;
-    background: linear-gradient(to bottom, #100a1c 0%, #05020a 100%);
-    border-top: 2px solid rgba(229, 9, 20, 0.6);
-    box-shadow: 0 -12px 35px rgba(229, 9, 20, 0.3);
-    z-index: 5;
-}
-
-.road-line {
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    height: 4px;
-    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0px, rgba(255, 255, 255, 0.4) 40px, transparent 40px, transparent 80px);
-}
-
-.road-reflections {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, rgba(229, 9, 20, 0.3) 0%, rgba(0, 210, 255, 0.15) 50%, transparent 80%);
-}
-
-.drift-skidmarks {
-    position: absolute;
-    bottom: 35px;
-    left: 15%;
-    width: 70%;
-    height: 18px;
-    background: rgba(0, 0, 0, 0.85);
-    border-radius: 50%;
-    filter: blur(5px);
-}
-
-/* --- CARRO COM SUA ROTA CORRIGIDA --- */
-.car-wrapper {
-    position: absolute;
-    bottom: 25px;
-    left: -600px;
-    width: 520px;
-    height: 260px;
-    z-index: 8;
-    animation: bugattiDriftSequence 12s cubic-bezier(0.25, 1, 0.35, 1) forwards;
-}
-
-.car-image {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    /* ROTA DA SUA IMAGEM */
-    background-image: url('../imagens/carro-ilustrado.jpeg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.9)) brightness(1.08) contrast(1.1);
-}
-
-.neon-underglow {
-    position: absolute;
-    bottom: 15px;
-    left: 10%;
-    width: 80%;
-    height: 25px;
-    background: radial-gradient(ellipse at center, rgba(229, 9, 20, 0.9) 0%, rgba(0, 210, 255, 0.6) 50%, transparent 80%);
-    filter: blur(10px);
-    border-radius: 50%;
-}
-
-/* ANIMAÇÃO DRIFT DE 12 SEGUNDOS */
-@keyframes bugattiDriftSequence {
-    0% {
-        left: -600px;
-        transform: scale(0.65) rotate(0deg);
-    }
-    20% {
-        left: 18%;
-        transform: scale(0.9) rotate(-4deg);
-    }
-    40% {
-        left: 32%;
-        transform: scale(1.05) rotate(35deg);
-    }
-    60% {
-        left: 45%;
-        transform: scale(1.15) rotate(180deg);
-    }
-    80% {
-        left: 50%;
-        transform: scale(1.05) rotate(360deg);
-        opacity: 1;
-    }
-    92% {
-        left: 110%;
-        transform: scale(0.85) rotate(360deg);
-        opacity: 1;
-    }
-    100% {
-        left: 135%;
-        transform: scale(0.7) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-/* FUMAÇA DO DRIFT */
-.smoke-container {
-    position: absolute;
-    bottom: 10px;
-    left: 15%;
-    width: 700px;
-    height: 260px;
-    z-index: 6;
-    pointer-events: none;
-}
-
-.smoke-cloud {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(229, 9, 20, 0.35) 0%, rgba(120, 0, 255, 0.2) 50%, transparent 75%);
-    filter: blur(35px);
-    opacity: 0;
-    animation: smokeDrift 12s ease-in-out forwards;
-}
-
-.smoke-left { width: 300px; height: 180px; left: 0; bottom: 20px; animation-delay: 1.8s; }
-.smoke-center { width: 400px; height: 220px; left: 150px; bottom: 10px; animation-delay: 3.8s; }
-.smoke-right { width: 350px; height: 200px; left: 300px; bottom: 30px; animation-delay: 5.8s; }
-
-@keyframes smokeDrift {
-    0% { opacity: 0; transform: scale(0.2); }
-    30% { opacity: 0.85; transform: scale(1.6); }
-    60% { opacity: 0.9; transform: scale(2.8); }
-    85% { opacity: 0.3; transform: scale(3.6); }
-    100% { opacity: 0; transform: scale(4.2); }
-}
-
-/* TEXTO DE BOAS-VINDAS */
-.welcome-box {
-    position: absolute;
-    top: 38%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    z-index: 10;
-    opacity: 0;
-    animation: welcomeFade 12s ease-in-out forwards;
-}
-
-.welcome-title {
-    font-size: clamp(2.5rem, 6vw, 4.8rem);
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 0 25px #e50914, 0 0 50px rgba(229, 9, 20, 0.8), 0 0 75px #00d2ff;
-    letter-spacing: 6px;
-}
-
-.welcome-brand {
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    font-weight: 900;
-    color: #ffffff;
-    letter-spacing: 8px;
-    margin-top: 5px;
-}
-
-.welcome-brand span { color: var(--primary); }
-
-@keyframes welcomeFade {
-    0%, 68% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
-    80%, 93% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
-}
-
-/* BOTÃO PULAR INTRO */
-.btn-pular {
-    position: absolute;
-    top: 25px;
-    right: 25px;
-    z-index: 20;
-    background: rgba(18, 18, 22, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
-    padding: 10px 22px;
-    border-radius: 50px;
-    font-weight: 700;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.btn-pular:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    transform: scale(1.05);
+/* 12. ACESSIBILIDADE */
+@media (prefers-reduced-motion:reduce){
+    .stage,.fx,.flash-lift,.grain,.kicker,.snd{display:none}
+    .brand__line,.brand__mask,.brand__sub,.veil{transition-duration:.35s}
+    .brand__mask{filter:none;transform:none}
 }
