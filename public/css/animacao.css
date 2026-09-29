@@ -10,14 +10,17 @@
     --red:#e50914; --black:#000; --white:#fff;
     --flash:0;                      /* 0..1, intensidade do clarão (escrita pelo JS a cada frame) */
     --bx1:27%; --bx2:73%;           /* x dos dois raios dentro da cena do vídeo (escrito pelo JS) */
+    --rv:0;                         /* 0..1, revelação da marca através da fumaça (escrito pelo JS em .brand) */
+    --gl:0;                         /* 0..1, brilho inicial no centro (escrito pelo JS em .brand) */
+    --sh:0;                         /* 0..1, reflexo que varre as letras depois da revelação (JS em .brand) */
     --ease-cine:cubic-bezier(.16,.7,.2,1);
 
-    /* Recorte do vídeo. O MP4 é quadrado e tem barras pretas embutidas:
-       --bars = fração da altura do arquivo que é barra, em CADA lado (80/368 ≈ .22).
-       --A    = proporção da cena visível = 1 / (1 - 2*bars).
-       Se reexportar o vídeo já em 16:9 sem barras: --bars:0 e --A:1.7778. */
-    --bars:.22;
-    --A:1.7857;
+    /* Recorte do vídeo. Valores só iniciais: o JS lê a proporção REAL do arquivo (videoWidth/videoHeight)
+       e detecta barras pretas embutidas, reescrevendo os dois em #intro.
+       --bars = fração da altura do arquivo que é barra, em CADA lado (0 = sem barras).
+       --A    = proporção da cena visível = (largura/altura do arquivo) / (1 - 2*bars). */
+    --bars:0;
+    --A:1.7778;
     --px:52%;                       /* foco horizontal (carro) */
     --py:50%;                       /* foco vertical */
 }
@@ -33,8 +36,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .intro>*{position:absolute}
 .stage{inset:0;transition:opacity .9s ease-in}
 .stage>*{position:absolute;pointer-events:none}
-/* Fim da tempestade: a cena mergulha no preto (JS só libera a marca depois de ~900ms + pausa) */
-.is-dark .stage{opacity:0}
+/* Depois do clarão a cena vai a PRETO TOTAL: só a fumaça fica na tela (o carro some) */
+.is-dark .stage{opacity:0;transition:opacity .6s ease-out}
 
 /* 4. FILM — equivalente a object-fit:cover, já descontando as barras do arquivo */
 .film{left:var(--px);top:var(--py);
@@ -53,7 +56,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     filter:brightness(calc(1 + var(--flash)*.6)) contrast(calc(1 + var(--flash)*.14)) saturate(calc(1 - var(--flash)*.35))}
 .is-scene .film{opacity:1;transition:opacity 1.8s ease-out}
 
-.fallback{inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;opacity:0}
+.fallback{inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;opacity:0;
+    filter:brightness(calc(1 + var(--flash)*.6)) contrast(calc(1 + var(--flash)*.14)) saturate(calc(1 - var(--flash)*.35))}
 .is-fallback .fallback{opacity:1;transition:opacity 1.8s ease-out}
 .is-fallback .film{display:none}
 
@@ -66,7 +70,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .dimmer{inset:0;opacity:calc(1 - var(--flash)*.9)}
 .dim{position:absolute;inset:0;background:#000;opacity:0}
 .is-fade .dim{opacity:.55;transition:opacity 1.6s ease-in}
-.is-storm .dim{opacity:.9;transition:opacity 1s ease}
+.is-storm .dim{opacity:.94;transition:opacity 1s ease}
 
 /* Luz fria vinda do céu, centrada nos dois raios. soft-light realça contornos e brilhos da carroceria e do céu */
 .lit{inset:0;mix-blend-mode:soft-light;opacity:calc(var(--flash)*1.2);
@@ -89,8 +93,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* 6. FX */
 .fx{inset:0;width:100%;height:100%;pointer-events:none}
-.vignette{inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%)}
+.vignette{inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.72) 100%)}
 .grain{inset:-50%;width:200%;height:200%;pointer-events:none;opacity:.05;background-image:var(--grain);animation:grain .9s steps(6) infinite}
+/* Fumaça: canvas em meia resolução esticado pela CSS (bordas naturalmente macias) */
+.smoke{inset:0;width:100%;height:100%;pointer-events:none}
 
 /* 7. TIPOGRAFIA (kicker no céu, para não competir com o carro) */
 .kicker{left:0;right:0;top:12vh;margin:0 auto;max-width:88vw;text-align:center;font-weight:600;font-size:clamp(9px,1.05vw,14px);
@@ -99,20 +105,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .is-kicker .kicker{opacity:.75;letter-spacing:.34em}
 .is-kicker-out .kicker{opacity:0;transition:opacity 1s ease}
 
-/* 8. MARCA — nada aparece antes de o JS liberar (visibility) */
+/* 8. MARCA
+   A revelação é dirigida pelo JS (--rv 0→1, --gl) em sincronia com a fumaça:
+   1) --gl acende um pequeno brilho no centro; 2) --rv abre uma máscara elíptica a partir do centro
+   (trechos das letras aparecem primeiro), tira o blur e assenta o espaçamento (.20em → .12em, o valor original). */
 .brand{inset:0;display:grid;grid-template-rows:1fr 1fr;justify-items:center;text-align:center;pointer-events:none}
 .brand__line{position:absolute;top:50%;left:50%;width:0;height:1px;opacity:0;transform:translate(-50%,-50%);
     background:linear-gradient(90deg,transparent,var(--red) 30%,#fff 50%,var(--red) 70%,transparent);
-    box-shadow:0 0 14px 1px rgba(229,9,20,.45);transition:width 1.1s cubic-bezier(.7,0,.2,1),opacity .4s ease}
+    box-shadow:0 0 14px 1px rgba(229,9,20,.45);transition:width 1.4s cubic-bezier(.7,0,.2,1),opacity .6s ease}
 .is-brand-line .brand__line{width:min(72vw,760px);opacity:1}
 .is-brand .brand__line{opacity:.35;transition:opacity 1.5s ease}
-.brand__name{visibility:hidden;align-self:end;padding-bottom:1.8vh;font-weight:900;font-size:clamp(38px,9vw,132px);line-height:1}
-.is-brand .brand__name{visibility:visible}
-.brand__mask{display:inline-block;opacity:0;letter-spacing:.2em;margin-right:-.2em;filter:blur(10px);transform:scale(.94);
-    clip-path:inset(-15% 50% -15% 50%);
-    transition:clip-path 1.5s cubic-bezier(.7,0,.15,1),filter 1.5s ease,opacity 1s ease,transform 2.6s ease-out,letter-spacing 2.6s var(--ease-cine)}
+.brand__name{position:relative;align-self:end;padding-bottom:1.8vh;font-weight:900;font-size:clamp(38px,9vw,132px);line-height:1}
+.brand__glint{position:absolute;left:50%;top:50%;width:150%;height:300%;pointer-events:none;mix-blend-mode:screen;
+    opacity:var(--gl);transform:translate(-50%,-50%) scale(calc(.25 + var(--gl)*.75));
+    background:radial-gradient(ellipse 30% 22% at 50% 50%,rgba(255,255,255,.75),rgba(255,236,232,.28) 45%,rgba(229,9,20,.14) 70%,transparent 100%)}
+.brand__mask{position:relative;display:inline-block;padding:.15em .12em;
+    opacity:min(1,calc(var(--rv)*3));
+    letter-spacing:calc(.2em - var(--rv)*.08em);margin-right:calc(-.2em + var(--rv)*.08em);
+    filter:blur(calc((1 - var(--rv))*12px));
+    transform:scale(calc(1.06 - var(--rv)*.06));
+    -webkit-mask-image:radial-gradient(ellipse calc(6% + var(--rv)*140%) 170% at 50% 50%,#000 35%,transparent 100%);
+            mask-image:radial-gradient(ellipse calc(6% + var(--rv)*140%) 170% at 50% 50%,#000 35%,transparent 100%)}
 .brand__mask em{font-style:normal;color:var(--red);text-shadow:0 0 24px rgba(229,9,20,.28)}
-.is-brand .brand__mask{opacity:1;letter-spacing:.12em;margin-right:-.12em;filter:blur(0);transform:scale(1);clip-path:inset(-15% 0 -15% 0)}
+/* Reflexo de luz que atravessa as letras (cópia do texto, transparente, só com o gradiente recortado no texto) */
+.brand__mask::after{content:attr(data-text);position:absolute;inset:.15em .12em;white-space:nowrap;pointer-events:none;
+    color:transparent;
+    background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%);
+    background-size:250% 100%;background-repeat:no-repeat;background-position:calc(100% - var(--sh)*100%) 0;
+    -webkit-background-clip:text;background-clip:text}
 .brand__sub{visibility:hidden;align-self:start;padding-top:2.4vh;font-weight:600;font-size:clamp(10px,1.3vw,17px);letter-spacing:.6em;margin-right:-.6em;color:#ddd;
     opacity:0;transition:opacity 1.6s ease,letter-spacing 2.4s var(--ease-cine)}
 .is-sub .brand__sub{visibility:visible;opacity:.85;letter-spacing:.46em}
@@ -148,9 +168,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     .kicker{top:8vh}
 }
 
-/* 12. ACESSIBILIDADE */
+/* 12. ACESSIBILIDADE
+   Reduced motion: a cena continua (imagem estática em vez do vídeo, feita no JS), mas com um único clarão suave,
+   sem tremor, fumaça reduzida e tempos curtos. A marca continua aparecendo. */
 @media (prefers-reduced-motion:reduce){
-    .stage,.fx,.flash-lift,.grain,.kicker,.snd{display:none}
-    .brand__line,.brand__mask,.brand__sub,.veil{transition-duration:.35s}
-    .brand__mask{filter:none;transform:none}
+    .grain,.kicker{display:none}
+    .is-fallback .fallback,.is-scene .film{transition-duration:.5s}
+    .is-dark .stage{transition-duration:.4s}
+    .brand__line,.brand__sub,.veil{transition-duration:.35s}
 }

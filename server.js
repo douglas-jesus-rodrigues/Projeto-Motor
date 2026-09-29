@@ -54,12 +54,13 @@ try {
 }
 
 // ==========================================
-// ARQUIVOS PÚBLICOS E PÁGINA INICIAL
+// ARQUIVOS PÚBLICOS E PÁGINA INICIAL (SEMPRE A ANIMAÇÃO)
 // ==========================================
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "pages", "index.html"));
+    // Sempre envia a página de animação cinematográfica ao entrar no site
+    res.sendFile(path.join(__dirname, "public", "pages", "animacao.html"));
 });
 
 // ==========================================
