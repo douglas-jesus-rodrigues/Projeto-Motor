@@ -2,58 +2,65 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex - Apresentação</title>
-    
-    <!-- ROTAS CSS E FONTE -->
-    <link rel="stylesheet" href="../css/animacao.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <title>MOTORFLEX — Apresentação</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/animacao.css">
+    <!-- Sem JavaScript: vai direto para o site -->
+    <noscript><meta http-equiv="refresh" content="0;url=../index.html"></noscript>
 </head>
 <body>
+<main id="intro" class="intro" data-state="INITIAL" aria-label="Abertura MotorFlex">
 
-    <div id="introOverlay" class="intro-overlay">
-        <!-- NOVO FUNDO NOCTURNO CINEMATOGRÁFICO COM SILHUETA DA CIDADE -->
-        <div class="sky-background"></div>
-        <div class="city-silhouettes"></div>
-        <div class="horizon-glow"></div>
-        
-        <div class="lightning-flash" id="lightning"></div>
-        <canvas id="lightningCanvas"></canvas>
+    <!-- CENA -->
+    <div class="stage" id="stage">
+        <div class="atmos"></div>
 
-        <!-- PISTA DE ASFALTO COM ILUMINAÇÃO DE NEON -->
-        <div class="wet-road">
-            <div class="road-line"></div>
-            <div class="road-reflections"></div>
-            <div class="drift-skidmarks"></div>
-        </div>
-        
-        <!-- FUMAÇA DO DRIFT -->
-        <div class="smoke-container">
-            <div class="smoke-cloud smoke-left"></div>
-            <div class="smoke-cloud smoke-center"></div>
-            <div class="smoke-cloud smoke-right"></div>
+        <!-- Recorte do vídeo: corta as barras pretas embutidas e cobre a viewport (ver --bars no CSS).
+             As camadas .lit e .wet ficam DENTRO do recorte para acompanhar a cena do vídeo. -->
+        <div class="film" id="film">
+            <video class="film__video" id="video"
+                   autoplay muted playsinline webkit-playsinline preload="auto"
+                   disablepictureinpicture disableremoteplayback
+                   tabindex="-1" aria-hidden="true">
+                <source src="../video/carro-ilustrado.mp4" type="video/mp4">
+            </video>
+            <div class="lit"></div>
+            <div class="wet"></div>
         </div>
 
-        <!-- CONTAINER DO SEU CARRO (IMAGEM CORRIGIDA) -->
-        <div class="car-wrapper">
-            <div class="car-image">
-                <div class="neon-underglow"></div>
-            </div>
-        </div>
+        <!-- Fallback: só recebe src via JS se o vídeo falhar -->
+        <img class="fallback" id="fallback" alt="" aria-hidden="true">
 
-        <!-- TEXTO DE BOAS-VINDAS -->
-        <div class="welcome-box">
-            <h1 class="welcome-title">SEJA BEM-VINDO</h1>
-            <h2 class="welcome-brand">MOTOR<span>FLEX</span></h2>
-        </div>
-
-        <!-- BOTÃO PULAR -->
-        <button id="btnPular" class="btn-pular">Pular Intro ✕</button>
+        <!-- Escurecimento que "abre" durante os clarões -->
+        <div class="dimmer"><div class="dim"></div></div>
+        <div class="mist"></div>
+        <div class="flash-lift"></div>
     </div>
 
-    <!-- ROTA DO JS -->
-    <script src="../js/animacao.js"></script>
+    <!-- Chuva sutil + os dois raios (Canvas) -->
+    <canvas class="fx" id="fx"></canvas>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <!-- TEXTOS -->
+    <p class="kicker">UMA NOVA FORMA DE ENCONTRAR SEU PRÓXIMO CARRO</p>
+
+    <section class="brand">
+        <div class="brand__line"></div>
+        <h1 class="brand__name"><span class="brand__mask">MOTOR<em>FLEX</em></span></h1>
+        <p class="brand__sub">SEJA BEM-VINDO</p>
+    </section>
+
+    <div class="veil"></div>
+
+    <button id="btnPular" class="skip" type="button" aria-label="Pular introdução e ir para o site">
+        <span>PULAR INTRO</span><i aria-hidden="true">×</i>
+    </button>
+</main>
+<script src="../js/animacao.js"></script>
 </body>
 </html>
