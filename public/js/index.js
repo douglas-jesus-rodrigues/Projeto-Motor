@@ -54,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const avatarLetra = document.getElementById("avatarLetra");
     const avatarImagem = document.getElementById("avatarImagem");
-    const CAMINHO_FOTO_PERFIL = "../uploads/1788186907271-886045211.png";
     
     if (usuarioLogado && usuarioLogado !== "undefined" && usuarioLogado !== "null") {
         try {
@@ -64,11 +63,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (dropdownUsuario) dropdownUsuario.style.display = "block";
             
             let rotaPainel = "/pages/painel-cliente.html";
+            let tipoPerfilClass = "usuario-cliente";
+
             if (usuario.tipo === "empresa") {
                 rotaPainel = "/pages/painel-empresa.html";
+                tipoPerfilClass = "usuario-empresa";
             } else if (usuario.tipo === "admin" || usuario.cargo === "admin" || usuario.tipo === "super_admin") {
                 rotaPainel = "/pages/painel-admin.html";
+                tipoPerfilClass = "usuario-admin";
             }
+            
+            document.body.classList.add(tipoPerfilClass);
             if (irPainel) irPainel.href = rotaPainel;
 
             if (itemAnunciar && (usuario.tipo === "empresa" || usuario.tipo === "cliente")) {
@@ -83,10 +88,26 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (nomeUsuario) nomeUsuario.textContent = nomeExibicao;
             
-            if (avatarLetra) avatarLetra.style.textIndent = "-9999px";
+            // Lógica dinâmica para capturar a foto da empresa ou usuário logado
+            let fotoPerfil = null;
+            if (usuario.tipo === "empresa" && usuario.empresa) {
+                fotoPerfil = usuario.empresa.logo || usuario.empresa.foto || usuario.foto;
+            } else {
+                fotoPerfil = usuario.foto || usuario.avatar;
+            }
+
             if (avatarImagem) {
-                avatarImagem.src = CAMINHO_FOTO_PERFIL;
-                avatarImagem.style.display = "block";
+                if (fotoPerfil && fotoPerfil.trim() !== "") {
+                    avatarImagem.src = fotoPerfil.startsWith("http") || fotoPerfil.startsWith("/") ? fotoPerfil : `/uploads/${fotoPerfil}`;
+                    avatarImagem.style.display = "block";
+                    if (avatarLetra) avatarLetra.style.display = "none";
+                } else {
+                    avatarImagem.style.display = "none";
+                    if (avatarLetra) {
+                        avatarLetra.style.display = "flex";
+                        avatarLetra.textContent = nomeExibicao.charAt(0).toUpperCase();
+                    }
+                }
             }
         } catch (e) {
             localStorage.removeItem("usuario");
@@ -94,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         if (acoesDeslogado) acoesDeslogado.style.display = "flex";
         if (dropdownUsuario) dropdownUsuario.style.display = "none";
+        document.body.classList.add("usuario-deslogado");
     }
     
     // --- 3. MENU DE CONFIGURAÇÃO / DROPDOWN ---
@@ -311,4 +333,4 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 300); 
         });
     });
-}); 
+});
