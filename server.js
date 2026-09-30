@@ -35,8 +35,12 @@ app.use(session({
     }
 }));
 
-// Servir a pasta de uploads publicamente sob a rota /uploads
+// ==========================================
+// ROTA ESTÁTICA DE UPLOADS (DUPLA CHECAGEM)
+// ==========================================
+// Servir a pasta de uploads publicamente (procura na raiz e em public/uploads)
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ==========================================
 // SERVIÇOS EM SEGUNDO PLANO (CRON JOBS / LGPD)
