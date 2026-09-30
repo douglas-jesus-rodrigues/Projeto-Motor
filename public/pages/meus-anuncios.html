@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0b0b">
     <title>Meus Anúncios | MotorFlex</title>
     <link rel="icon" href="/imagens/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,53 +12,61 @@
 <body>
 
     <header class="header">
-        <div class="logo">
-            <h1>Motor<span>Flex</span></h1>
-        </div>
-        <nav class="nav-menu">
-            <a href="/pages/painel-cliente.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Painel</a>
-            <a href="/pages/catalogo.html?tab=cadastrar" class="btn-novo"><i class="fa-solid fa-plus"></i> Novo Anúncio</a>
-            <a href="#" id="btnSair" class="sair"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+        <a class="logo" href="/index.html" aria-label="MotorFlex"><h1>Motor<span>Flex</span></h1></a>
+        <nav class="nav-menu" aria-label="Navegação">
+            <a href="/pages/painel-cliente.html" id="btnVoltar" class="nav-link"><i class="fa-solid fa-arrow-left"></i> <span>Voltar ao Painel</span></a>
+            <a href="/pages/catalogo.html?tab=cadastrar" class="btn-novo"><i class="fa-solid fa-plus"></i> <span>Novo Anúncio</span></a>
         </nav>
     </header>
 
     <main class="container">
         <section class="titulo-secao">
-            <h2><i class="fa-solid fa-car-side"></i> Meus Veículos Anunciados</h2>
-            <p>Gerencie todos os carros que você colocou à venda e acompanhe o desempenho.</p>
+            <div>
+                <h2><i class="fa-solid fa-car-side"></i> Meus Veículos Anunciados</h2>
+                <p id="saudacao">Gerencie todos os carros que você colocou à venda e acompanhe o desempenho.</p>
+            </div>
         </section>
 
-        <!-- Tabela de Anúncios -->
+        <section class="resumo" aria-label="Resumo">
+            <div class="card-resumo"><i class="fa-solid fa-car"></i><div><span id="kpiTotal">0</span><small>Anúncios</small></div></div>
+            <div class="card-resumo"><i class="fa-solid fa-eye"></i><div><span id="kpiViews">0</span><small>Visualizações</small></div></div>
+            <div class="card-resumo"><i class="fa-solid fa-tag"></i><div><span id="kpiValor">R$ 0</span><small>Valor em estoque</small></div></div>
+        </section>
+
+        <section class="ferramentas">
+            <label class="busca"><i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="busca" placeholder="Buscar por marca ou modelo…" autocomplete="off">
+            </label>
+            <select id="ordem" aria-label="Ordenar">
+                <option value="recentes">Mais recentes</option>
+                <option value="views">Mais visualizados</option>
+                <option value="menor">Menor preço</option>
+                <option value="maior">Maior preço</option>
+            </select>
+        </section>
+
         <section class="tabela-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Foto</th>
-                        <th>Veículo</th>
-                        <th>Modelo</th>
-                        <th>Ano</th>
-                        <th>Preço</th>
-                        <th>Visualizações</th>
-                        <th>Status</th>
-                        <th>Ações</th>
+                        <th>Foto</th><th>Veículo</th><th>Ano</th><th>Preço</th><th>Visualizações</th><th>Status</th><th class="col-acoes">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaMeusAnuncios">
-                    <tr>
-                        <td colspan="8" style="text-align: center; color: #888;">Carregando seus anúncios...</td>
-                    </tr>
+                    <tr><td colspan="7" class="estado">Carregando seus anúncios...</td></tr>
                 </tbody>
             </table>
         </section>
     </main>
 
-    <!-- MODAL DE VISUALIZAÇÃO DE IMAGEM (LIGHTBOX) -->
-    <div id="modalImagem" class="modal-imagem-overlay" onclick="fecharModalImagem()">
-        <div class="modal-imagem-conteudo" onclick="event.stopPropagation()">
-            <button class="modal-fechar" onclick="fecharModalImagem()">&times;</button>
-            <img id="imagemAmpliada" src="" alt="Veículo Ampliado">
+    <div id="modalImagem" class="modal-imagem-overlay" role="dialog" aria-modal="true" aria-label="Imagem ampliada">
+        <div class="modal-imagem-conteudo">
+            <button class="modal-fechar" id="btnFecharModal" aria-label="Fechar">&times;</button>
+            <img id="imagemAmpliada" src="" alt="Veículo ampliado">
         </div>
     </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="/js/meus-anuncios.js"></script>
 </body>

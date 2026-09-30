@@ -1,5 +1,46 @@
 let recaptchaWidgetId;
 
+/* ---------- SESSÃO / ROTAS (uma única fonte de verdade) ---------- */
+const CHAVES_SESSAO = ["usuario", "usuario_logado", "token"];
+const PAINEL_CLIENTE = "../pages/painel-cliente.html";
+const ROTAS = {
+    empresa: "../pages/painel-empresa.html",
+    admin: "../pages/painel-admin.html",
+    super_admin: "../pages/painel-admin.html"
+};
+
+// Remove qualquer resto de sessão anterior (de qualquer conta) nos dois armazenamentos
+function limparSessao() {
+    [localStorage, sessionStorage].forEach((s) => CHAVES_SESSAO.forEach((k) => {
+        try { s.removeItem(k); } catch (e) { /* ignora */ }
+    }));
+}
+
+const norm = (v) => String(v ?? "").toLowerCase().trim();
+
+function rotaDoUsuario(u) {
+    return ROTAS[norm(u.tipo)] || ROTAS[norm(u.cargo)] || PAINEL_CLIENTE;
+}
+
+// Sessão só é válida se tiver tipo/cargo E identificador (os painéis exigem o id)
+function sessaoValida(u) {
+    if (!u || typeof u !== "object") return false;
+    const base = u.usuario && typeof u.usuario === "object" ? u.usuario : u;
+    const temId = (base.id ?? base._id ?? base.id_usuario ?? base.usuario_id ?? u.id) != null;
+    return temId && Boolean(base.tipo || base.cargo);
+}
+
+// Trava anti-loop: se a tela de login redirecionou 3+ vezes em 6 s, a sessão está inconsistente
+function loopDetectado() {
+    const agora = Date.now();
+    let marcas = [];
+    try { marcas = JSON.parse(sessionStorage.getItem("mf_redir") || "[]"); } catch (e) { marcas = []; }
+    marcas = marcas.filter((t) => agora - t < 6000);
+    marcas.push(agora);
+    try { sessionStorage.setItem("mf_redir", JSON.stringify(marcas)); } catch (e) { /* ignora */ }
+    return marcas.length > 3;
+}
+
 // Função global chamada automaticamente pelo Google quando o reCAPTCHA carrega
 window.onRecaptchaLoad = function() {
     // Pronto para renderizar sob demanda
@@ -14,7 +55,7 @@ window.aoVerificarCaptcha = function(token) {
         if (cardModal) cardModal.style.transform = 'scale(0.95)';
         setTimeout(() => overlay.remove(), 250);
     }
-    
+
     // Dispara a submissão do login imediatamente após a verificação bem-sucedida
     if (typeof window.executarLoginNoServidor === 'function') {
         window.executarLoginNoServidor();
@@ -22,24 +63,19 @@ window.aoVerificarCaptcha = function(token) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // TRAVA DE SEGURANÇA: Só redireciona se realmente houver sessão ativa e válida
+    // TRAVA DE SEGURANÇA: só redireciona se houver sessão ativa E válida
     const usuarioLogado = localStorage.getItem("usuario");
     if (usuarioLogado && usuarioLogado !== "undefined" && usuarioLogado !== "null") {
-        try {
-            const usuario = JSON.parse(usuarioLogado);
-            if (usuario && (usuario.tipo || usuario.cargo)) {
-                const rotas = {
-                    empresa: "../pages/painel-empresa.html",
-                    admin: "../pages/painel-admin.html",
-                    super_admin: "../pages/painel-admin.html"
-                };
-                const destino = rotas[usuario.tipo] || rotas[usuario.cargo] || "../pages/painel-cliente.html";
-                window.location.replace(destino);
-                return;
-            }
-        } catch (e) {
-            localStorage.removeItem("usuario");
+        let usuario = null;
+        try { usuario = JSON.parse(usuarioLogado); } catch (e) { usuario = null; }
+
+        if (sessaoValida(usuario) && !loopDetectado()) {
+            const base = usuario.usuario && typeof usuario.usuario === "object" ? usuario.usuario : usuario;
+            window.location.replace(rotaDoUsuario(base));
+            return;
         }
+        // sessão corrompida, sem id, ou em loop: limpa tudo e deixa a pessoa entrar de novo
+        limparSessao();
     }
 
     const formLogin = document.getElementById("formLogin");
@@ -100,12 +136,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="modal-card-content" style="background: linear-gradient(145deg, #0d0d0d, #141414); border: 1px solid rgba(255, 0, 0, 0.4); padding: 38px 32px; border-radius: 14px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px rgba(255, 0, 0, 0.15); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative;">
                 <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: 2px; margin-bottom: 8px;">MOTOR<span style="color: #ff0000;">FLEX</span></div>
                 <div style="width: 40px; height: 3px; background: #ff0000; margin: 0 auto 20px auto; border-radius: 2px;"></div>
-                
+
                 <h3 style="color: #ffffff; font-size: 16px; margin-bottom: 8px; font-weight: 600;">Validação de Segurança</h3>
                 <p style="color: #999999; font-size: 13px; line-height: 1.5; margin-bottom: 24px;">Por favor, confirme que você não é um robô para prosseguir com o acesso.</p>
-                
+
                 <div id="recaptchaContainerModal" style="display: flex; justify-content: center; margin-bottom: 22px; background: #080808; padding: 14px; border-radius: 10px; border: 1px solid #222;"></div>
-                
+
                 <button type="button" id="fecharAlertaBtn" style="background: transparent; color: #777777; border: none; padding: 6px 14px; font-size: 12px; cursor: pointer; transition: color 0.2s; font-weight: 500;">Cancelar</button>
             </div>
         `;
@@ -195,20 +231,17 @@ document.addEventListener("DOMContentLoaded", () => {
             mostrarToast(data.mensagem || "Login realizado com sucesso!", "sucesso");
 
             if (data.sucesso && data.usuario) {
+                // Apaga qualquer resto de outra conta (usuario, usuario_logado, token) ANTES de gravar a nova
+                limparSessao();
+                try { sessionStorage.removeItem("mf_redir"); } catch (e) { /* ignora */ }
+
                 localStorage.setItem("usuario", JSON.stringify(data.usuario));
+                if (typeof data.token === "string" && data.token) localStorage.setItem("token", data.token);
+
+                const destino = rotaDoUsuario(data.usuario);
 
                 // Reduzido para 400ms para agilizar a transição e a animação do botão
                 setTimeout(() => {
-                    const rotas = {
-                        empresa: "../pages/painel-empresa.html",
-                        admin: "../pages/painel-admin.html",
-                        super_admin: "../pages/painel-admin.html"
-                    };
-
-                    const destino = rotas[data.usuario.tipo] || 
-                                    rotas[data.usuario.cargo] || 
-                                    "../pages/painel-cliente.html";
-
                     // Substitui o histórico para impedir voltar à tela de login via botão "Voltar"
                     window.location.replace(destino);
                 }, 400);
@@ -218,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Erro no login:", erro);
             mostrarToast(erro.message || "Erro ao conectar com o servidor.", "erro");
             toggleLoading(false);
-            
+
             // Invalida o widget atual para permitir nova verificação limpa
             recaptchaWidgetId = undefined;
         }
@@ -230,13 +263,13 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
 
             // Verifica se o reCAPTCHA foi resolvido
-            const respostaCaptcha = typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== undefined 
-                ? grecaptcha.getResponse(recaptchaWidgetId) 
+            const respostaCaptcha = typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== undefined
+                ? grecaptcha.getResponse(recaptchaWidgetId)
                 : "";
-            
+
             if (!respostaCaptcha) {
                 mostrarModalCaptcha(); // Abre o modal animado na frente da tela
-                return; 
+                return;
             }
 
             // Se o reCAPTCHA já estiver marcado, executa o login diretamente
@@ -276,4 +309,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3500);
     }
 });
-

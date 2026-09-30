@@ -3,270 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Empresa | MotorFlex</title>
-
+    <title>Painel da Empresa | MotorFlex</title>
     <link rel="icon" href="/imagens/favicon.ico">
-    <!-- Cropper.js CSS para o recorte de imagens -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    <!-- Seus estilos principais -->
     <link rel="stylesheet" href="/css/painel-empresa.css">
 </head>
 <body>
 
-<div class="painel">
+    <header class="header">
+        <a href="/pages/index.html" class="logo">Motor<span>Flex</span></a>
 
-    <!-- Sidebar / Menu Lateral -->
-    <aside class="sidebar">
-        <h1 class="logo">
-            <a href="/pages/index.html">
-                Motor<span>Flex</span>
-            </a>
-        </h1>
+        <nav class="nav-menu" aria-label="Navegação principal">
+            <a href="/pages/index.html">Home</a>
+            <a href="/pages/catalogo.html">Catálogo</a>
+            <a href="/pages/catalogo.html?tab=cadastrar">Anunciar Veículo</a>
 
-        <!-- Perfil / Foto da Empresa (Ícones nas bordas da bolinha) -->
-        <div class="perfil-sidebar">
-            <div class="avatar-wrapper" id="avatarWrapper" title="Clique para ver ou alterar a foto">
-                <img id="fotoPerfilPreview" src="/imagens/sem-foto.png" alt="Foto de Perfil" class="foto-perfil-preview">
-                
-                <!-- Ícone de Câmera (Direita) -->
-                <div class="avatar-overlay">
-                    <span class="icone-camera">📷</span>
+            <div class="dropdown">
+                <button type="button" class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true" aria-controls="menuConfig">
+                    Configurações <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-menu" id="menuConfig">
+                    <!-- Estes três só aparecem no celular (no desktop já estão no topo) -->
+                    <a href="/pages/index.html" class="so-mobile"><i class="fa-solid fa-house"></i> Home</a>
+                    <a href="/pages/catalogo.html" class="so-mobile"><i class="fa-solid fa-car-side"></i> Catálogo</a>
+                    <a href="/pages/catalogo.html?tab=cadastrar" class="so-mobile"><i class="fa-solid fa-plus"></i> Anunciar Veículo</a>
+
+                    <a href="/pages/perfil.html"><i class="fa-solid fa-id-card"></i> Meus Dados</a>
+                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+
+        <!-- Boas-vindas -->
+        <section class="boas-vindas">
+            <div class="avatar-wrapper" id="avatarWrapper">
+                <div class="avatar">
+                    <span id="avatarIniciais" aria-hidden="true">E</span>
+                    <img id="imgPerfil" alt="Foto da empresa" hidden>
                 </div>
 
-                <!-- Ícone de Lixeira (Esquerda - aparece apenas se houver foto personalizada) -->
-                <button type="button" id="btnRemoverFoto" class="btn-lixeira-perfil" title="Remover foto" style="display: none;">
-                    🗑️
+                <button type="button" id="btnTrocarFoto" class="btn-avatar btn-trocar" title="Alterar foto" aria-label="Alterar foto da empresa">
+                    <i class="fa-solid fa-camera"></i>
+                </button>
+                <input type="file" id="inputFotoPerfil" accept="image/png,image/jpeg,image/webp" hidden>
+                <button type="button" id="btnRemoverFoto" class="btn-avatar btn-remover" title="Remover foto" aria-label="Remover foto da empresa" hidden>
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
-            
-            <!-- Input de arquivo oculto para o upload -->
-            <input type="file" id="inputFotoPerfil" accept="image/png, image/jpeg, image/jpg" style="display: none;">
-        </div>
 
-        <nav class="menu">
-            <a href="#" class="ativo" data-section="painel">Painel</a>
-            <a href="#" data-section="cadastrar">Anunciar veículo</a>
-            <a href="#" data-section="veiculos">Meus veículos</a>
-            <a href="#" data-section="propostas">Propostas</a>
-            <a href="#" data-section="conversas">Conversas</a>
-            <a href="#" data-section="agendamentos">Agendamentos</a>
-            <a href="#" data-section="empresa">Dados da empresa</a>
-            <a href="#" id="btnSair">Sair</a>
-        </nav>
-    </aside>
-
-    <!-- Conteúdo Principal -->
-    <main class="conteudo">
-
-        <!-- SEÇÃO: PAINEL (DASHBOARD) -->
-        <section id="painelSection" class="secao ativa">
-            <header class="topo">
-                <div>
-                    <h2>Painel da Empresa</h2>
-                    <p>Gerencie seus anúncios, propostas e conversas.</p>
-                </div>
-            </header>
-
-            <section class="empresa-card">
-                <div>
-                    <h3 id="nomeEmpresa">Minha Empresa</h3>
-                </div>
-
-                <span class="status">Conta ativa</span>
-            </section>
-
-            <section class="cards-resumo">
-                <div class="card">
-                    <h3>Veículos anunciados</h3>
-                    <strong id="totalVeiculos">0</strong>
-                </div>
-
-                <div class="card">
-                    <h3>Propostas recebidas</h3>
-                    <strong id="totalPropostas">0</strong>
-                </div>
-
-                <div class="card">
-                    <h3>Conversas</h3>
-                    <strong id="totalConversas">0</strong>
-                </div>
-
-                <div class="card">
-                    <h3>Visualizações</h3>
-                    <strong id="totalVisualizacoes">0</strong>
-                </div>
-            </section>
+            <div class="boas-vindas-info">
+                <p class="eyebrow"><i class="fa-solid fa-building"></i> Painel da empresa</p>
+                <h1 id="nomeEmpresa">Minha Empresa</h1>
+                <p class="sub">Gerencie seus anúncios, acompanhe seus favoritos e converse com clientes interessados.</p>
+                <span class="status-conta"><i class="fa-solid fa-circle"></i> Conta ativa</span>
+            </div>
         </section>
 
-        <!-- SEÇÃO: ANUNCIAR VEÍCULOS -->
-        <section id="cadastrarSection" class="secao">
-            <header class="topo">
+        <!-- Resumo -->
+        <section class="stats carregando" id="stats" aria-label="Resumo da conta">
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-car"></i></span>
+                <div><span class="stat-label">Veículos anunciados</span><strong id="totalVeiculos">–</strong></div>
+            </div>
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-comments"></i></span>
+                <div><span class="stat-label">Conversas</span><strong id="totalConversas">–</strong></div>
+            </div>
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-eye"></i></span>
+                <div><span class="stat-label">Visualizações</span><strong id="totalVisualizacoes">–</strong></div>
+            </div>
+        </section>
+
+        <!-- Atalhos (cada um abre em sua própria página) -->
+        <section class="atalhos" aria-label="Atalhos">
+            <a href="/pages/catalogo.html?tab=cadastrar" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-plus"></i></span>
                 <div>
                     <h2>Anunciar veículo</h2>
                     <p>Adicione um novo veículo ao catálogo da empresa.</p>
                 </div>
-            </header>
-
-            <a href="/pages/anunciar.html" class="btn-anunciar">
-                Ir para cadastro de veículo
             </a>
-        </section>
-
-        <!-- SEÇÃO: MEUS VEÍCULOS -->
-        <section id="veiculosSection" class="secao">
-            <header class="topo">
+            <a href="/pages/meus-anuncios.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-car-side"></i></span>
                 <div>
-                    <h2>Meus veículos</h2>
-                    <p>Veja, edite ou remova seus anúncios.</p>
+                    <h2>Meus anúncios</h2>
+                    <p>Veja, edite ou remova os veículos anunciados.</p>
                 </div>
-            </header>
-
-            <div class="box">
-                <div class="box-topo">
-                    <h3>Últimos veículos</h3>
-                </div>
-
-                <div class="lista-veiculos" id="listaVeiculos">
-                    <p class="vazio">Nenhum veículo cadastrado ainda.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- SEÇÃO: PROPOSTAS -->
-        <section id="propostasSection" class="secao">
-            <header class="topo">
+            </a>
+            <a href="/pages/favoritos.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-heart"></i></span>
                 <div>
-                    <h2>Propostas</h2>
-                    <p>Propostas recebidas nos seus veículos.</p>
+                    <h2>Meus favoritos</h2>
+                    <p>Veja os veículos que você salvou para conferir depois.</p>
                 </div>
-            </header>
-
-            <div class="box">
-                <p class="vazio">Nenhuma proposta recebida.</p>
-            </div>
-        </section>
-
-        <!-- SEÇÃO: CONVERSAS -->
-        <section id="conversasSection" class="secao">
-            <header class="topo">
+            </a>
+            <a href="/pages/mensagens.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-comments"></i></span>
                 <div>
                     <h2>Conversas</h2>
-                    <p>Mensagens entre você e clientes interessados.</p>
+                    <p>Fale com clientes, receba propostas e agende visitas.</p>
                 </div>
-            </header>
-
-            <div class="box">
-                <p class="vazio">Nenhuma conversa iniciada.</p>
-            </div>
+            </a>
         </section>
-
-        <!-- SEÇÃO: AGENDAMENTOS -->
-        <section id="agendamentosSection" class="secao">
-            <header class="topo">
-                <div>
-                    <h2>Agendamentos</h2>
-                    <p>Test drives e visitas agendadas.</p>
-                </div>
-            </header>
-
-            <div class="box">
-                <p class="vazio">Nenhum agendamento encontrado.</p>
-            </div>
-        </section>
-
-        <!-- SEÇÃO: DADOS DA EMPRESA -->
-        <section id="empresaSection" class="secao">
-            <header class="topo">
-                <div>
-                    <h2>Dados da empresa</h2>
-                    <p>Informações da conta e da empresa cadastrada.</p>
-                </div>
-            </header>
-
-            <div class="box">
-                <div class="box-topo">
-                    <h3>Dados pessoais</h3>
-                </div>
-
-                <div class="dados-conta">
-                    <p><strong>Nome:</strong> <span id="dadoNome">-</span></p>
-                    <p><strong>Sobrenome:</strong> <span id="dadoSobrenome">-</span></p>
-                    <p><strong>E-mail:</strong> <span id="dadoEmail">-</span></p>
-                    <p><strong>Telefone:</strong> <span id="dadoTelefone">-</span></p>
-                    <p><strong>CPF:</strong> <span id="dadoCpf">-</span></p>
-                    <p><strong>Tipo:</strong> <span id="dadoTipo">-</span></p>
-                </div>
-            </div>
-
-            <div class="box">
-                <div class="box-topo">
-                    <h3>Dados da empresa</h3>
-                </div>
-
-                <div class="dados-conta">
-                    <p><strong>Empresa:</strong> <span id="dadoEmpresa">-</span></p>
-                    <p><strong>CNPJ:</strong> <span id="dadoCnpj">-</span></p>
-                    <p><strong>Razão social:</strong> <span id="dadoRazaoSocial">-</span></p>
-                    <p><strong>Inscrição estadual:</strong> <span id="dadoInscricao">-</span></p>
-                    <p><strong>Site:</strong> <span id="dadoSite">-</span></p>
-                </div>
-            </div>
-        </section>
-
     </main>
 
-</div>
+    <!-- Avisos -->
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
 
-<!-- MODAL DE RECORTE (CROPPER.JS) -->
-<div id="modalRecorte" class="modal-recorte-overlay" style="display: none;">
-    <div class="modal-recorte-conteudo">
-        <h3>Ajustar Foto de Perfil</h3>
-        <p>Arraste e redimensione a área desejada.</p>
-        
-        <div class="img-container">
-            <img id="imagemParaCortar" src="" alt="Para recortar">
-        </div>
-
-        <div class="modal-recorte-botoes">
-            <button type="button" id="btnCancelarRecorte" class="btn-acao btn-secundario">Cancelar</button>
-            <button type="button" id="btnConfirmarRecorte" class="btn-acao btn-primario">Salvar Foto</button>
+    <!-- Confirmação genérica (saída, remover foto) -->
+    <div class="modal-overlay" id="modalConfirma" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmaTitulo">
+            <div class="modal-icone"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 id="confirmaTitulo">Confirmar</h3>
+            <p id="confirmaTexto"></p>
+            <div class="modal-botoes">
+                <button type="button" class="btn-modal btn-cinza" id="confirmaCancelar">Cancelar</button>
+                <button type="button" class="btn-modal btn-vermelho" id="confirmaOk">Confirmar</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- MODAL DE CAPTURA VIA CÂMERA (WEBCAM) -->
-<div id="modalCamera" class="modal-recorte-overlay" style="display: none;">
-    <div class="modal-recorte-conteudo modal-camera-box">
-        <h3>Tirar Foto com a Câmera</h3>
-        <p>Posicione-se em frente à câmera e clique em capturar.</p>
-        
-        <div class="video-container">
-            <video id="videoCamera" autoplay playsinline></video>
-            <canvas id="canvasCamera" style="display: none;"></canvas>
-        </div>
-
-        <div class="modal-recorte-botoes">
-            <button type="button" id="btnFecharCamera" class="btn-acao btn-secundario">Cancelar</button>
-            <button type="button" id="btnCapturarFoto" class="btn-acao btn-primario">🔴 Capturar</button>
+    <!-- Recorte de foto -->
+    <div class="modal-overlay" id="modalRecorte" hidden>
+        <div class="modal modal-recorte" role="dialog" aria-modal="true" aria-labelledby="recorteTitulo">
+            <h3 id="recorteTitulo">Ajustar foto da empresa</h3>
+            <div class="area-recorte">
+                <img id="imagemParaCortar" alt="Imagem para recortar">
+            </div>
+            <div class="modal-botoes">
+                <button type="button" class="btn-modal btn-cinza" id="btnCancelarRecorte">Cancelar</button>
+                <button type="button" class="btn-modal btn-vermelho" id="btnConfirmarRecorte">Cortar e enviar</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- MODAL DE CONFIRMAÇÃO DE SAÍDA -->
-<div id="modalSairContainer" class="modal-recorte-overlay" style="display: none;">
-    <div class="modal-recorte-conteudo">
-        <h3>Deseja mesmo sair?</h3>
-        <p>Sua sessão será encerrada e você precisará entrar novamente.</p>
-        <div class="modal-recorte-botoes">
-            <button type="button" id="btnCancelarSair" class="btn-acao btn-secundario">Cancelar</button>
-            <button type="button" id="btnSair" class="btn-acao btn-perigo">Sair</button>
-        </div>
-    </div>
-</div>
-
-<!-- Cropper.js Script -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<!-- Seu script do painel -->
-<script src="/js/painel-empresa.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="/js/painel-empresa.js"></script>
 </body>
 </html>

@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0b0e">
     <title>MotorFlex - Mensagens e Negociações</title>
     <link rel="stylesheet" href="../css/index.css">
     <link rel="stylesheet" href="../css/mensagens.css">
@@ -12,60 +13,75 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="chat-page">
     <header class="header">
         <nav class="navbar">
             <div class="logo">
                 <a href="/index.html" class="nav-link">Motor<span>Flex</span></a>
             </div>
-            <a href="/pages/catalogo.html" class="nav-back-btn"><i class="fa-solid fa-arrow-left"></i> Voltar ao Catálogo</a>
+            <!-- destino e texto definidos pelo JS (página anterior, validada pelo tipo de login) -->
+            <a href="/pages/catalogo.html" id="btnVoltar" class="nav-back-btn"><i class="fa-solid fa-arrow-left"></i> <span id="btnVoltarTexto">Voltar</span></a>
         </nav>
     </header>
 
     <main class="container chat-main-container">
-        <div class="chat-wrapper">
-            <!-- LISTA DE CONVERSAS (BARRA LATERAL) -->
-            <aside class="chat-sidebar">
+        <div class="chat-wrapper" id="chatWrapper">
+
+            <!-- LISTA DE CONVERSAS -->
+            <aside class="chat-sidebar" aria-label="Conversas">
                 <div class="chat-sidebar-header">
                     <h2>Conversas</h2>
                     <span class="chat-badge-count" id="totalConversas">0</span>
                 </div>
+
                 <div class="chat-search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="inputPesquisaConversa" placeholder="Pesquisar conversa...">
+                    <input type="search" id="inputPesquisaConversa" placeholder="Pesquisar por nome ou veículo" autocomplete="off">
                 </div>
+
+                <div class="chat-filtros" role="tablist">
+                    <button type="button" class="filtro ativo" data-filtro="todas" role="tab">Todas</button>
+                    <button type="button" class="filtro" data-filtro="nao-lidas" role="tab">Não lidas <span id="totalNaoLidas" hidden>0</span></button>
+                </div>
+
                 <div class="conversas-list" id="conversasList">
-                    <!-- Preenchido dinamicamente pelo JavaScript -->
-                    <div class="chat-loading">A carregar conversas...</div>
+                    <div class="chat-loading">Carregando conversas...</div>
                 </div>
             </aside>
 
-            <!-- ÁREA DA CONVERSA ATIVA -->
+            <!-- CONVERSA ATIVA -->
             <section class="chat-content-area" id="chatContentArea">
-                <!-- Estado Vazio (Nenhuma conversa selecionada) -->
                 <div class="chat-empty-state" id="chatEmptyState">
-                    <i class="fa-solid fa-comments"></i>
-                    <h3>Suas Negociações</h3>
-                    <p>Selecione uma conversa ao lado para ver as mensagens ou inicie um contato através de um anúncio no catálogo.</p>
+                    <div class="empty-icone"><i class="fa-solid fa-comments"></i></div>
+                    <h3>Suas negociações</h3>
+                    <p>Selecione uma conversa ao lado ou inicie um contato através de um anúncio no catálogo.</p>
                 </div>
 
-                <!-- Painel de Chat Ativo (Escondido por padrão até selecionar um chat) -->
-                <div class="chat-active-box" id="chatActiveBox" style="display: none;">
+                <div class="chat-active-box" id="chatActiveBox" hidden>
                     <div class="chat-header-info">
-                        <img src="/imagens/sem-foto.jpg" alt="Avatar" id="chatDestinatarioFoto">
-                        <div>
-                            <h3 id="chatDestinatarioNome">Nome do Utilizador</h3>
-                            <span class="chat-veiculo-ref" id="chatVeiculoRef">Ref: Veículo em negociação</span>
+                        <button type="button" class="btn-lista" id="btnListaVoltar" aria-label="Voltar para as conversas"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="av av-md" id="chatAvatar"></span>
+                        <div class="chat-header-texto">
+                            <h3 id="chatDestinatarioNome">Nome do usuário</h3>
+                            <span class="chat-veiculo-ref" id="chatVeiculoRef"><i class="fa-solid fa-car-side"></i> Veículo em negociação</span>
                         </div>
                     </div>
 
-                    <div class="chat-messages-scroll" id="chatMessagesScroll">
-                        <!-- As mensagens entram aqui via JS -->
+                    <div class="chat-messages-wrap">
+                        <div class="chat-messages-scroll" id="chatMessagesScroll" aria-live="polite"></div>
+                        <button type="button" class="btn-baixo" id="btnBaixo" aria-label="Ir para as mensagens mais recentes" hidden>
+                            <i class="fa-solid fa-chevron-down"></i><span id="baixoContador" hidden>0</span>
+                        </button>
                     </div>
 
-                    <form class="chat-input-form" id="chatForm">
-                        <input type="text" id="inputMensagem" placeholder="Escreva a sua mensagem..." autocomplete="off" required>
-                        <button type="submit" id="btnEnviarMensagem" aria-label="Enviar Mensagem">
+                    <div class="respostas-rapidas" id="respostasRapidas" hidden></div>
+                    <div class="emoji-panel" id="emojiPanel" hidden></div>
+
+                    <form class="chat-input-form" id="chatForm" autocomplete="off">
+                        <button type="button" class="btn-icone" id="btnRapidas" aria-label="Respostas rápidas" title="Respostas rápidas"><i class="fa-solid fa-bolt"></i></button>
+                        <button type="button" class="btn-icone" id="btnEmoji" aria-label="Emojis" title="Emojis"><i class="fa-regular fa-face-smile"></i></button>
+                        <textarea id="inputMensagem" rows="1" maxlength="1000" placeholder="Escreva sua mensagem..." aria-label="Mensagem"></textarea>
+                        <button type="submit" id="btnEnviarMensagem" class="btn-enviar" aria-label="Enviar mensagem" disabled>
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </form>
@@ -73,6 +89,8 @@
             </section>
         </div>
     </main>
+
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
 
     <script src="../js/mensagens.js"></script>
 </body>
