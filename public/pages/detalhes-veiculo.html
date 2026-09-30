@@ -12,295 +12,195 @@
 
     <!-- HEADER DO SITE -->
     <header class="header">
-        <div class="logo">
+        <a href="/pages/index.html" class="logo" aria-label="MotorFlex - início">
             <h1>Motor<span>Flex</span></h1>
-        </div>
+        </a>
         <nav class="nav-menu">
             <a href="javascript:history.back()"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
             <a href="/pages/catalogo.html"><i class="fa-solid fa-car"></i> Catálogo</a>
         </nav>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL DO VEÍCULO -->
     <main class="detalhes-container">
-        
+
         <!-- ESTADO DE CARREGAMENTO -->
         <div id="loading" class="loading-state">
             <i class="fa-solid fa-circle-notch fa-spin"></i>
             <p>Carregando informações do veículo...</p>
         </div>
 
-        <!-- ESTRUTURA DOS DETALHES (Oculta até carregar) -->
-        <div id="conteudoVeiculo" class="conteudo-principal" style="display: none;">
-            
-            <!-- SEÇÃO ESQUERDA: FOTOS E DESCRIÇÃO -->
-            <div class="coluna-esquerda">
-                <div class="galeria-card">
-                    <div class="foto-principal-wrapper">
-                        <img id="fotoPrincipal" src="" alt="Foto do Veículo" onclick="abrirModalImagem(this.src)">
-                        
-                        <!-- BOTÃO DE FAVORITAR NO CANTO DA IMAGEM -->
-                        <button type="button" id="btnFavoritarDetalhe" class="btn-favoritar-detalhe" title="Favoritar veículo" aria-pressed="false">
-                            <i id="iconeFavorito" class="fa-regular fa-heart"></i>
-                        </button>
+        <!-- CONTEÚDO (oculto até carregar) -->
+        <div id="conteudoVeiculo" style="display: none;">
 
-                        <div class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Clique para ampliar</div>
+            <!-- MIGALHAS DE PÃO -->
+            <nav class="breadcrumb" aria-label="Você está em">
+                <a href="/pages/catalogo.html">Catálogo</a>
+                <i class="fa-solid fa-chevron-right"></i>
+                <span id="breadcrumbAtual">Veículo</span>
+            </nav>
+
+            <div class="conteudo-principal">
+
+                <!-- COLUNA ESQUERDA: FOTOS E DESCRIÇÃO -->
+                <div class="coluna-esquerda">
+                    <div class="galeria-card">
+                        <div class="foto-principal-wrapper" id="fotoWrapper">
+                            <img id="fotoPrincipal" src="" alt="Foto do veículo">
+
+                            <button type="button" id="btnFavoritarDetalhe" class="btn-favoritar-detalhe" title="Favoritar veículo" aria-pressed="false">
+                                <i id="iconeFavorito" class="fa-regular fa-heart"></i>
+                            </button>
+
+                            <div class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Clique para ampliar</div>
+                        </div>
+
+                        <!-- Miniaturas (só aparecem se o veículo tiver mais de uma foto) -->
+                        <div id="miniaturas" class="miniaturas" hidden></div>
+                    </div>
+
+                    <div class="info-card descricao-card">
+                        <h3><i class="fa-solid fa-align-left"></i> Descrição do Vendedor</h3>
+                        <p id="descricaoVeiculo">O proprietário não adicionou uma descrição detalhada para este veículo.</p>
                     </div>
                 </div>
 
-                <div class="info-card descricao-card">
-                    <h3><i class="fa-solid fa-align-left"></i> Descrição do Vendedor</h3>
-                    <p id="descricaoVeiculo">O proprietário não adicionou uma descrição detalhada para este veículo.</p>
-                </div>
-            </div>
+                <!-- COLUNA DIREITA: PREÇO, FICHA TÉCNICA E CONTATO -->
+                <div class="coluna-direita">
 
-            <!-- SEÇÃO DIREITA: PREÇO, FICHA TÉCNICA E CONTATO -->
-            <div class="coluna-direita">
-                
-                <!-- CABEÇALHO DO ANÚNCIO -->
-                <div class="info-card header-anuncio-card">
-                    <span id="marcaModeloBadge" class="badge-marca">Marca / Modelo</span>
-                    <h1 id="tituloVeiculo">Nome do Veículo</h1>
-                    <p id="versaoVeiculo" class="versao-texto">Versão detalhada</p>
-                    <div id="precoVeiculo" class="preco-destaque">R$ 0,00</div>
-                </div>
+                    <div class="info-card header-anuncio-card">
+                        <span id="marcaModeloBadge" class="badge-marca">Marca / Modelo</span>
+                        <h1 id="tituloVeiculo">Nome do Veículo</h1>
+                        <p id="versaoVeiculo" class="versao-texto">Versão detalhada</p>
 
-                <!-- ESPECIFICAÇÕES TÉCNICAS (GRID) -->
-                <div class="info-card specs-card">
-                    <h3><i class="fa-solid fa-gauge-high"></i> Especificações Técnicas</h3>
-                    <div class="specs-grid">
-                        <div class="spec-item">
-                            <i class="fa-solid fa-calendar-days"></i>
-                            <div>
-                                <span class="spec-label">Ano Fab/Mod</span>
-                                <span id="specAno" class="spec-value">-</span>
-                            </div>
+                        <div class="resumo-chips">
+                            <span class="chip-resumo"><i class="fa-solid fa-calendar-days"></i> <span id="chipAno">-</span></span>
+                            <span class="chip-resumo"><i class="fa-solid fa-road"></i> <span id="chipKm">-</span></span>
+                            <span class="chip-resumo"><i class="fa-solid fa-gas-pump"></i> <span id="chipComb">-</span></span>
                         </div>
 
-                        <div class="spec-item">
-                            <i class="fa-solid fa-road"></i>
-                            <div>
-                                <span class="spec-label">Quilometragem</span>
-                                <span id="specQuilometragem" class="spec-value">-</span>
-                            </div>
-                        </div>
+                        <div class="preco-label">Preço</div>
+                        <div id="precoVeiculo" class="preco-destaque">R$ 0,00</div>
+                    </div>
 
-                        <div class="spec-item">
-                            <i class="fa-solid fa-gas-pump"></i>
-                            <div>
-                                <span class="spec-label">Combustível</span>
-                                <span id="specCombustivel" class="spec-value">-</span>
-                            </div>
-                        </div>
+                    <!-- CARD DE CONTATO / PROPOSTA / GESTÃO (preenchido pelo JS) -->
+                    <div class="info-card contato-card" id="contatoCard"></div>
 
-                        <div class="spec-item">
-                            <i class="fa-solid fa-gears"></i>
-                            <div>
-                                <span class="spec-label">Câmbio</span>
-                                <span id="specCambio" class="spec-value">-</span>
+                    <div class="info-card specs-card">
+                        <h3><i class="fa-solid fa-gauge-high"></i> Especificações Técnicas</h3>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <i class="fa-solid fa-calendar-days"></i>
+                                <div>
+                                    <span class="spec-label">Ano Fab/Mod</span>
+                                    <span id="specAno" class="spec-value">-</span>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="spec-item">
-                            <i class="fa-solid fa-palette"></i>
-                            <div>
-                                <span class="spec-label">Cor</span>
-                                <span id="specCor" class="spec-value">-</span>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-road"></i>
+                                <div>
+                                    <span class="spec-label">Quilometragem</span>
+                                    <span id="specQuilometragem" class="spec-value">-</span>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="spec-item">
-                            <i class="fa-solid fa-door-open"></i>
-                            <div>
-                                <span class="spec-label">Portas</span>
-                                <span id="specPortas" class="spec-value">-</span>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-gas-pump"></i>
+                                <div>
+                                    <span class="spec-label">Combustível</span>
+                                    <span id="specCombustivel" class="spec-value">-</span>
+                                </div>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-gears"></i>
+                                <div>
+                                    <span class="spec-label">Câmbio</span>
+                                    <span id="specCambio" class="spec-value">-</span>
+                                </div>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-palette"></i>
+                                <div>
+                                    <span class="spec-label">Cor</span>
+                                    <span id="specCor" class="spec-value">-</span>
+                                </div>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-door-open"></i>
+                                <div>
+                                    <span class="spec-label">Portas</span>
+                                    <span id="specPortas" class="spec-value">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- CARD DE CONTATO / PROPOSTA -->
-                <div class="info-card contato-card">
-                    <h3><i class="fa-solid fa-headset"></i> Interessado neste carro?</h3>
-                    <p>Entre em contacto com o anunciante ou faça uma proposta diretamente pela plataforma.</p>
-                    <button class="btn-proposta" onclick="enviarPropostaModal()">
-                        <i class="fa-solid fa-paper-plane"></i> Enviar Proposta
-                    </button>
-                </div>
+                    <div class="dica-seguranca">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <p>Negocie sempre pela plataforma e nunca faça pagamentos antecipados sem ver o veículo pessoalmente.</p>
+                    </div>
 
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- MODAL DE VISUALIZAÇÃO DE IMAGEM (LIGHTBOX) -->
-    <div id="modalImagem" class="modal-imagem-overlay" onclick="fecharModalImagem()">
-        <div class="modal-imagem-conteudo" onclick="event.stopPropagation()">
-            <button class="modal-fechar" onclick="fecharModalImagem()">&times;</button>
-            <img id="imagemAmpliada" src="" alt="Veículo Ampliado">
+    <!-- LIGHTBOX DE IMAGEM -->
+    <div id="modalImagem" class="modal-imagem-overlay">
+        <div class="modal-imagem-conteudo">
+            <button type="button" class="modal-fechar" id="btnFecharImagem" aria-label="Fechar">&times;</button>
+            <img id="imagemAmpliada" src="" alt="Veículo ampliado">
         </div>
     </div>
 
-    <!-- MODAL DE ALERTA MODERNO (LOGIN NECESSÁRIO) -->
-    <div id="modalLoginNecessario" class="modal-aviso-overlay" style="display: none;">
+    <!-- MODAL: LOGIN NECESSÁRIO -->
+    <div id="modalLoginNecessario" class="modal-aviso-overlay" hidden>
         <div class="modal-aviso-conteudo">
-            <div class="modal-aviso-icone">
-                <i class="fa-solid fa-lock"></i>
-            </div>
+            <div class="modal-aviso-icone"><i class="fa-solid fa-lock"></i></div>
             <h3>Autenticação Necessária</h3>
-            <p>Para enviar uma proposta e conversar com o vendedor, é necessário entrar na sua conta no sistema MotorFlex.</p>
+            <p>Para enviar uma proposta e conversar com o vendedor, é necessário entrar na sua conta MotorFlex.</p>
             <div class="modal-aviso-acoes">
-                <button type="button" class="btn-modal-cancelar" onclick="fecharModalLoginNecessario()">Cancelar</button>
+                <button type="button" class="btn-modal-cancelar" id="btnCancelarLogin">Cancelar</button>
                 <a href="/pages/login.html" class="btn-modal-entrar">Fazer Login Agora</a>
             </div>
         </div>
     </div>
 
-    <!-- ESTILOS EXCLUSIVOS (BOTÃO DE FAVORITO E MODAL DE AVISO) -->
-    <style>
-        .btn-favoritar-detalhe {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            z-index: 10;
-            transition: all 0.2s ease;
-        }
+    <!-- MODAL: PROPOSTA COM MENSAGEM AUTOMÁTICA -->
+    <div id="modalProposta" class="modal-aviso-overlay" hidden>
+        <div class="modal-proposta" role="dialog" aria-modal="true" aria-labelledby="tituloProposta">
+            <button type="button" class="modal-proposta-fechar" id="btnFecharProposta" aria-label="Fechar">&times;</button>
 
-        .btn-favoritar-detalhe:hover {
-            background: rgba(229, 9, 20, 0.8);
-            transform: scale(1.08);
-            border-color: #e50914;
-        }
+            <h3 id="tituloProposta"><i class="fa-solid fa-paper-plane"></i> Enviar proposta</h3>
+            <p class="modal-proposta-sub">Já deixamos uma mensagem pronta para o vendedor. É só enviar (ou ajustar antes, se quiser).</p>
 
-        .btn-favoritar-detalhe i.fa-solid.fa-heart {
-            color: #e50914;
-        }
+            <div class="proposta-veiculo">
+                <img id="propostaFoto" src="" alt="">
+                <div>
+                    <strong id="propostaTitulo">Veículo</strong>
+                    <span id="propostaPreco">R$ 0,00</span>
+                </div>
+            </div>
 
-        .btn-favoritar-detalhe:hover i.fa-solid.fa-heart {
-            color: #fff;
-        }
+            <label for="propostaTexto" class="proposta-label">Sua mensagem</label>
+            <textarea id="propostaTexto" rows="5" maxlength="600"></textarea>
 
-        /* Estilos do Modal de Login */
-        .modal-aviso-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(4, 5, 6, 0.82);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeInModal 0.3s ease-out forwards;
-        }
+            <div class="proposta-chips" id="propostaChips">
+                <button type="button" data-frase="Ele ainda está disponível?">Ainda disponível?</button>
+                <button type="button" data-frase="Aceita troca?">Aceita troca?</button>
+                <button type="button" data-frase="Posso agendar uma visita para ver o carro?">Agendar visita</button>
+                <button type="button" data-frase="Qual o melhor valor à vista?">Melhor valor</button>
+            </div>
 
-        .modal-aviso-conteudo {
-            background: var(--surface, #14181f);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: 16px;
-            padding: 32px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
-            transform: translateY(10px);
-            animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+            <div class="modal-aviso-acoes">
+                <button type="button" class="btn-modal-cancelar" id="btnCancelarProposta">Cancelar</button>
+                <button type="button" class="btn-modal-entrar" id="btnEnviarProposta">
+                    <i class="fa-solid fa-paper-plane"></i>&nbsp; Enviar mensagem
+                </button>
+            </div>
+        </div>
+    </div>
 
-        .modal-aviso-icone {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 0, 0, 0.14);
-            border: 1px solid rgba(255, 0, 0, 0.4);
-            color: #ff0000;
-            font-size: 1.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-        }
-
-        .modal-aviso-conteudo h3 {
-            color: #fff;
-            font-size: 1.2rem;
-            font-family: var(--font-display, 'Oswald', sans-serif);
-            margin-bottom: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        .modal-aviso-conteudo p {
-            color: var(--text-muted, #8b93a1);
-            font-size: 0.88rem;
-            line-height: 1.5;
-            margin-bottom: 24px;
-        }
-
-        .modal-aviso-acoes {
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn-modal-cancelar {
-            flex: 1;
-            background: var(--surface-2, #1b2029);
-            color: var(--text, #eef1f5);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-modal-cancelar:hover {
-            background: var(--surface-3, #232a35);
-        }
-
-        .btn-modal-entrar {
-            flex: 1;
-            background: #ff0000;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.88rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
-        }
-
-        .btn-modal-entrar:hover {
-            background: #ff3333;
-            transform: translateY(-1px);
-        }
-
-        @keyframes fadeInModal {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes scaleUpModal {
-            from { transform: translateY(15px) scale(0.95); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-    </style>
+    <!-- AVISO RÁPIDO (TOAST) -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="/js/detalhes-veiculo.js"></script>
 </body>

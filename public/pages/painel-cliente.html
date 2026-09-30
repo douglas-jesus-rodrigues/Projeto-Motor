@@ -3,160 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Cliente | MotorFlex</title>
-    
+    <title>Painel da Empresa | MotorFlex</title>
     <link rel="icon" href="/imagens/favicon.ico">
-    <link rel="stylesheet" href="/css/painel-cliente.css">
-
-    <!-- Cropper.js Stylesheet (Para recorte de foto estilo WhatsApp) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="/css/painel-empresa.css">
 </head>
 <body>
 
     <header class="header">
-        <div class="logo">
-            <h1>Motor<span>Flex</span></h1>
-        </div>
+        <a href="/pages/index.html" class="logo">Motor<span>Flex</span></a>
 
-        <nav class="nav-menu">
-            <a href="/pages/index.html">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
-                    <path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .1 160c0 27.1-22 49.4-49 49.4l-320 0c-27.1 0-49.1-22.3-49.1-49.4l-.1-160-21.8 0c-18 0-32-14.1-32-32.1c0-9 7.1-17.1 13.1-24.1l242-212c14-12.1 35-12.1 49 0l241.9 212c6 7 13.1 15.1 13.1 24.1z"/>
-                </svg> Home
-            </a>
+        <nav class="nav-menu" aria-label="Navegação principal">
+            <a href="/pages/index.html">Home</a>
+            <a href="/pages/catalogo.html">Catálogo</a>
+            <a href="/pages/catalogo.html?tab=cadastrar">Anunciar Veículo</a>
 
-            <a href="/pages/catalogo.html">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
-                    <path d="M135.2 117.4L109.1 192l293.8 0-26.1-74.6C372.3 104.1 360 96 346.2 96L165.8 96c-13.8 0-26.1 8.1-31.6 21.4zM48 400c0 17.7 14.3 32 32 32l32 0c17.7 0 32-14.3 32-32l0-32 224 0l0 32c0 17.7 14.3 32 32 32l32 0c17.7 0 32-14.3 32-32l0-144 0-14.1c0-10.4-3.3-20.5-9.3-29l-34.6-49.5c-16.7-23.8-43.6-38.1-72.3-38.1l-180.1 0c-28.7 0-55.6 14.3-72.3 38.1L41.3 212.9C35.3 221.4 32 231.5 32 242l0 14.1 0 144zM432 288a24 24 0 1 1 0 48 24 24 0 1 1 0-48zM96 312a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/>
-                </svg> Catálogo
-            </a>
-
-            <!-- Botão atualizado para abrir direto na aba de cadastro do catálogo -->
-            <a href="/pages/catalogo.html?tab=cadastrar">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="14" height="14" fill="currentColor" style="margin-right: 4px;">
-                    <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 344l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
-                </svg> Anunciar Carro
-            </a>
-            
-            <div class="nav-item-dropdown">
-                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
-                    <svg class="icone-engrenagem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor">
-                        <path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.8c-13.4 11.7-28.5 21.5-44.8 29l-11.5 57.2c-1.8 9.2-9.4 16-18.8 16.3c-12.4 .4-25 .4-37.5 0c-9.4-.3-17-7.1-18.8-16.3l-11.5-57.2c-16.3-7.5-31.4-17.3-44.8-29l-55.7 17.8c-8.8 2.8-18.6 .3-24.5-6.8-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.8c13.4-11.7 28.5-21.5 44.8-29l11.5-57.2C191 19.9 198.6 13 208 12.7c12.4-.4 25-.4 37.5 0c9.4 .3 17 7.1 18.8 16.3l11.5 57.2c16.3 7.5 31.4 17.3 44.8 29l55.7-17.8c8.8-2.8 18.6-.3 24.5 6.8c4.5 5.5 8.8 11.2 12.7 17.1l1.4 2.1 7.2 11.4c3.4 5.7 6.6 11.5 9.4 17.5c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4zm-143.9 89.4a96 96 0 1 0 -192 0a96 96 0 1 0 192 0z"/>
-                    </svg>
-                    Configurações
+            <div class="dropdown">
+                <button type="button" class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true" aria-controls="menuConfig">
+                    Configurações <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="dropdown-menu" id="menuConfig">
-                    <a href="/pages/perfil.html">Meus Dados</a>
-                    <a href="#" id="gatilhoSair" class="sair-item">Sair</a>
+                    <!-- Estes três só aparecem no celular (no desktop já estão no topo) -->
+                    <a href="/pages/index.html" class="so-mobile"><i class="fa-solid fa-house"></i> Home</a>
+                    <a href="/pages/catalogo.html" class="so-mobile"><i class="fa-solid fa-car-side"></i> Catálogo</a>
+                    <a href="/pages/catalogo.html?tab=cadastrar" class="so-mobile"><i class="fa-solid fa-plus"></i> Anunciar Veículo</a>
+
+                    <a href="/pages/perfil.html"><i class="fa-solid fa-id-card"></i> Meus Dados</a>
+                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
                 </div>
             </div>
         </nav>
     </header>
 
     <main class="container">
-        <section class="boas-vindas">
-            <div class="perfil-avatar-wrapper">
-                <div class="perfil-avatar">
-                    <img id="imgPerfil" src="https://ui-avatars.com/api/?name=Cliente&background=181824&color=ff1e27&size=150" alt="Foto de Perfil">
-                </div>
-                
-                <!-- Botão de alterar foto -->
-                <label for="inputFotoPerfil" class="btn-trocar-foto" title="Alterar Foto">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="13" height="13" fill="currentColor">
-                        <path d="M149.1 64L160 64l32 0 16 0 16 0 96 0 16 0 16 0 32 0 10.9 0c14.7 0 27.5 9.6 31.6 23.7l12.7 44.3 49.8 0c26.5 0 48 21.5 48 48l0 224c0 26.5-21.5 48-48 48L32 448c-26.5 0-48-21.5-48-48L0 180c0-26.5 21.5-48 48-48l49.8 0 12.7-44.3C121.6 73.6 134.4 64 149.1 64zM256 192a96 96 0 1 0 0 192 96 96 0 1 0 0-192z"/>
-                    </svg>
-                </label>
-                <input type="file" id="inputFotoPerfil" accept="image/*" hidden>
 
-                <!-- Botão de remover foto -->
-                <button type="button" id="btnRemoverFoto" class="btn-remover-foto" title="Remover Foto">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="12" height="12" fill="currentColor">
-                        <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
-                    </svg>
+        <!-- Boas-vindas -->
+        <section class="boas-vindas">
+            <div class="avatar-wrapper" id="avatarWrapper">
+                <div class="avatar">
+                    <span id="avatarIniciais" aria-hidden="true">E</span>
+                    <img id="imgPerfil" alt="Foto da empresa" hidden>
+                </div>
+
+                <button type="button" id="btnTrocarFoto" class="btn-avatar btn-trocar" title="Alterar foto" aria-label="Alterar foto da empresa">
+                    <i class="fa-solid fa-camera"></i>
+                </button>
+                <input type="file" id="inputFotoPerfil" accept="image/png,image/jpeg,image/webp" hidden>
+                <button type="button" id="btnRemoverFoto" class="btn-avatar btn-remover" title="Remover foto" aria-label="Remover foto da empresa" hidden>
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
 
-            <div class="boas-vindas-texto">
-                <h2 id="nomeUsuario">Cliente</h2>
-                <p>Acompanhe seus favoritos, gerencie seus anúncios e confira suas mensagens em um só lugar.</p>
+            <div class="boas-vindas-info">
+                <p class="eyebrow"><i class="fa-solid fa-building"></i> Painel da empresa</p>
+                <h1 id="nomeEmpresa">Minha Empresa</h1>
+                <p class="sub">Gerencie seus anúncios, acompanhe seus favoritos e converse com clientes interessados.</p>
+                <span class="status-conta"><i class="fa-solid fa-circle"></i> Conta ativa</span>
             </div>
         </section>
 
-        <section class="cards">
-            <div class="card">
-                <div class="card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="28" height="28" fill="currentColor">
-                        <path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/>
-                    </svg>
-                </div>
-                <div class="card-content">
-                    <h3>Meus Favoritos</h3>
-                    <p>Veja os carros que você salvou para conferir depois.</p>
-                    <a href="/pages/favoritos.html" class="btn-card">Ver favoritos</a>
-                </div>
+        <!-- Resumo -->
+        <section class="stats carregando" id="stats" aria-label="Resumo da conta">
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-car"></i></span>
+                <div><span class="stat-label">Veículos anunciados</span><strong id="totalVeiculos">–</strong></div>
             </div>
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-comments"></i></span>
+                <div><span class="stat-label">Conversas</span><strong id="totalConversas">–</strong></div>
+            </div>
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-eye"></i></span>
+                <div><span class="stat-label">Visualizações</span><strong id="totalVisualizacoes">–</strong></div>
+            </div>
+        </section>
 
-            <div class="card">
-                <div class="card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="28" height="28" fill="currentColor">
-                        <path d="M171.3 96H224v96H111.3l26.1-74.6c5.5-15.7 19.8-21.4 33.9-21.4zm156.4 0h52.7c14.1 0 28.4 5.7 33.9 21.4L440.4 192H327.7V96zM48 240c0-26.5 21.5-48 48-48h448c26.5 0 48 21.5 48 48v128c0 26.5-21.5 48-48 48H96c-26.5 0-48-21.5-48-48V240zm80 56a24 24 0 1 0 0-48 24 24 0 1 0 0 48zm384 0a24 24 0 1 0 0-48 24 24 0 1 0 0 48z"/>
-                    </svg>
+        <!-- Atalhos (cada um abre em sua própria página) -->
+        <section class="atalhos" aria-label="Atalhos">
+            <a href="/pages/catalogo.html?tab=cadastrar" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-plus"></i></span>
+                <div>
+                    <h2>Anunciar veículo</h2>
+                    <p>Adicione um novo veículo ao catálogo da empresa.</p>
                 </div>
-                <div class="card-content">
-                    <h3>Meus Anúncios</h3>
-                    <p>Gerencie, edite ou remova os veículos que você anunciou.</p>
-                    <a href="/pages/meus-anuncios.html" class="btn-card">Ver anúncios</a>
+            </a>
+            <a href="/pages/meus-anuncios.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-car-side"></i></span>
+                <div>
+                    <h2>Meus anúncios</h2>
+                    <p>Veja, edite ou remova os veículos anunciados.</p>
                 </div>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="28" height="28" fill="currentColor">
-                        <path d="M64 0C28.7 0 0 28.7 0 64V352c0 35.3 28.7 64 64 64h96v80c0 6.1 3.4 11.6 8.8 14.3s11.9 2.1 16.8-1.5L309.3 416H448c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64H64zM160 224a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm128-32a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zm96 32a32 32 0 1 1 0-64 32 32 0 1 1 0 64z"/>
-                    </svg>
+            </a>
+            <a href="/pages/favoritos.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-heart"></i></span>
+                <div>
+                    <h2>Meus favoritos</h2>
+                    <p>Veja os veículos que você salvou para conferir depois.</p>
                 </div>
-                <div class="card-content">
-                    <h3>Mensagens</h3>
-                    <p>Confira contatos de vendedores e compradores interessados.</p>
-                    <a href="/pages/mensagens.html" class="btn-card">Ver mensagens</a>
+            </a>
+            <a href="/pages/mensagens.html" class="atalho">
+                <span class="atalho-icone"><i class="fa-solid fa-comments"></i></span>
+                <div>
+                    <h2>Conversas</h2>
+                    <p>Fale com clientes, receba propostas e agende visitas.</p>
                 </div>
-            </div>
+            </a>
         </section>
     </main>
 
-    <div class="modal-overlay" id="modalSairContainer">
-        <div class="modal-container">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="48" height="48" fill="var(--primary)" style="margin-bottom: 15px;">
-                <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-384c13.3 0 24 10.7 24 24l0 128c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-128c0-13.3 10.7-24 24-24zm32 224a32 32 0 1 1 -64 0 32 32 0 1 1 64 0z"/>
-            </svg>
-            <h3>Confirmar Saída</h3>
-            <p>Tem certeza que deseja encerrar sua sessão na MotorFlex?</p>
+    <!-- Avisos -->
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
+
+    <!-- Confirmação genérica (saída, remover foto) -->
+    <div class="modal-overlay" id="modalConfirma" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmaTitulo">
+            <div class="modal-icone"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 id="confirmaTitulo">Confirmar</h3>
+            <p id="confirmaTexto"></p>
             <div class="modal-botoes">
-                <button class="btn-modal btn-cancelar" id="btnCancelarSair">Cancelar</button>
-                <button class="btn-modal btn-confirmar-sair" id="btnSair">Sim, Sair</button>
+                <button type="button" class="btn-modal btn-cinza" id="confirmaCancelar">Cancelar</button>
+                <button type="button" class="btn-modal btn-vermelho" id="confirmaOk">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Recorte de Foto (Estilo WhatsApp) -->
-    <div id="modalRecorte" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: #141414; border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 22px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
-            <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.2rem;">Ajustar Foto de Perfil</h3>
-            
-            <div style="max-height: 350px; overflow: hidden; margin-bottom: 20px; display: flex; justify-content: center;">
-                <img id="imagemParaCortar" style="max-width: 100%; display: block;" />
+    <!-- Recorte de foto -->
+    <div class="modal-overlay" id="modalRecorte" hidden>
+        <div class="modal modal-recorte" role="dialog" aria-modal="true" aria-labelledby="recorteTitulo">
+            <h3 id="recorteTitulo">Ajustar foto da empresa</h3>
+            <div class="area-recorte">
+                <img id="imagemParaCortar" alt="Imagem para recortar">
             </div>
-
-            <div style="display: flex; gap: 12px; justify-content: center;">
-                <button id="btnCancelarRecorte" style="padding: 12px 20px; background: #222; border: 1px solid #333; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1;">Cancelar</button>
-                <button id="btnConfirmarRecorte" style="padding: 12px 20px; background: #e50914; border: none; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1; box-shadow: 0 4px 12px rgba(229,9,20,0.3);">Cortar e Enviar</button>
+            <div class="modal-botoes">
+                <button type="button" class="btn-modal btn-cinza" id="btnCancelarRecorte">Cancelar</button>
+                <button type="button" class="btn-modal btn-vermelho" id="btnConfirmarRecorte">Cortar e enviar</button>
             </div>
         </div>
     </div>
 
-    <!-- Cropper.js Script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-    <script src="/js/painel-cliente.js"></script>
+    <script src="/js/painel-empresa.js"></script>
 </body>
 </html>

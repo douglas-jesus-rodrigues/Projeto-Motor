@@ -6,58 +6,111 @@
     <title>Gerenciar Usuários | MotorFlex Admin</title>
 
     <link rel="icon" href="/imagens/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/painel-admin.css">
+    <!-- CSS independente: não depende mais do painel-admin.css -->
     <link rel="stylesheet" href="/css/usuarios.css">
 </head>
 <body>
 
-    <header class="header">
-        <div class="logo">
-            <h1>Motor<span>Flex</span> <small style="color: #888; font-size: 0.9rem;">| Admin - Usuários</small></h1>
-        </div>
+    <header class="topbar">
+        <!-- Os href abaixo são ajustados pelo JS conforme o tipo de login (admin / empresa / cliente) -->
+        <a href="/pages/painel-admin.html" class="logo" id="logoLink">
+            Motor<span>Flex</span><small>Admin · Usuários</small>
+        </a>
 
-        <nav class="nav-menu">
-            <a href="/pages/painel-admin.html"><i class="fa-solid fa-house"></i> Início</a>
-            <a href="/pages/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
+        <nav class="topnav">
+            <a href="/pages/painel-admin.html" id="linkInicio"><i class="fa-solid fa-house"></i><span>Início</span></a>
+            <a href="/pages/moderacao.html" id="linkModeracao"><i class="fa-solid fa-check-double"></i><span>Moderação</span></a>
         </nav>
     </header>
 
-    <main class="container">
-        <div class="page-header">
-            <h2><i class="fa-solid fa-users"></i> Lista de Usuários Cadastrados</h2>
-            <p>Gerencie os perfis e tipos de acesso (Cliente ou Admin) dos usuários do sistema.</p>
-        </div>
+    <main class="wrap">
 
-        <!-- Barra de pesquisa compatível com o JavaScript (id="inputBusca") -->
-        <div class="search-container">
+        <a href="/pages/painel-admin.html" class="voltar" id="btnVoltar">
+            <i class="fa-solid fa-arrow-left"></i> Voltar ao painel
+        </a>
+
+        <section class="hero">
+            <h1><i class="fa-solid fa-users"></i> Usuários cadastrados</h1>
+            <p>Gerencie os perfis e os tipos de acesso (Admin, Empresa ou Individual) de quem usa o sistema.</p>
+        </section>
+
+        <!-- Resumo -->
+        <section class="stats" aria-label="Resumo de usuários">
+            <div class="stat">
+                <span class="stat-icone"><i class="fa-solid fa-users"></i></span>
+                <div><span>Total</span><strong id="statTotal">–</strong></div>
+            </div>
+            <div class="stat stat--admin">
+                <span class="stat-icone"><i class="fa-solid fa-user-shield"></i></span>
+                <div><span>Admins</span><strong id="statAdmin">–</strong></div>
+            </div>
+            <div class="stat stat--empresa">
+                <span class="stat-icone"><i class="fa-solid fa-building"></i></span>
+                <div><span>Empresas</span><strong id="statEmpresa">–</strong></div>
+            </div>
+            <div class="stat stat--individual">
+                <span class="stat-icone"><i class="fa-solid fa-user"></i></span>
+                <div><span>Individuais</span><strong id="statIndividual">–</strong></div>
+            </div>
+        </section>
+
+        <!-- Busca + filtros (id="inputBusca" mantido) -->
+        <section class="toolbar">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="inputBusca" placeholder="Pesquisar por CPF, E-mail ou Nome...">
+                <input type="text" id="inputBusca" placeholder="Pesquisar por nome, e-mail ou CPF..." autocomplete="off">
             </div>
-        </div>
 
-        <div class="table-responsive">
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Tipo de Acesso</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaUsuarios">
-                    <tr>
-                        <td colspan="5" style="text-align: center;">Carregando usuários do banco de dados...</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="filtros" role="group" aria-label="Filtrar por tipo de acesso">
+                <button type="button" class="chip ativo" data-filtro="todos" aria-pressed="true">Todos</button>
+                <button type="button" class="chip" data-filtro="admin" aria-pressed="false">Admin</button>
+                <button type="button" class="chip" data-filtro="empresa" aria-pressed="false">Empresa</button>
+                <button type="button" class="chip" data-filtro="individual" aria-pressed="false">Individual</button>
+            </div>
+        </section>
+
+        <p class="contador" id="contador" aria-live="polite"></p>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>E-mail</th>
+                            <th>Tipo de acesso</th>
+                            <th class="th-acoes">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaUsuarios">
+                        <tr class="estado"><td colspan="5">Carregando usuários...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
-    <!-- Script principal da página -->
+    <!-- Avisos -->
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
+
+    <!-- Confirmação (substitui o confirm() do navegador) -->
+    <div class="modal-overlay" id="modalConfirma" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmaTitulo">
+            <div class="modal-icone"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 id="confirmaTitulo">Confirmar</h3>
+            <p id="confirmaTexto"></p>
+            <div class="modal-botoes">
+                <button type="button" class="btn-modal btn-cinza" id="confirmaCancelar">Cancelar</button>
+                <button type="button" class="btn-modal btn-primario" id="confirmaOk">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/usuarios.js"></script>
 </body>
 </html>

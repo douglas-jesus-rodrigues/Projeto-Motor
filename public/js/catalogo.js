@@ -24,24 +24,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    const usuario = lerLocalStorageSeguro("usuario") || { id: 1, tipo: "cliente" };
+    // Rota do painel conforme o tipo de conta (no banco: 'individual', 'empresa', 'admin')
+    function obterRotaPainel(usuarioAtual) {
+        if (!usuarioAtual) return "/pages/painel-cliente.html";
+        if (usuarioAtual.tipo === "empresa") return "/pages/painel-empresa.html";
+        if (["admin", "super_admin"].includes(usuarioAtual.tipo) || usuarioAtual.cargo === "admin") {
+            return "/pages/painel-admin.html";
+        }
+        return "/pages/painel-cliente.html"; // individual / cliente
+    }
+
+    const usuario = lerLocalStorageSeguro("usuario");
 
     const btnPainel = document.getElementById("btnPainel");
     if (btnPainel && usuario) {
-        if (usuario.tipo === "empresa") {
-            btnPainel.href = "/pages/painel-empresa.html";
-        } else if (usuario.tipo === "admin") {
-            btnPainel.href = "/pages/admin.html";
-        } else {
-            btnPainel.href = "/pages/painel-cliente.html";
-        }
+        btnPainel.href = obterRotaPainel(usuario);
     }
 
     // ==========================================
-    // 0.1. MÁSCARA AUTOMÁTICA DE PREÇO (CORRIGIDA)
+    // 0.1. MÁSCARA AUTOMÁTICA DE PREÇO
     // O "R$" já aparece no <span class="prefixo">, então a máscara
     // formata apenas o número inteiro, sem centavos: 150.000
-    // O input do HTML precisa ser type="text".
     // ==========================================
     const precoInput = document.getElementById("preco");
     if (precoInput) {
@@ -522,8 +525,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (typeof valorBruto === "number") return valorBruto;
         if (!valorBruto) return 0;
 
-        let limpo = String(valorBruto).replace(/[^\d,]/g, ""); // Mantém apenas números e a vírgula decimal
-        limpo = limpo.replace(",", "."); // Troca a vírgula por ponto para o banco de dados
+        // A máscara usa ponto como separador de milhar e não tem centavos,
+        // então basta manter os dígitos.
+        const limpo = String(valorBruto).replace(/\D/g, "");
         return Number(limpo) || 0;
     }
 
@@ -631,9 +635,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     await carregarVeiculosDoBanco();
                     irParaCatalogo();
 
+                    // Depois de publicar, leva o usuário ao painel do seu tipo de conta.
+                    // (No banco o tipo do cliente é 'individual'; admin não é redirecionado.)
                     if (usuarioLogado.tipo === "empresa") {
                         window.location.href = "/pages/painel-empresa.html";
-                    } else if (usuarioLogado.tipo === "cliente") {
+                    } else if (usuarioLogado.tipo === "cliente" || usuarioLogado.tipo === "individual") {
                         window.location.href = "/pages/painel-cliente.html";
                     }
                 } else {

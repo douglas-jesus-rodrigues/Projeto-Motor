@@ -23,7 +23,6 @@
             <ul class="menu" id="menuNavegacao">
                 <li><a href="#home" class="nav-link active" data-target="home">Home</a></li>
                 <li><a href="/pages/catalogo.html">Catálogo</a></li>
-                <li id="itemAnunciar" style="display: none;"><a href="/pages/anunciar.html" class="nav-link-anunciar">Anunciar Veículo</a></li>
                 <li><a href="#sobre" class="nav-link" data-target="sobre">Sobre</a></li>
                 <li><a href="#contato" class="nav-link" data-target="contato">Contato</a></li>
             </ul>
@@ -32,47 +31,69 @@
                     <a href="/pages/login.html" class="btn-secondary" id="btnLogin">Entrar</a>
                     <a href="/pages/cadastro.html" class="btn-action" id="btnCadastro">Cadastrar</a>
                 </div>
-                <div class="nav-item-dropdown" id="dropdownUsuario" style="display: none;">
-                    <button class="btn-config" id="btnConfig" aria-expanded="false">
-                        <div class="avatar-usuario" id="avatarLetra">
-                            U
-                            <img src="" alt="Foto de Perfil" id="avatarImagem">
+
+                <!-- Logado: nome + foto levam direto ao perfil (painel do tipo de conta) -->
+                <div id="perfilUsuario" style="display: none;">
+                    <a href="/pages/painel-cliente.html" class="btn-config" id="irPainel" title="Ir para o meu perfil">
+                        <div class="avatar-usuario">
+                            <span id="avatarLetra">U</span>
+                            <img alt="Foto de perfil" id="avatarImagem">
                         </div>
                         <span id="nomeUsuario">Minha Conta</span>
-                    </button>
-                    <div class="dropdown-menu" id="menuConfig" hidden>
-                        <a href="/pages/painel-cliente.html" id="irPainel">Meu Painel</a>
-                        <a href="/pages/painel-admin.html" id="linkAdmin" style="display: none;">Painel Admin</a>
-                        <a href="#" id="btnSair" class="link-sair">Sair</a>
-                    </div>
+                    </a>
                 </div>
             </div>
         </nav>
     </header>
+
     <main>
         <section id="sec-home" class="page-section active">
             <div class="hero-banner">
                 <div class="hero-overlay"></div>
+
                 <div class="hero-content">
-                    <h1 class="hero-title">Compre e Venda Veículos<br>com Segurança</h1>
+                    <span class="hero-badge" id="heroBadge" hidden>
+                        <span class="hero-badge-dot"></span>
+                        <span id="heroBadgeTexto"></span>
+                    </span>
+
+                    <h1 class="hero-title">Compre e Venda Veículos<br><span class="hero-title-accent">com Segurança</span></h1>
                     <p class="hero-description">A plataforma completa para pessoas físicas e concessionárias anunciarem ou encontrarem as melhores ofertas do mercado.</p>
+
                     <div class="quick-search-bar">
                         <div class="search-input-group">
                             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                            <!-- Desligamos o autocomplete nativo do navegador para usar o nosso customizado -->
-                            <input type="text" id="inputBuscaRapida" placeholder="Qual carro você procura? (ex: Porsche, Civic, SUV...)" autocomplete="off">
-                            
-                            <!-- Lista onde as sugestões do Banco de Dados vão aparecer -->
-                            <ul id="sugestoesBusca" class="sugestoes-busca" hidden></ul>
+                            <input type="text" id="inputBuscaRapida"
+                                   placeholder="Qual carro você procura? (ex: Mustang, Tesla, SUV, azul...)"
+                                   autocomplete="off"
+                                   role="combobox"
+                                   aria-autocomplete="list"
+                                   aria-expanded="false"
+                                   aria-controls="sugestoesBusca">
                         </div>
                         <button type="button" class="btn-quick-search" id="btnBuscarRapido">Buscar</button>
+
+                        <!-- Sugestões vindas do banco de dados -->
+                        <ul id="sugestoesBusca" class="sugestoes-busca" role="listbox" hidden></ul>
                     </div>
+
+                    
+
                     <a href="/pages/catalogo.html" class="btn-hero-cta" id="btnVerCatalogo">Ver Catálogo Completo</a>
                 </div>
+
                 <div class="hero-divider"></div>
+
                 <div class="featured-cars-section">
+                    <div class="featured-header">
+                        <div>
+                            <h2 class="featured-title">Em destaque no MotorFlex</h2>
+                            <p class="featured-subtitle">Anúncios recentes direto do nosso catálogo</p>
+                        </div>
+                        <a href="/pages/catalogo.html" class="ver-todos">Ver todos <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
                     <div class="cars-scroll-wrapper">
-                        <div class="cars-track" id="carsTrack"></div>
+                        <div class="cars-track carregando" id="carsTrack"></div>
                     </div>
                 </div>
             </div>
@@ -197,6 +218,20 @@
             </div>
         </section>
     </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            
+            <div class="footer-brand">
+                <span class="footer-logo">Motor<span>Flex</span></span>
+                <p>Compre e venda veículos com segurança, transparência e tecnologia.</p>
+            </div>
+           
+        </div>
+
+        <div class="footer-copy">© <span id="anoAtual"></span> MotorFlex. Todos os direitos reservados.</div>
+    </footer>
+
     <script src="../js/index.js"></script>
 </body>
 </html>

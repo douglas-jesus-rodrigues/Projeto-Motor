@@ -35,13 +35,8 @@ app.use(session({
     }
 }));
 
-// ==========================================
-// GARANTIR QUE A PASTA DE UPLOADS EXISTE
-// ==========================================
-const uploadDir = path.join(__dirname, "public", "uploads");
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Servir a pasta de uploads publicamente sob a rota /uploads
+app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
 // ==========================================
 // SERVIÇOS EM SEGUNDO PLANO (CRON JOBS / LGPD)
