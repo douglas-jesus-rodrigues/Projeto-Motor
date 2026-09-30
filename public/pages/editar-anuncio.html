@@ -3,129 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#060606">
     <title>MotorFlex - Editar Anúncio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/editar-anuncio.css">
     <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
 </head>
 <body>
 
-    <div class="form-container">
-        <header class="form-header">
-            <div class="header-badge">Painel de Gestão</div>
-            <h2>Editar Anúncio</h2>
-            <p>Atualize as especificações técnicas e comerciais do seu veículo no marketplace</p>
-        </header>
-        
-        <form id="form-editar-anuncio">
+    <header class="topbar">
+        <a href="/pages/meus-anuncios.html" class="voltar" id="linkVoltar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Meus anúncios</span>
+        </a>
+        <a href="/index.html" class="marca">Motor<span>Flex</span></a>
+        <span class="estado-salvo" id="estadoSalvo" aria-live="polite">Sem alterações</span>
+    </header>
+
+    <main class="layout">
+
+        <!-- COLUNA ESQUERDA: FOTO + RESUMO -->
+        <aside class="lateral">
+            <section class="card foto-card" aria-label="Foto do anúncio">
+                <div class="foto-frame" id="dropzone" tabindex="0" role="button" aria-label="Trocar foto do veículo">
+                    <img id="fotoPreview" alt="Foto do veículo" hidden>
+                    <div class="foto-vazia" id="fotoVazia">
+                        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="m21 16-5-5-8 8"/></svg>
+                        <span>Sem foto</span>
+                    </div>
+                    <span class="foto-badge" id="fotoBadge" hidden>Nova foto</span>
+                    <div class="foto-overlay"><span>Clique ou arraste para trocar</span></div>
+                </div>
+
+                <input type="file" id="inputFoto" accept="image/jpeg,image/png,image/webp" hidden>
+
+                <div class="foto-acoes">
+                    <button type="button" class="btn-outline" id="btnTrocarFoto">Trocar foto</button>
+                    <button type="button" class="btn-ghost" id="btnDesfazerFoto" hidden>Desfazer</button>
+                </div>
+                <p class="dica">JPG, PNG ou WebP · até 5&nbsp;MB · fotos grandes são reduzidas automaticamente.</p>
+            </section>
+
+            <section class="card resumo" aria-label="Resumo do anúncio">
+                <p class="resumo-rotulo">Como aparece no catálogo</p>
+                <h2 id="resumoTitulo">—</h2>
+                <p class="resumo-versao" id="resumoVersao"></p>
+                <strong class="resumo-preco" id="resumoPreco">R$ 0</strong>
+                <div class="chips" id="resumoChips"></div>
+            </section>
+        </aside>
+
+        <!-- COLUNA DIREITA: FORMULÁRIO -->
+        <form id="form-editar-anuncio" novalidate class="carregando">
             <input type="hidden" id="veiculo-id">
 
-            <!-- SECÇÃO 1: IDENTIFICAÇÃO -->
-            <div class="form-section">
-                <div class="section-title">
-                    <span class="section-icon">🏷️</span>
-                    <h3>Identificação do Veículo</h3>
-                </div>
-                
+            <header class="form-header">
+                <span class="header-badge">Painel de Gestão</span>
+                <h1>Editar Anúncio</h1>
+                <p>Atualize as informações e a foto do seu veículo no marketplace.</p>
+            </header>
+
+            <section class="card secao">
+                <h3 class="secao-titulo"><i>🏷️</i> Identificação</h3>
                 <div class="input-grid">
                     <div class="input-group">
                         <label for="marca">Marca</label>
-                        <input type="text" id="marca" placeholder="Ex: Chevrolet" required>
+                        <input type="text" id="marca" placeholder="Ex: Chevrolet" autocomplete="off" required>
                     </div>
-
                     <div class="input-group">
                         <label for="modelo">Modelo</label>
-                        <input type="text" id="modelo" placeholder="Ex: Camaro SS" required>
+                        <input type="text" id="modelo" placeholder="Ex: Camaro SS" autocomplete="off" required>
                     </div>
-
                     <div class="input-group full-width">
-                        <label for="versao">Versão Detalhada</label>
-                        <input type="text" id="versao" placeholder="Ex: 6.2 V8 16V Coupé">
+                        <label for="versao">Versão</label>
+                        <input type="text" id="versao" placeholder="Ex: 6.2 V8 16V Coupé" autocomplete="off" maxlength="100">
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- SECÇÃO 2: CARACTERÍSTICAS TÉCNICAS -->
-            <div class="form-section">
-                <div class="section-title">
-                    <span class="section-icon">⚙️</span>
-                    <h3>Características Técnicas</h3>
-                </div>
-
+            <section class="card secao">
+                <h3 class="secao-titulo"><i>⚙️</i> Características técnicas</h3>
                 <div class="input-grid">
-                    <!-- Ano Fabricação com Stepper Compacto -->
                     <div class="input-group">
-                        <label for="ano_fabricacao">Ano Fabricação</label>
-                        <div class="stepper-wrapper">
-                            <input type="text" id="ano_fabricacao" maxlength="4" placeholder="Ex: 2017" required>
+                        <label for="ano_fabricacao">Ano de fabricação</label>
+                        <div class="stepper">
+                            <input type="text" id="ano_fabricacao" inputmode="numeric" maxlength="4" placeholder="Ex: 2017" required>
                             <div class="stepper-btns">
-                                <button type="button" class="btn-step" onclick="ajustarValor('ano_fabricacao', 1, 1900)">▲</button>
-                                <button type="button" class="btn-step" onclick="ajustarValor('ano_fabricacao', -1, 1900)">▼</button>
+                                <button type="button" class="btn-step" data-alvo="ano_fabricacao" data-passo="1" data-min="1900" aria-label="Aumentar">▲</button>
+                                <button type="button" class="btn-step" data-alvo="ano_fabricacao" data-passo="-1" data-min="1900" aria-label="Diminuir">▼</button>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Ano Modelo com Stepper Compacto -->
+
                     <div class="input-group">
-                        <label for="ano_modelo">Ano Modelo</label>
-                        <div class="stepper-wrapper">
-                            <input type="text" id="ano_modelo" maxlength="4" placeholder="Ex: 2017" required>
+                        <label for="ano_modelo">Ano do modelo</label>
+                        <div class="stepper">
+                            <input type="text" id="ano_modelo" inputmode="numeric" maxlength="4" placeholder="Ex: 2018" required>
                             <div class="stepper-btns">
-                                <button type="button" class="btn-step" onclick="ajustarValor('ano_modelo', 1, 1900)">▲</button>
-                                <button type="button" class="btn-step" onclick="ajustarValor('ano_modelo', -1, 1900)">▼</button>
+                                <button type="button" class="btn-step" data-alvo="ano_modelo" data-passo="1" data-min="1900" aria-label="Aumentar">▲</button>
+                                <button type="button" class="btn-step" data-alvo="ano_modelo" data-passo="-1" data-min="1900" aria-label="Diminuir">▼</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="input-group">
                         <label for="combustivel">Combustível</label>
-                        <select id="combustivel" required>
-                            <option value="">A carregar do sistema...</option>
+                        <select id="combustivel" required><option value="">Carregando...</option></select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cambio">Câmbio</label>
+                        <select id="cambio" required><option value="">Carregando...</option></select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="carroceria">Carroceria</label>
+                        <select id="carroceria">
+                            <option value="">Selecione...</option>
+                            <option>Hatch</option><option>Sedan</option><option>SUV</option><option>Picape</option>
+                            <option>Coupé</option><option>Conversível</option><option>Perua</option><option>Minivan</option>
                         </select>
                     </div>
 
                     <div class="input-group">
-                        <label for="cambio">Câmbio / Transmissão</label>
-                        <select id="cambio" required>
-                            <option value="">A carregar do sistema...</option>
+                        <label for="portas">Portas</label>
+                        <select id="portas">
+                            <option value="">Selecione...</option>
+                            <option value="2">2 portas</option><option value="3">3 portas</option>
+                            <option value="4">4 portas</option><option value="5">5 portas</option>
                         </select>
                     </div>
-                </div>
-            </div>
 
-            <!-- SECÇÃO 3: VALORES E ESTADO -->
-            <div class="form-section">
-                <div class="section-title">
-                    <span class="section-icon">💰</span>
-                    <h3>Valores e Estado</h3>
+                    <div class="input-group full-width">
+                        <label for="cor">Cor</label>
+                        <input type="text" id="cor" placeholder="Ex: Preto metálico" autocomplete="off" maxlength="50">
+                    </div>
                 </div>
+            </section>
 
+            <section class="card secao">
+                <h3 class="secao-titulo"><i>💰</i> Valores e estado</h3>
                 <div class="input-grid">
-                    <!-- Quilometragem com Stepper Compacto -->
                     <div class="input-group">
                         <label for="quilometragem">Quilometragem (km)</label>
-                        <div class="stepper-wrapper">
-                            <input type="text" id="quilometragem" placeholder="Ex: 45000">
+                        <div class="stepper">
+                            <input type="text" id="quilometragem" inputmode="numeric" placeholder="Ex: 45.000">
                             <div class="stepper-btns">
-                                <button type="button" class="btn-step" onclick="ajustarValor('quilometragem', 1000, 0)">▲</button>
-                                <button type="button" class="btn-step" onclick="ajustarValor('quilometragem', -1000, 0)">▼</button>
+                                <button type="button" class="btn-step" data-alvo="quilometragem" data-passo="1000" data-min="0" aria-label="Aumentar 1.000 km">▲</button>
+                                <button type="button" class="btn-step" data-alvo="quilometragem" data-passo="-1000" data-min="0" aria-label="Diminuir 1.000 km">▼</button>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="input-group destaque-preco">
-                        <label for="preco">Valor do Veículo (R$)</label>
-                        <input type="text" id="preco" placeholder="Ex: 150.000,00" required>
+                        <label for="preco">Valor do veículo (R$)</label>
+                        <div class="prefixo"><span>R$</span><input type="text" id="preco" inputmode="numeric" placeholder="150.000" required></div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- BOTÕES DE AÇÃO -->
+            <section class="card secao">
+                <h3 class="secao-titulo"><i>📝</i> Descrição</h3>
+                <div class="input-group">
+                    <label for="descricao">Conte mais sobre o veículo</label>
+                    <textarea id="descricao" rows="5" maxlength="1000" placeholder="Estado de conservação, revisões, opcionais, motivo da venda..."></textarea>
+                    <span class="contador" id="contadorDescricao">0 / 1000</span>
+                </div>
+            </section>
+
             <div class="form-actions">
-                <a href="/pages/meus-anuncios.html" class="btn-secundario">Cancelar</a>
-                <button type="submit" class="btn-primario"><span>Salvar Alterações</span></button>
+                <a href="/pages/meus-anuncios.html" class="btn-secundario" id="btnCancelar">Cancelar</a>
+                <button type="submit" class="btn-primario" id="btnSalvar"><span class="spinner" hidden></span><span class="txt">Salvar alterações</span></button>
             </div>
         </form>
-    </div>
+    </main>
+
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
 
     <script src="/js/editar-anuncio.js"></script>
 </body>

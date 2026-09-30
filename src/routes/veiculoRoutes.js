@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
+const fs = require("fs");
 const multer = require("multer");
 
 const db = require("../config/db");
@@ -16,6 +17,8 @@ const storage = multer.diskStorage({
     }
 });
 
+const UPLOAD_DIR = path.join(__dirname, "../../public/uploads");
+
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB por imagem
@@ -23,6 +26,13 @@ const upload = multer({
         if (file.mimetype.startsWith("image/")) cb(null, true);
         else cb(new Error("Apenas arquivos de imagem são permitidos!"), false);
     }
+});
+
+// Upload de 1 imagem; erros do multer viram JSON (limite de 5MB, tipo inválido)
+const uploadImagem = (req, res, next) => upload.single("imagem")(req, res, (err) => {
+    if (!err) return next();
+    const msg = err.code === "LIMIT_FILE_SIZE" ? "A imagem deve ter no máximo 5MB." : err.message;
+    return res.status(400).json({ sucesso: false, mensagem: msg });
 });
 
 // ==========================================
@@ -237,42 +247,47 @@ router.get("/:id", async (req, res) => {
 });
 
 // ==========================================
-// PUT /api/veiculos/:id — ATUALIZAR VEÍCULO
+// PUT /api/veiculos/:id — ATUALIZAR VEÍCULO (aceita JSON ou multipart com nova foto)
+// Só altera os campos ENVIADOS: o que não vier no corpo permanece como está.
 // ==========================================
-router.put("/:id", async (req, res) => {
+router.put("/:id", uploadImagem, async (req, res) => {
     const { id } = req.params;
-    const {
-        marca, modelo, versao, ano_fabricacao, ano_modelo, preco, quilometragem,
-        combustivel, cambio, cor, portas, carroceria, descricao
-    } = req.body;
+    const descartarUpload = () => { if (req.file) fs.unlink(req.file.path, () => {}); };
 
     try {
-        // Se o front enviar usuario_id, só o dono (ou admin) pode editar.
-        // Para exigir SEMPRE, troque false por true.
-        if (!(await podeGerenciar(req, id, false))) {
+        if (!(await podeGerenciar(req, id, true))) {
+            descartarUpload();
             return res.status(403).json({ sucesso: false, mensagem: "Você não tem permissão para editar este anúncio." });
         }
 
-        if (!marca || !marca.trim() || !modelo || !modelo.trim()) {
-            return res.status(400).json({ sucesso: false, mensagem: "Marca e modelo são obrigatórios." });
+        const [[atual]] = await db.query("SELECT * FROM veiculos WHERE id = ?", [id]);
+        if (!atual) {
+            descartarUpload();
+            return res.status(404).json({ sucesso: false, mensagem: "Veículo não encontrado para atualização." });
         }
 
-        let precoArredondado = null;
-        if (preco !== undefined && preco !== null && preco !== "" && preco !== "NaN") {
-            const precoLimpo = String(preco).replace("R$", "").trim().replace(/\./g, "").replace(",", ".");
-            const precoNumerico = Number(precoLimpo);
-            if (!isNaN(precoNumerico) && precoNumerico > 0) precoArredondado = arredondarPreco(precoNumerico, 100);
-        }
-        if (!precoArredondado) {
-            const [atual] = await db.query("SELECT preco FROM veiculos WHERE id = ?", [id]);
-            if (atual.length > 0) precoArredondado = atual[0].preco;
+        const b = req.body;
+        const enviado = (k) => b[k] !== undefined;
+        const texto = (k, antigo) => (enviado(k) ? (String(b[k]).trim() || null) : antigo);
+        const inteiro = (k, antigo) => (enviado(k) && String(b[k]).trim() !== "" ? Number(b[k]) : (enviado(k) ? null : antigo));
+
+        // marca / modelo
+        let marcaId = atual.marca_id, modeloId = atual.modelo_id;
+        if (enviado("marca") && enviado("modelo") && String(b.marca).trim() && String(b.modelo).trim()) {
+            ({ marcaId, modeloId } = await resolverMarcaModelo(String(b.marca).trim(), String(b.modelo).trim()));
         }
 
-        const { marcaId, modeloId } = await resolverMarcaModelo(marca.trim(), modelo.trim());
-        const combustivelId = await resolverAuxiliar("tipo_combustivel", combustivel, 3);
-        const transmissaoId = await resolverAuxiliar("tipo_transmissao", cambio, 1);
+        // preço (aceita "150.000", "150000" ou "150.000,00")
+        let preco = atual.preco;
+        if (enviado("preco") && String(b.preco).trim() !== "") {
+            const n = Number(String(b.preco).replace("R$", "").trim().replace(/\./g, "").replace(",", "."));
+            if (!isNaN(n) && n > 0) preco = arredondarPreco(n, 100);
+        }
 
-        const [resultado] = await db.query(
+        const combustivelId = enviado("combustivel") ? await resolverAuxiliar("tipo_combustivel", b.combustivel, atual.tipo_combustivel_id) : atual.tipo_combustivel_id;
+        const transmissaoId = enviado("cambio") ? await resolverAuxiliar("tipo_transmissao", b.cambio, atual.tipo_transmissao_id) : atual.tipo_transmissao_id;
+
+        await db.query(
             `UPDATE veiculos SET
                 marca_id = ?, modelo_id = ?, versao = ?, ano_fabricacao = ?, ano_modelo = ?, preco = ?,
                 quilometragem = ?, tipo_combustivel_id = ?, tipo_transmissao_id = ?, cor = ?, portas = ?,
@@ -280,26 +295,43 @@ router.put("/:id", async (req, res) => {
              WHERE id = ?`,
             [
                 marcaId, modeloId,
-                versao ? versao.trim() : null,
-                ano_fabricacao ? Number(ano_fabricacao) : null,
-                ano_modelo ? Number(ano_modelo) : null,
-                precoArredondado,
-                quilometragem ? Number(quilometragem) : 0,
+                texto("versao", atual.versao),
+                inteiro("ano_fabricacao", atual.ano_fabricacao),
+                inteiro("ano_modelo", atual.ano_modelo),
+                preco,
+                inteiro("quilometragem", atual.quilometragem) ?? 0,
                 combustivelId, transmissaoId,
-                cor ? cor.trim() : null,
-                portas ? Number(portas) : null,
-                carroceria ? carroceria.trim() : null,
-                descricao ? descricao.trim() : null,
+                texto("cor", atual.cor),
+                inteiro("portas", atual.portas),
+                texto("carroceria", atual.carroceria),
+                texto("descricao", atual.descricao),
                 id
             ]
         );
 
-        if (resultado.affectedRows === 0) {
-            return res.status(404).json({ sucesso: false, mensagem: "Veículo não encontrado para atualização." });
+        // Troca da foto principal (remove o arquivo antigo do disco)
+        let imagem = null;
+        if (req.file) {
+            const [fotos] = await db.query("SELECT id, imagem FROM fotos_veiculos WHERE veiculo_id = ? AND principal = 1 ORDER BY id LIMIT 1", [id]);
+            if (fotos[0]) {
+                await db.query(
+                    "UPDATE fotos_veiculos SET imagem = ?, nome_original = ?, mime_type = ?, tamanho_bytes = ? WHERE id = ?",
+                    [req.file.filename, req.file.originalname, req.file.mimetype, req.file.size, fotos[0].id]
+                );
+                fs.unlink(path.join(UPLOAD_DIR, path.basename(fotos[0].imagem)), () => {});
+            } else {
+                await db.query(
+                    "INSERT INTO fotos_veiculos (veiculo_id, imagem, nome_original, mime_type, tamanho_bytes, principal) VALUES (?, ?, ?, ?, ?, 1)",
+                    [id, req.file.filename, req.file.originalname, req.file.mimetype, req.file.size]
+                );
+            }
+            imagem = req.file.filename;
         }
-        return res.status(200).json({ sucesso: true, mensagem: "Anúncio atualizado com sucesso!" });
+
+        return res.status(200).json({ sucesso: true, mensagem: "Anúncio atualizado com sucesso!", imagem });
 
     } catch (erro) {
+        descartarUpload();
         console.error("❌ Erro ao atualizar veículo:", erro.sqlMessage || erro);
         return res.status(500).json({ sucesso: false, mensagem: "Erro interno ao atualizar o anúncio." });
     }
