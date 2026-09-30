@@ -1,19 +1,33 @@
+/* Seleciona o reset universal (*): afeta absolutamente todos os elementos da página */
 *{
+    /* Remove todas as margens externas padrão aplicadas pelos navegadores */
     margin:0;
+    
+    /* Remove todos os espaçamentos internos padrão aplicados pelos navegadores */
     padding:0;
+    
+    /* Faz com que a largura e altura contem bordas e paddings, evitando quebras de layout */
     box-sizing:border-box;
 }
 
+/* Estilização da tag <body> (o corpo da página) */
 body{
-
+    /* Garante que o corpo tenha no mínimo 100% da altura da tela (View Height) */
     min-height:100vh;
 
+    /* Ativa o modelo de layout Flexbox para alinhar o conteúdo interno */
     display:flex;
+    
+    /* Centraliza o cartão horizontalmente no meio da tela */
     justify-content:center;
+    
+    /* Centraliza o cartão verticalmente no meio da tela */
     align-items:center;
 
+    /* Adiciona uma margem interna de segurança de 20px ao redor da tela */
     padding:20px;
 
+    /* Define um fundo com gradiente linear em diagonal (135 graus) indo do preto quase puro ao cinza escuro */
     background:
     linear-gradient(
         135deg,
@@ -21,120 +35,167 @@ body{
         #111111
     );
 
+    /* Define a família tipográfica padrão com fontes de fallback sem serifa */
     font-family:
     Arial,
     Helvetica,
     sans-serif;
 
+    /* Define a cor padrão de todo o texto dentro do body para branco */
     color:white;
 }
 
+/* Estilização do cartão principal centralizado (Card de confirmação/sucesso) */
 .card{
-
+    /* Garante responsividade, ocupando até 100% da largura disponível */
     width:100%;
+    
+    /* Limita a largura máxima do cartão em 520px para não ficar gigante em monitores grandes */
     max-width:520px;
 
+    /* Cor de fundo cinza bem escuro para se destacar do fundo do body */
     background:#181818;
 
+    /* Borda fina e discreta em volta do cartão */
     border:
     1px solid #2a2a2a;
 
+    /* Arredonda os cantos do cartão com um raio suave de 24px */
     border-radius:24px;
 
+    /* Espaçamento interno grande (45px) entre as bordas e o conteúdo do cartão */
     padding:45px;
 
+    /* Alinha todos os textos e elementos internos ao centro */
     text-align:center;
 
+    /* Adiciona um brilho/sombra vermelha avermelhada suave em volta do card */
     box-shadow:
     0 0 40px
     rgba(229,9,20,0.18);
 }
 
+/* Estilo da marca/logo do topo */
 .logo{
-
+    /* Define um tamanho de fonte grande e destacado (38px) */
     font-size:38px;
 
+    /* Espaçamento de 10px em relação ao ícone de baixo */
     margin-bottom:10px;
 }
 
+/* Estilo para a parte destacada do logo (ex: tag <span> dentro da div .logo) */
 .logo span{
+    /* Altera a cor apenas do texto selecionado para o vermelho da marca */
     color:#e50914;
 }
 
+/* Círculo que abriga o ícone de confirmação (Check/Sucesso) */
 .icone{
-
+    /* Define uma largura fixa para o círculo */
     width:100px;
+    
+    /* Define a altura idêntica para manter o formato perfeitamente quadrado/circular */
     height:100px;
 
+    /* Centraliza o círculo horizontalmente na caixa com margem de 25px em cima e embaixo */
     margin:
     25px auto;
 
+    /* Habilita Flexbox para alinhar o ícone/check internamente */
     display:flex;
+    
+    /* Centraliza o ícone horizontalmente dentro do círculo */
     justify-content:center;
+    
+    /* Centraliza o ícone verticalmente dentro do círculo */
     align-items:center;
 
+    /* Transforma o elemento quadrado em um círculo perfeito (50%) */
     border-radius:50%;
 
+    /* Fundo verde translúcido (com 15% de opacidade) para indicar sucesso */
     background:
     rgba(0,200,83,0.15);
 
+    /* Borda sólida verde ao redor do círculo */
     border:
     2px solid #00c853;
 
+    /* Tamanho do símbolo/ícone dentro do círculo */
     font-size:45px;
 }
 
+/* Título principal do cartão (ex: "Cadastro Realizado!") */
 h2{
-
+    /* Tamanho da fonte do título */
     font-size:28px;
 
+    /* Espaçamento inferior até o parágrafo */
     margin-bottom:18px;
 }
 
+/* Parágrafo de texto descritivo */
 .texto{
-
+    /* Cor cinza claro para o texto de apoio */
     color:#c2c2c2;
 
+    /* Define a altura da linha em 30px facilitando a leitura de textos com várias linhas */
     line-height:30px;
 
+    /* Distância até o botão de login */
     margin-bottom:35px;
 
+    /* Tamanho padrão da fonte de leitura */
     font-size:16px;
 }
 
+/* Botão principal de ação (Call to Action / Ir para Login) */
 .btn-login{
-
+    /* Permite aplicar padding, largura e altura mantendo a alinhamento no fluxo do texto */
     display:inline-block;
 
+    /* Espaçamento interno: 15px (cima/baixo) e 28px (esquerda/direita) */
     padding:
     15px 28px;
 
+    /* Cor do fundo do botão em vermelho marcante */
     background:#e50914;
 
+    /* Cor do texto em branco */
     color:white;
 
+    /* Remove o sublinhado padrão dos links HTML */
     text-decoration:none;
 
+    /* Cantos arredondados do botão */
     border-radius:14px;
 
+    /* Deixa o texto do botão em negrito */
     font-weight:bold;
 
+    /* Adiciona animação de transição suave de 0.3 segundos nos efeitos de hover */
     transition:.3s;
 }
 
+/* Efeito ao passar o ponteiro do mouse sobre o botão de login */
 .btn-login:hover{
-
+    /* Escurece ligeiramente o vermelho do fundo ao passar o mouse */
     background:#b80710;
 
+    /* Eleva o botão 2px para cima criando um efeito tátil de clique/levitação */
     transform:
     translateY(-2px);
 }
 
+/* Texto de rodapé no final do cartão */
 .rodape{
-
+    /* Distância do botão até o rodapé */
     margin-top:35px;
 
+    /* Cor do texto em tom cinza mais escuro e discreto */
     color:#666;
 
+    /* Tamanho de fonte reduzido para informações secundárias */
     font-size:13px;
 }

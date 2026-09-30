@@ -1,47 +1,57 @@
 /* ==========================================================================
-   PERFIL — mesmo visual dos painéis (Inter, tema escuro, vermelho MotorFlex)
+   PERFIL
+   Mesmo visual dos painéis — Fonte Inter, tema escuro, identidade MotorFlex
    ========================================================================== */
+
+/* Variáveis globais — paleta de cores, medidas e comportamentos */
 :root {
-    --primary: #e50914;
-    --primary-hover: #b80710;
-    --bg: #08080a;
-    --surface: #121216;
-    --surface-2: #1a1a20;
-    --input: #17171d;
-    --text: #ffffff;
-    --text-muted: #a0a0b0;
-    --text-dim: #6d6d7c;
-    --border: rgba(255, 255, 255, 0.1);
-    --radius: 14px;
-    --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --badge-admin: #38a3ff;
-    --badge-individual: #3ddc84;
-    --badge-empresa: #a47bff;
-    color-scheme: dark;
+    --primary: #e50914;                  /* Vermelho principal da marca */
+    --primary-hover: #b80710;            /* Vermelho escuro para interação */
+    --bg: #08080a;                       /* Fundo base da página */
+    --surface: #121216;                  /* Fundo de cartões e seções */
+    --surface-2: #1a1a20;                /* Fundo alternativo / destaque */
+    --input: #17171d;                    /* Fundo dos campos de formulário */
+    --text: #ffffff;                     /* Texto principal — branco */
+    --text-muted: #a0a0b0;               /* Texto secundário — cinza claro */
+    --text-dim: #6d6d7c;                 /* Texto terciário — mais escuro */
+    --border: rgba(255, 255, 255, 0.1);  /* Borda sutil padrão */
+    --radius: 14px;                      /* Arredondamento padrão */
+    --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Curva de animação suave */
+    --badge-admin: #38a3ff;              /* Cor do selo Administrador */
+    --badge-individual: #3ddc84;         /* Cor do selo Usuário Individual */
+    --badge-empresa: #a47bff;            /* Cor do selo Empresa */
+    color-scheme: dark;                  /* Indica ao navegador modo escuro */
 }
 
+/* Reset universal */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-[hidden] { display: none !important; }
-body {
-    min-height: 100vh; display: flex; flex-direction: column;
-    color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.5;
-    background: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(229, 9, 20, 0.12), transparent 70%), var(--bg);
-    -webkit-font-smoothing: antialiased;
-}
-a { color: inherit; text-decoration: none; }
-button, input { font-family: inherit; }
 
-/* ---------- Header ---------- */
+/* Elementos com atributo hidden ficam ocultos */
+[hidden] { display: none !important; }
+
+/* Corpo da página */
+body {
+    min-height: 100vh; display: flex; flex-direction: column; /* Empurra rodapé para baixo */
+    color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.5;
+    /* Fundo com brilho radial sutil no topo */
+    background: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(229, 9, 20, 0.12), transparent 70%), var(--bg);
+    -webkit-font-smoothing: antialiased; /* Fonte mais nítida no Safari */
+}
+
+a { color: inherit; text-decoration: none; } /* Herda cor do pai */
+button, input { font-family: inherit; }      /* Herda fonte do sistema */
+
+/* ---------- Cabeçalho Fixo ---------- */
 .header {
     position: sticky; top: 0; z-index: 100; height: 70px; padding: 0 24px;
     display: flex; align-items: center; justify-content: space-between;
-    background: rgba(8, 8, 10, 0.9); backdrop-filter: blur(12px);
+    background: rgba(8, 8, 10, 0.9); backdrop-filter: blur(12px); /* Efeito vidro fosco */
     border-bottom: 1px solid var(--border);
 }
 .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
-.logo span { color: var(--primary); }
+.logo span { color: var(--primary); } /* Destaque vermelho no nome */
 
+/* Botão Voltar */
 .btn-voltar {
     display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 18px;
     color: var(--text-muted); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
@@ -49,26 +59,29 @@ button, input { font-family: inherit; }
 }
 .btn-voltar svg { transition: transform 0.25s ease; }
 .btn-voltar:hover { color: #fff; background: var(--primary); border-color: var(--primary); box-shadow: 0 0 18px rgba(229, 9, 20, 0.4); }
-.btn-voltar:hover svg { transform: translateX(-4px); }
-.btn-voltar:active { transform: scale(0.98); }
+.btn-voltar:hover svg { transform: translateX(-4px); } /* Ícone desliza à esquerda */
+.btn-voltar:active { transform: scale(0.98); } /* Efeito de clique */
+
+/* Contorno de foco para acessibilidade via teclado */
 .btn-voltar:focus-visible, .btn-revelar:focus-visible, .btn-mostrar-senha-modal:focus-visible,
 .btn-cancelar:focus-visible, .btn-confirmar:focus-visible, .btn-tentar:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* ---------- Layout ---------- */
+/* ---------- Container Principal ---------- */
 .container { width: 100%; max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; flex: 1; }
 
-/* ---------- Hero ---------- */
+/* ---------- Seção Destaque / Perfil ---------- */
 .hero {
     position: relative; overflow: hidden; display: flex; align-items: center; gap: 26px; margin-bottom: 20px; padding: 30px;
     background: linear-gradient(135deg, var(--surface), var(--surface-2)); border: 1px solid var(--border); border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
-.hero::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--primary); }
+.hero::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--primary); } /* Faixa vermelha lateral */
 .hero::after {
     content: ''; position: absolute; right: -80px; top: -80px; width: 260px; height: 260px; pointer-events: none;
-    background: radial-gradient(circle, rgba(229, 9, 20, 0.16), transparent 70%);
+    background: radial-gradient(circle, rgba(229, 9, 20, 0.16), transparent 70%); /* Brilho canto superior direito */
 }
 
+/* Avatar do perfil */
 .hero-avatar {
     position: relative; z-index: 1; width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
     display: grid; place-items: center; font-size: 2rem; font-weight: 800; color: #fff;
@@ -76,39 +89,43 @@ button, input { font-family: inherit; }
 }
 .hero-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.hero-info { position: relative; z-index: 1; min-width: 0; }
+.hero-info { position: relative; z-index: 1; min-width: 0; } /* Evita transbordamento */
 .eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: var(--primary); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .hero h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; word-break: break-word; }
 .hero-sub { margin: 4px 0 12px; color: var(--text-muted); font-size: 0.93rem; }
 
+/* Selo/Tipo de conta */
 .badge {
-    --c: var(--text-muted);
+    --c: var(--text-muted); /* Cor padrão */
     display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 50px;
     font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
     color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
 }
-.badge--admin { --c: var(--badge-admin); }
-.badge--individual { --c: var(--badge-individual); }
-.badge--empresa { --c: var(--badge-empresa); }
+.badge--admin { --c: var(--badge-admin); }       /* Muda cor para admin */
+.badge--individual { --c: var(--badge-individual); } /* Muda para individual */
+.badge--empresa { --c: var(--badge-empresa); }   /* Muda para empresa */
 
-/* ---------- Aviso de erro ---------- */
+/* ---------- Aviso de Erro ---------- */
 .aviso-erro {
     display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 20px; padding: 14px 18px;
     font-size: 0.9rem; color: #ffb4b8; background: rgba(229, 9, 20, 0.1); border: 1px solid rgba(229, 9, 20, 0.4); border-radius: var(--radius);
 }
 .aviso-erro i { color: var(--primary); }
 .aviso-erro span { flex: 1 1 200px; }
+
 .btn-tentar {
     display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; cursor: pointer;
     font-size: 0.8rem; font-weight: 600; color: #fff; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); border-radius: 50px; transition: var(--ease);
 }
 .btn-tentar:hover { background: var(--primary); border-color: var(--primary); }
 
-/* ---------- Cards ---------- */
+/* ---------- Formulário em Cards ---------- */
 .perfil-form { display: flex; flex-direction: column; gap: 18px; }
+
 .card { padding: 26px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); animation: subir 0.4s ease both; }
-.card:nth-child(2) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.05s; } /* Aparecimento escalonado */
 .card:nth-child(3) { animation-delay: 0.1s; }
+
 .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .card-head i {
     width: 36px; height: 36px; display: grid; place-items: center; font-size: 0.9rem; color: var(--primary);
@@ -116,25 +133,25 @@ button, input { font-family: inherit; }
 }
 .card-head h2 { font-size: 1.1rem; font-weight: 700; }
 
+/* Grade do formulário */
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .form-group { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-.form-group.la-inteira { grid-column: span 2; }
+.form-group.la-inteira { grid-column: span 2; } /* Campo ocupa 2 colunas */
 .form-group label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
-
 .form-group input {
     width: 100%; height: 48px; padding: 0 16px; cursor: default; outline: none; font-size: 0.95rem; color: #fff;
     background: var(--input); border: 1px solid var(--border); border-radius: var(--radius); transition: var(--ease);
-    text-overflow: ellipsis;
+    text-overflow: ellipsis; /* Texto longo com reticências */
 }
 .form-group input::placeholder { color: var(--text-dim); }
 .form-group input:focus { border-color: rgba(255, 255, 255, 0.35); background: #1c1c23; }
 
+/* Input com botão interno (ex: mostrar senha) */
 .input-com-botao { position: relative; display: flex; width: 100%; }
-.input-com-botao input { padding-right: 104px; }
-
+.input-com-botao input { padding-right: 104px; } /* Espaço para o botão */
 .dica { display: flex; align-items: center; gap: 8px; margin-top: 2px; color: var(--text-dim); font-size: 0.8rem; }
 
-/* Botão Ver / Ocultar */
+/* Botão Ver / Ocultar Senha */
 .btn-revelar {
     position: absolute; right: 6px; top: 50%; transform: translateY(-50%); z-index: 2;
     width: 84px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -143,16 +160,16 @@ button, input { font-family: inherit; }
 }
 .btn-revelar:hover { color: #fff; border-color: var(--primary); background: rgba(229, 9, 20, 0.15); }
 .btn-revelar:active { transform: translateY(-50%) scale(0.96); }
-.btn-revelar.ativo { color: #fff; background: var(--primary); border-color: var(--primary-hover); }
+.btn-revelar.ativo { color: #fff; background: var(--primary); border-color: var(--primary-hover); } /* Estado ativo */
 
-/* Carregando: campos com brilho animado */
+/* Esqueleto de carregamento */
 .carregando .form-group input {
     color: transparent; pointer-events: none;
     background: linear-gradient(90deg, #17171d 25%, #22222a 50%, #17171d 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear;
 }
 .carregando .btn-revelar { opacity: 0.4; pointer-events: none; }
 
-/* ---------- Modal ---------- */
+/* ---------- Modal de Confirmação/Alteração ---------- */
 .modal-overlay {
     position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px;
     background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); animation: fade 0.2s ease;
@@ -166,6 +183,7 @@ button, input { font-family: inherit; }
 .modal-card h3 { margin-bottom: 8px; font-size: 1.3rem; }
 .modal-card > p { margin-bottom: 22px; color: var(--text-muted); font-size: 0.93rem; line-height: 1.5; }
 
+/* Campo dentro do modal */
 .campo-modal { text-align: left; }
 .campo-modal .input-wrapper { position: relative; display: flex; width: 100%; }
 .campo-modal input {
@@ -173,9 +191,10 @@ button, input { font-family: inherit; }
     background: var(--input); border: 1px solid var(--border); border-radius: var(--radius); transition: var(--ease);
 }
 .campo-modal input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18); }
-.campo-modal.invalido input { border-color: var(--primary); }
+.campo-modal.invalido input { border-color: var(--primary); } /* Erro visual */
 .campo-erro { margin-top: 8px; color: #ff6b73; font-size: 0.82rem; font-weight: 500; }
 
+/* Botão mostrar senha no modal */
 .btn-mostrar-senha-modal {
     position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 84px; height: 36px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
@@ -187,6 +206,7 @@ button, input { font-family: inherit; }
 .esqueci-senha-container a { font-size: 0.82rem; color: var(--text-muted); transition: var(--ease); }
 .esqueci-senha-container a:hover { color: var(--primary); text-decoration: underline; }
 
+/* Botões de ação do modal */
 .modal-acoes { display: flex; gap: 12px; margin-top: 20px; }
 .btn-cancelar, .btn-confirmar { flex: 1; padding: 12px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 700; color: #fff; border: 1px solid transparent; border-radius: 10px; transition: var(--ease); }
 .btn-cancelar { background: #222; border-color: #333; }
@@ -195,52 +215,51 @@ button, input { font-family: inherit; }
 .btn-confirmar:hover { background: var(--primary-hover); }
 .btn-confirmar:disabled { opacity: 0.6; cursor: wait; }
 
-/* ---------- Toast ---------- */
+/* ---------- Notificações (Toast) ---------- */
 .toast-area { position: fixed; bottom: 24px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
 .toast {
     display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 12px; color: #fff; font-size: 0.9rem; font-weight: 600;
     background: #1b873f; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateY(16px); transition: var(--ease);
 }
 .toast--erro { background: var(--primary); }
-.toast.visivel { opacity: 1; transform: translateY(0); }
+.toast.visivel { opacity: 1; transform: translateY(0); } /* Classe para exibir */
 
 /* ---------- Animações ---------- */
-@keyframes shimmer { to { background-position: -200% 0; } }
-@keyframes subir { from { opacity: 0; transform: translateY(14px); } }
-@keyframes fade { from { opacity: 0; } }
-@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.97); } }
+@keyframes shimmer { to { background-position: -200% 0; } } /* Efeito brilho carregamento */
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } } /* Cards surgem de baixo */
+@keyframes fade { from { opacity: 0; } } /* Aparecimento suave */
+@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.97); } } /* Modal salta */
 
-/* ---------- Responsivo ---------- */
+/* ---------- Responsividade ---------- */
 @media (max-width: 720px) {
     .header { padding: 0 16px; }
-    .btn-voltar span { display: none; }
+    .btn-voltar span { display: none; } /* Esconde texto, mantém ícone */
     .btn-voltar { padding: 0 14px; }
     .container { padding: 20px 14px 48px; }
     .hero { flex-direction: column; text-align: center; padding: 26px 20px; }
-    .hero::before { inset: 0 0 auto 0; width: auto; height: 4px; }
+    .hero::before { inset: 0 0 auto 0; width: auto; height: 4px; } /* Faixa passa para topo */
     .eyebrow { justify-content: center; }
     .hero h1 { font-size: 1.4rem; }
     .card { padding: 20px 16px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.la-inteira { grid-column: span 1; }
-    .toast-area { left: 16px; right: 16px; bottom: 16px; }
+    .form-grid { grid-template-columns: 1fr; } /* Uma coluna só */
+    .form-group.la-inteira { grid-column: span 1; } /* Ajusta largura */
+    .toast-area { left: 16px; right: 16px; bottom: 16px; } /* Largura total */
 }
 
+/* Respeita preferência de reduzir animações */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* ---------- COLE NO FINAL DO perfil.css ---------- */
-
-/* Status de verificação da empresa */
-.badge--pendente { --c: #f5b301; }
-.badge--aprovada { --c: var(--badge-individual); }
-.badge--recusada { --c: var(--primary); }
-.badge--neutro   { --c: var(--text-muted); }
+/* ---------- Extensões: Status de Verificação da Empresa ---------- */
+.badge--pendente { --c: #f5b301; }      /* Selo Pendente */
+.badge--aprovada { --c: var(--badge-individual); } /* Selo Aprovada */
+.badge--recusada { --c: var(--primary); }          /* Selo Recusada */
+.badge--neutro   { --c: var(--text-muted); }       /* Selo Neutro */
 
 .status-linha { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; min-height: 48px; }
 .status-nota { color: var(--text-muted); font-size: 0.88rem; }
 
-/* Os cards aparecem em sequência mesmo com seções ocultas */
+/* Continuação da sequência de animação dos cards */
 .card:nth-child(4) { animation-delay: 0.15s; }
 .card:nth-child(5) { animation-delay: 0.2s; }

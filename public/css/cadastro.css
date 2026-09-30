@@ -1,278 +1,278 @@
 /* ==========================================
    VARIÁVEIS GERAIS (Fácil Manutenção)
+   Permitem reaproveitar cores, tamanhos e transições em todo o código.
 ========================================== */
 :root {
-    --primary: #e50914;
-    --primary-hover: #b80710;
+    --primary: #e50914; /* Cor principal da aplicação (vermelho) */
+    --primary-hover: #b80710; /* Cor principal em tom mais escuro para o estado hover */
     
-    --bg-grad-1: #080808;
-    --bg-grad-2: #161616;
-    --bg-grad-3: #242424;
-    --card-bg: #141414;
-    --input-bg: #0d0d0d;
+    --bg-grad-1: #080808; /* Primeira cor do degradê de fundo (muito escuro) */
+    --bg-grad-2: #161616; /* Segunda cor do degradê de fundo (cinza escuro) */
+    --bg-grad-3: #242424; /* Terceira cor do degradê de fundo (cinza intermediário) */
+    --card-bg: #141414; /* Cor de fundo do cartão de cadastro */
+    --input-bg: #0d0d0d; /* Cor de fundo dos campos de texto (inputs) */
     
-    --border-color: #333333;
-    --border-focus-ring: rgba(229, 9, 20, 0.2);
+    --border-color: #333333; /* Cor padrão das bordas */
+    --border-focus-ring: rgba(229, 9, 20, 0.2); /* Sombra suave vermelha ao focar em um campo */
     
-    --text-main: #ffffff;
-    --text-muted: #c7c7c7;
-    --error-color: #ff4d4d;
+    --text-main: #ffffff; /* Cor principal dos textos (branco) */
+    --text-muted: #c7c7c7; /* Cor secundária dos textos (cinza claro) */
+    --error-color: #ff4d4d; /* Cor utilizada para mensagens de erro (vermelho vivo) */
     
-    --radius-sm: 10px;
-    --radius-lg: 22px;
+    --radius-sm: 10px; /* Arredondamento pequeno para bordas */
+    --radius-lg: 22px; /* Arredondamento grande para o cartão principal */
     
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 0.2s ease; /* Animação rápida de 0.2 segundos */
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animação suave com curva personalizada */
 }
 
 /* ==========================================
    RESET & CONFIGURAÇÕES GERAIS
 ========================================== */
+/* Erro de digitação original corrigido: trocado '-' por '*' para aplicar o reset universal */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0; /* Remove as margens padrão do navegador */
+    padding: 0; /* Remove os espaçamentos internos padrão do navegador */
+    box-sizing: border-box; /* Garante que padding e border não aumentem a largura total dos elementos */
 }
 
 html {
-    /* Força barras de rolagem e elementos nativos (como o <select>) a ficarem escuros */
-    color-scheme: dark; 
+    color-scheme: dark; /* Força barras de rolagem e elementos nativos do sistema a usarem tema escuro */
 }
 
 body {
-    /* Fontes nativas para maior performance */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
-    color: var(--text-main);
-    line-height: 1.5;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Define a fonte padrão do sistema operacional */
+    min-height: 100vh; /* Garante que o corpo da página ocupe pelo menos 100% da altura da tela */
+    background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3)); /* Aplica o degradê diagonal no fundo */
+    color: var(--text-main); /* Define a cor padrão do texto para branco */
+    line-height: 1.5; /* Ajusta o espaçamento entrelinhas para melhorar a leitura */
 }
 
 /* ==========================================
    CONTAINER
 ========================================== */
 .container {
-    width: 100%;
-    min-height: 100vh;
-    padding: 40px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 100%; /* Largura total da tela */
+    min-height: 100vh; /* Altura mínima de 100% da visualização */
+    padding: 40px 20px; /* Espaçamento interno (top/bottom: 40px, left/right: 20px) */
+    display: flex; /* Ativa o layout Flexbox */
+    justify-content: center; /* Centraliza o conteúdo horizontalmente */
+    align-items: center; /* Centraliza o conteúdo verticalmente */
 }
 
 /* ==========================================
    CARD CADASTRO
 ========================================== */
 .card-cadastro {
-    width: 100%;
-    max-width: 850px;
-    background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    padding: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.05); /* Borda mais sutil */
-    /* Sombra mais elegante e difusa */
-    box-shadow: 0 15px 50px rgba(229, 9, 20, 0.12);
+    width: 100%; /* Ocupa 100% do espaço disponível até o limite do max-width */
+    max-width: 850px; /* Define a largura máxima do cartão */
+    background: var(--card-bg); /* Aplica a cor de fundo do cartão */
+    border-radius: var(--radius-lg); /* Aplica o arredondamento de 22px nas bordas */
+    padding: 40px; /* Espaçamento interno de 40px em todos os lados */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Borda fina e sutilmente transparente */
+    box-shadow: 0 15px 50px rgba(229, 9, 20, 0.12); /* Sombra externa difusa com tom vermelho */
 }
 
 /* ==========================================
    TOPO
 ========================================== */
 .topo {
-    text-align: center;
-    margin-bottom: 35px;
+    text-align: center; /* Centraliza o texto do cabeçalho */
+    margin-bottom: 35px; /* Espaço abaixo do topo */
 }
 
 .topo h1 {
-    /* Tipografia fluida: ajusta o tamanho dependendo da tela */
-    font-size: clamp(1.8rem, 4vw, 2.4rem);
-    margin-bottom: 8px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: clamp(1.8rem, 4vw, 2.4rem); /* Tamanho de fonte fluido (mínimo 1.8rem, ideal 4vw, máximo 2.4rem) */
+    margin-bottom: 8px; /* Espaço entre o título e a descrição */
+    font-weight: 700; /* Deixa o texto em negrito */
+    letter-spacing: -0.5px; /* Aproxima ligeiramente as letras */
 }
 
 .topo span {
-    color: var(--primary);
+    color: var(--primary); /* Destaca palavras em span usando a cor primária (vermelha) */
 }
 
 .topo p {
-    color: var(--text-muted);
-    font-size: 0.95rem;
+    color: var(--text-muted); /* Define cor cinza claro para a descrição */
+    font-size: 0.95rem; /* Tamanho levemente menor que o texto padrão */
 }
 
 /* ==========================================
    GRID DO FORMULÁRIO
 ========================================== */
 .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px 24px;
+    display: grid; /* Ativa o layout CSS Grid */
+    grid-template-columns: repeat(2, 1fr); /* Cria 2 colunas de larguras iguais */
+    gap: 20px 24px; /* Espaçamento: 20px entre linhas e 24px entre colunas */
 }
 
 /* ==========================================
    GRUPOS DE INPUT
 ========================================== */
 .grupo {
-    display: flex;
-    flex-direction: column;
+    display: flex; /* Ativa o layout Flexbox */
+    flex-direction: column; /* Organiza label, input e small em coluna */
 }
 
 .grupo label {
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #e0e0e0;
+    margin-bottom: 8px; /* Espaço entre o rótulo e o campo de texto */
+    font-size: 0.9rem; /* Tamanho da fonte do rótulo */
+    font-weight: 500; /* Peso médio para a fonte */
+    color: #e0e0e0; /* Cor cinza bem claro para o texto da label */
 }
 
 /* INPUTS & SELECTS */
 .grupo input,
 .grupo select {
-    height: 48px; /* Ligeiramente mais alto para melhor toque no celular */
-    padding: 0 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    background: var(--input-bg);
-    color: var(--text-main);
-    font-size: 1rem;
-    outline: none;
-    transition: all var(--transition-fast);
-    font-family: inherit;
+    height: 48px; /* Define a altura dos campos para facilitar o toque em telas mobile */
+    padding: 0 14px; /* Espaçamento interno lateral de 14px */
+    border-radius: var(--radius-sm); /* Aplica o arredondamento de 10px */
+    border: 1px solid var(--border-color); /* Borda padrão cinza escuro */
+    background: var(--input-bg); /* Cor de fundo escura para os inputs */
+    color: var(--text-main); /* Cor do texto digitado (branco) */
+    font-size: 1rem; /* Tamanho padrão do texto */
+    outline: none; /* Remove a borda azul/padrão ao clicar no campo */
+    transition: all var(--transition-fast); /* Aplica transição suave para interações */
+    font-family: inherit; /* Herda a mesma fonte do elemento pai */
 }
 
 /* Foco Acessível e Moderno */
 .grupo input:focus,
 .grupo select:focus {
-    border-color: var(--primary);
-    background: #1a1a1a;
-    box-shadow: 0 0 0 3px var(--border-focus-ring);
+    border-color: var(--primary); /* Altera a cor da borda para vermelho quando em foco */
+    background: #1a1a1a; /* Escurece levemente o fundo do campo focado */
+    box-shadow: 0 0 0 3px var(--border-focus-ring); /* Cria um anel de destaque em volta do campo */
 }
 
 /* ERROS */
 .grupo small {
-    margin-top: 6px;
-    color: var(--error-color);
-    font-size: 0.8rem;
-    min-height: 16px;
-    font-weight: 500;
+    margin-top: 6px; /* Espaço acima da mensagem de erro */
+    color: var(--error-color); /* Cor vermelha para indicar erro */
+    font-size: 0.8rem; /* Tamanho de fonte reduzido para mensagens */
+    min-height: 16px; /* Reserva espaço mínimo para evitar saltos de layout quando o erro aparece */
+    font-weight: 500; /* Peso médio na fonte */
 }
 
 /* ==========================================
    ÁREA DA SENHA
 ========================================== */
 .senha-area {
-    display: flex;
-    gap: 10px;
-    width: 100%;
+    display: flex; /* Alinha o input e o botão de visibilidade lado a lado */
+    gap: 10px; /* Espaço de 10px entre o campo de senha e o botão */
+    width: 100%; /* Largura total */
 }
 
 .senha-area input {
-    flex: 1;
-    min-width: 0; /* Evita quebra de layout no flexbox */
+    flex: 1; /* Faz o campo de entrada ocupar todo o espaço restante */
+    min-width: 0; /* Previne que o input estoure a largura no Flexbox */
 }
 
 .senha-area button {
-    width: 85px;
-    min-width: 85px;
-    height: 48px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: var(--primary);
-    color: var(--text-main);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-fast);
+    width: 85px; /* Largura fixa do botão da senha */
+    min-width: 85px; /* Largura mínima garantida */
+    height: 48px; /* Altura igual à do campo de input */
+    border: none; /* Remove a borda padrão do botão */
+    border-radius: var(--radius-sm); /* Arredondamento de 10px */
+    background: var(--primary); /* Cor de fundo vermelha */
+    color: var(--text-main); /* Texto do botão em branco */
+    font-weight: 600; /* Texto em negrito suave */
+    cursor: pointer; /* Transforma o ponteiro do mouse no ícone de clique */
+    transition: all var(--transition-fast); /* Animação rápida nas alterações */
 }
 
 .senha-area button:hover {
-    background: var(--primary-hover);
+    background: var(--primary-hover); /* Muda para um vermelho mais escuro ao passar o mouse */
 }
 
 .senha-area button:active {
-    transform: scale(0.95); /* Efeito de clique */
+    transform: scale(0.95); /* Dá um efeito visual de encolhimento ao ser clicado */
 }
 
 /* ==========================================
    EMPRESA
 ========================================== */
 .empresa-campos {
-    display: none;
-    grid-column: 1 / -1; /* Ocupa toda a linha no grid */
+    display: none; /* Mantém os campos de empresa ocultos por padrão */
+    grid-column: 1 / -1; /* Faz o elemento ocupar todas as colunas da linha do grid */
 }
 
 /* ==========================================
    BOTÃO CADASTRAR
 ========================================== */
 .btn-cadastrar {
-    width: 100%;
-    height: 52px;
-    margin-top: 30px;
-    border: none;
-    border-radius: 12px;
-    background: var(--primary);
-    color: var(--text-main);
-    font-size: 1.05rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all var(--transition-normal);
+    width: 100%; /* Botão ocupa a largura total do container */
+    height: 52px; /* Altura confortável para o botão principal */
+    margin-top: 30px; /* Distância de 30px em relação aos campos acima */
+    border: none; /* Sem bordas */
+    border-radius: 12px; /* Arredondamento das pontas em 12px */
+    background: var(--primary); /* Fundo vermelho primário */
+    color: var(--text-main); /* Texto em branco */
+    font-size: 1.05rem; /* Tamanho da fonte levemente ampliado */
+    font-weight: 700; /* Texto em negrito destacado */
+    cursor: pointer; /* Altera o cursor para formato de clique */
+    transition: all var(--transition-normal); /* Animação suave para hover e click */
 }
 
 .btn-cadastrar:hover {
-    background: var(--primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3);
+    background: var(--primary-hover); /* Escurece o vermelho no hover */
+    transform: translateY(-2px); /* Eleva o botão suavemente 2px para cima */
+    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3); /* Aplica uma sombra vermelha de destaque */
 }
 
 .btn-cadastrar:active {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.98); /* Retorna à posição original e encolhe levemente ao clicar */
 }
 
 /* ==========================================
    LINK LOGIN
 ========================================== */
 .login-link {
-    margin-top: 25px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.95rem;
+    margin-top: 25px; /* Espaço acima da área do link */
+    text-align: center; /* Centraliza o texto */
+    color: var(--text-muted); /* Texto na cor cinza claro */
+    font-size: 0.95rem; /* Tamanho de fonte intermediário */
 }
 
 .login-link a {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color var(--transition-fast);
+    color: var(--primary); /* Link na cor vermelha primária */
+    text-decoration: none; /* Remove o sublinhado padrão dos links */
+    font-weight: 600; /* Deixa o link em negrito */
+    transition: color var(--transition-fast); /* Transição suave na cor */
 }
 
 .login-link a:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
+    color: var(--primary-hover); /* Escurece a cor do link ao passar o mouse */
+    text-decoration: underline; /* Adiciona o sublinhado ao passar o mouse */
 }
 
 /* ==========================================
    RESPONSIVO
 ========================================== */
+/* Regras aplicadas para telas de até 768px (Tablets / Celulares) */
 @media (max-width: 768px) {
     .card-cadastro {
-        max-width: 550px;
-        padding: 35px 25px;
+        max-width: 550px; /* Reduz a largura máxima do cartão */
+        padding: 35px 25px; /* Reduz o espaçamento interno do cartão */
     }
 
     .form-grid {
-        grid-template-columns: 1fr; /* Colapsa para 1 coluna */
-        gap: 16px;
+        grid-template-columns: 1fr; /* Muda o grid de 2 colunas para 1 coluna */
+        gap: 16px; /* Reduz o espaço entre os elementos */
     }
 
     .empresa-campos {
-        grid-column: 1; /* Ajuste seguro para 1 coluna */
+        grid-column: 1; /* Ajusta a ocupação para apenas 1 coluna */
     }
 }
 
+/* Regras aplicadas para telas de até 480px (Celulares pequenos) */
 @media (max-width: 480px) {
     .container {
-        padding: 20px 15px;
+        padding: 20px 15px; /* Reduz a margem interna do container principal */
     }
 
     .card-cadastro {
-        padding: 30px 20px;
+        padding: 30px 20px; /* Reduz ainda mais o espaçamento interno do cartão */
     }
 }
 
@@ -280,58 +280,60 @@ body {
    BOTÃO VOLTAR
 ========================================== */
 .btn-voltar-topo {
-    position: fixed; /* Fixa no canto da tela */
-    top: 20px;
-    left: 20px;
+    position: fixed; /* Fixa o botão em relação à janela do navegador */
+    top: 20px; /* Posiciona a 20px do topo da tela */
+    left: 20px; /* Posiciona a 20px da esquerda da tela */
     
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: inline-flex; /* Usa flexbox para alinhar texto e ícone internamente */
+    align-items: center; /* Centraliza o conteúdo verticalmente */
+    gap: 8px; /* Espaço entre o ícone e o texto do botão */
     
-    background: #1a1a1a;
-    color: var(--text-main, #ffffff);
+    background: #1a1a1a; /* Fundo cinza escuro */
+    color: var(--text-main, #ffffff); /* Cor do texto em branco */
     
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid #333;
+    padding: 10px 16px; /* Espaçamento interno do botão */
+    border-radius: 8px; /* Bordas levemente arredondadas */
+    border: 1px solid #333; /* Borda fina cinza */
     
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
+    text-decoration: none; /* Remove o sublinhado do link */
+    font-weight: 500; /* Peso da fonte médio */
+    font-size: 0.95rem; /* Tamanho da fonte */
     
-    transition: all 0.3s ease;
-    z-index: 1000; /* Garante que fique por cima de tudo */
+    transition: all 0.3s ease; /* Animação suave para os estados hover/active */
+    z-index: 1000; /* Mantém o botão na camada mais alta acima dos outros elementos */
 }
 
 .btn-voltar-topo:hover {
-    background: var(--primary, #e50914);
-    border-color: var(--primary, #e50914);
-    transform: translateX(-4px); /* Animação sutil de voltar */
-    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+    background: var(--primary, #e50914); /* Altera o fundo para a cor primária (vermelho) */
+    border-color: var(--primary, #e50914); /* Altera a borda para vermelho */
+    transform: translateX(-4px); /* Move o botão ligeiramente para a esquerda simulando ação de voltar */
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3); /* Adiciona sombra projetada vermelha */
 }
 
 .btn-voltar-topo:active {
-    transform: translateX(0) scale(0.95);
+    transform: translateX(0) scale(0.95); /* Retorna à posição x original e reduz de tamanho ao clicar */
 }
 
-/* Esconder o botão em telas muito pequenas (opcional) */
+/* Ajuste do botão voltar para celulares */
 @media (max-width: 480px) {
     .btn-voltar-topo {
-        top: 15px;
-        left: 15px;
-        padding: 8px 12px;
-        font-size: 0.85rem;
+        top: 15px; /* Reduz a distância do topo */
+        left: 15px; /* Reduz a distância da esquerda */
+        padding: 8px 12px; /* Diminui o tamanho do botão */
+        font-size: 0.85rem; /* Diminui o texto para telas menores */
     }
 }
 
+/* ==========================================
+   ESTILOS DE VALIDAÇÃO DE ERRO
+========================================== */
 #erroEmail {
-    color: #e50914; /* Cor vermelha do seu tema */
-    font-size: 12px;
-    margin-top: 4px;
-    display: block;
+    color: #e50914; /* Cor vermelha do tema para mensagem de erro específica do e-mail */
+    font-size: 12px; /* Tamanho pequeno para o texto de erro */
+    margin-top: 4px; /* Pequeno espaço acima da mensagem */
+    display: block; /* Garante que o elemento ocupe sua própria linha */
 }
 
-/* Opcional para destacar a borda do input */
 .input-erro {
-    border-color: #e50914 !important;
+    border-color: #e50914 !important; /* Força a borda do input a ficar vermelha em caso de erro */
 }

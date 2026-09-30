@@ -5,175 +5,574 @@
    11 Responsive 12 Accessibility
    ========================================================== */
 
-/* 1. VARIABLES */
-:root{
-    --red:#e50914; --black:#000; --white:#fff;
-    --flash:0;                      /* 0..1, intensidade do clarão (escrita pelo JS a cada frame) */
-    --bx1:27%; --bx2:73%;           /* x dos dois raios dentro da cena do vídeo (escrito pelo JS) */
-    --rv:0;                         /* 0..1, revelação da marca através da fumaça (escrito pelo JS em .brand) */
-    --gl:0;                         /* 0..1, brilho inicial no centro (escrito pelo JS em .brand) */
-    --sh:0;                         /* 0..1, reflexo que varre as letras depois da revelação (JS em .brand) */
-    --ease-cine:cubic-bezier(.16,.7,.2,1);
+/* ----------------------------------------------------------
+   1. VARIABLES (Variáveis Globais do CSS)
+   Define as propriedades customizadas (:root) acessíveis em
+   todo o documento. Muitas são alteradas dinamicamente via JS.
+   ---------------------------------------------------------- */
+   :root {
+    /* Cores principais do tema */
+    --red: #e50914;               /* Vermelho assinatura (estilo Netflix/Automotivo) */
+    --black: #000;                /* Preto puro para o fundo e transições */
+    --white: #fff;                /* Branco puro para textos e destaques */
 
-    /* Recorte do vídeo. Valores só iniciais: o JS lê a proporção REAL do arquivo (videoWidth/videoHeight)
-       e detecta barras pretas embutidas, reescrevendo os dois em #intro.
-       --bars = fração da altura do arquivo que é barra, em CADA lado (0 = sem barras).
-       --A    = proporção da cena visível = (largura/altura do arquivo) / (1 - 2*bars). */
-    --bars:0;
-    --A:1.7778;
-    --px:52%;                       /* foco horizontal (carro) */
-    --py:50%;                       /* foco vertical */
+    /* Variáveis dinâmicas de iluminação e ilhas de efeito (manipuladas pelo JavaScript a cada frame) */
+    --flash: 0;                   /* Intensidade do clarão de raios (0 = sem luz, 1 = clarão máximo) */
+    --bx1: 27%;                   /* Posição X (horizontal) do primeiro raio na tela */
+    --bx2: 73%;                   /* Posição X (horizontal) do segundo raio na tela */
+    --rv: 0;                      /* Revelação da marca através da fumaça (0 = invisível, 1 = 100% visível) */
+    --gl: 0;                      /* Intensidade do brilho (glint) no centro da logo */
+    --sh: 0;                      /* Posição do reflexo/varredura de luz (shine) cortando as letras */
+    --ease-cine: cubic-bezier(.16, .7, .2, 1); /* Curva de animação personalizada para transições cinematográficas */
+
+    /* Variáveis de proporção e enquadramento do vídeo/imagem de fundo */
+    --bars: 0;                    /* Fração da altura referente a barras pretas embutidas no arquivo (0 = sem barras) */
+    --A: 1.7778;                  /* Aspect ratio padrão (16:9). Calculado pelo JS para ajustar a tela */
+    --px: 52%;                    /* Ponto focal horizontal (mantém o carro/objeto principal centralizado) */
+    --py: 50%;                    /* Ponto focal vertical */
 }
 
-/* 2. RESET */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--black);overflow:hidden}
-body{font-family:'Inter',system-ui,sans-serif;color:var(--white);-webkit-font-smoothing:antialiased}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-
-/* 3. SHELL */
-.intro{position:fixed;inset:0;background:var(--black);overflow:hidden;isolation:isolate}
-.intro>*{position:absolute}
-.stage{inset:0;transition:opacity .9s ease-in}
-.stage>*{position:absolute;pointer-events:none}
-/* Depois do clarão a cena vai a PRETO TOTAL: só a fumaça fica na tela (o carro some) */
-.is-dark .stage{opacity:0;transition:opacity .6s ease-out}
-
-/* 4. FILM — equivalente a object-fit:cover, já descontando as barras do arquivo */
-.film{left:var(--px);top:var(--py);
-    width:max(100vw,calc(100vh*var(--A)));
-    height:max(100vh,calc(100vw/var(--A)));
-    transform:translate(calc(-1*var(--px)),calc(-1*var(--py)));
-    overflow:hidden;opacity:0;isolation:isolate}
-.film>*{position:absolute;pointer-events:none}
-@supports (height:100dvh){
-    .film{width:max(100vw,calc(100dvh*var(--A)));height:max(100dvh,calc(100vw/var(--A)))}
+/* ----------------------------------------------------------
+   2. RESET (Normalização de Estilos)
+   Reseta margens, preenchimentos e comportamentos padrões
+   para garantir consistência em diferentes navegadores.
+   ---------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;       /* Inclui bordas e paddings nos cálculos de largura/altura dos elementos */
+    margin: 0;                    /* Remove margens padrão */
+    padding: 0;                   /* Remove preenchimentos padrão */
 }
-/* Durante o clarão o próprio vídeo ganha brilho/contraste e perde um pouco de cor (luz fria) */
-.film__video{display:block;left:0;width:100%;object-fit:fill;background:#000;
-    height:calc(100% / (1 - 2*var(--bars)));
-    top:calc(-100% * var(--bars) / (1 - 2*var(--bars)));
-    filter:brightness(calc(1 + var(--flash)*.6)) contrast(calc(1 + var(--flash)*.14)) saturate(calc(1 - var(--flash)*.35))}
-.is-scene .film{opacity:1;transition:opacity 1.8s ease-out}
 
-.fallback{inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;opacity:0;
-    filter:brightness(calc(1 + var(--flash)*.6)) contrast(calc(1 + var(--flash)*.14)) saturate(calc(1 - var(--flash)*.35))}
-.is-fallback .fallback{opacity:1;transition:opacity 1.8s ease-out}
-.is-fallback .film{display:none}
+html, body {
+    height: 100%;                 /* Garante que o documento ocupe toda a altura da viewport */
+    background: var(--black);     /* Cor de fundo preta */
+    overflow: hidden;             /* Esconde barras de rolagem para travar a tela na vinheta */
+}
 
-/* 5. ATMOSFERA + LUZ DOS RAIOS */
-.atmos{inset:0;opacity:0;transition:opacity 2.4s ease;mix-blend-mode:screen;
-    background:radial-gradient(ellipse 70% 20% at 50% 50%,rgba(229,9,20,.18),transparent 70%)}
-.is-glow .atmos{opacity:.7}
+body {
+    font-family: 'Inter', system-ui, sans-serif; /* Fonte padrão do sistema com fallback */
+    color: var(--white);          /* Cor padrão do texto */
+    -webkit-font-smoothing: antialiased; /* Suaviza a renderização de fontes em navegadores WebKit/macOS */
+}
 
-/* .dimmer "abre" durante o clarão (opacity = 1 - flash): a cena volta a ser vista, em vez de ser coberta de branco */
-.dimmer{inset:0;opacity:calc(1 - var(--flash)*.9)}
-.dim{position:absolute;inset:0;background:#000;opacity:0}
-.is-fade .dim{opacity:.55;transition:opacity 1.6s ease-in}
-.is-storm .dim{opacity:.94;transition:opacity 1s ease}
+button {
+    font: inherit;                /* Herda a fonte do elemento pai */
+    color: inherit;               /* Herda a cor do elemento pai */
+    background: none;             /* Remove o fundo padrão do botão */
+    border: 0;                    /* Remove a borda padrão */
+    cursor: pointer;              /* Modifica o ponteiro do mouse para o ícone de clique */
+}
 
-/* Luz fria vinda do céu, centrada nos dois raios. soft-light realça contornos e brilhos da carroceria e do céu */
-.lit{inset:0;mix-blend-mode:soft-light;opacity:calc(var(--flash)*1.2);
+/* ----------------------------------------------------------
+   3. SHELL (Estrutura Base da Introdução)
+   Container principal e camadas de controle do palco da cena.
+   ---------------------------------------------------------- */
+.intro {
+    position: fixed;              /* Fixa o container sobre toda a tela */
+    inset: 0;                     /* Equivalente a top:0; right:0; bottom:0; left:0; */
+    background: var(--black);     /* Fundo preto */
+    overflow: hidden;             /* Impede que elementos vazem da tela */
+    isolation: isolate;           /* Cria um novo contexto de empilhamento (stacking context) para z-index */
+}
+
+.intro > * {
+    position: absolute;           /* Faz com que todos os filhos diretos da .intro sejam posicionados em camadas */
+}
+
+.stage {
+    inset: 0;                     /* Ocupa 100% da área do container pai */
+    transition: opacity .9s ease-in; /* Transição suave de opacidade na entrada/saída da cena */
+}
+
+.stage > * {
+    position: absolute;           /* Posiciona as camadas da cena umas sobre as outras */
+    pointer-events: none;         /* Desativa cliques nos elementos do cenário para não interferir na interface */
+}
+
+/* Classe aplicada via JS: Escurece a cena após o clarão, deixando apenas a fumaça visível */
+.is-dark .stage {
+    opacity: 0;                   /* Oculta o palco (cenário com o carro) */
+    transition: opacity .6s ease-out; /* Transição rápida para o preto total */
+}
+
+/* ----------------------------------------------------------
+   4. FILM (Dimensionamento e Recorte do Vídeo)
+   Simula o efeito object-fit: cover via cálculos CSS para
+   eliminar barras pretas e manter a proporção correta.
+   ---------------------------------------------------------- */
+.film {
+    left: var(--px);              /* Alinha no ponto focal horizontal definido */
+    top: var(--py);               /* Alinha no ponto focal vertical definido */
+    width: max(100vw, calc(100vh * var(--A)));   /* Calcula a largura para cobrir a tela sem distorcer */
+    height: max(100vh, calc(100vw / var(--A)));  /* Calcula a altura para cobrir a tela sem distorcer */
+    transform: translate(calc(-1 * var(--px)), calc(-1 * var(--py))); /* Centraliza com base nas variáveis de foco */
+    overflow: hidden;             /* Recorta o excesso do vídeo */
+    opacity: 0;                   /* Inicia invisível */
+    isolation: isolate;           /* Garante isolamento de renderização */
+}
+
+.film > * {
+    position: absolute;           /* Posiciona os elementos internos de forma absoluta */
+    pointer-events: none;         /* Desativa interações com o ponteiro */
+}
+
+/* Suporte moderno para viewport dinâmica (soluciona problemas de barras em telas móbiles) */
+@supports (height: 100dvh) {
+    .film {
+        width: max(100vw, calc(100dvh * var(--A)));
+        height: max(100dvh, calc(100vw / var(--A)));
+    }
+}
+
+/* Elemento de vídeo da introdução com filtros dinâmicos acionados pelo clarão dos raios */
+.film__video {
+    display: block;
+    left: 0;
+    width: 100%;
+    object-fit: fill;            /* Estica o vídeo para preencher a caixa calculada */
+    background: #000;
+    height: calc(100% / (1 - 2 * var(--bars)));       /* Compensa a altura descontando barras pretas do vídeo */
+    top: calc(-100% * var(--bars) / (1 - 2 * var(--bars))); /* Reposiciona para esconder as barras pretas */
+    /* Filtros manipulados em tempo real pela variável --flash (aumenta brilho/contraste e reduz saturação) */
+    filter: brightness(calc(1 + var(--flash) * .6)) 
+            contrast(calc(1 + var(--flash) * .14)) 
+            saturate(calc(1 - var(--flash) * .35));
+}
+
+/* Estado ativo: torna o vídeo visível */
+.is-scene .film {
+    opacity: 1;
+    transition: opacity 1.8s ease-out; /* Surgimento suave da cena */
+}
+
+/* Imagem estática de fallback caso o vídeo falhe ou não seja suportado */
+.fallback {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;            /* Cobre todo o espaço mantendo a proporção */
+    object-position: 50% 55%;     /* Ajusta o centro visual da imagem */
+    opacity: 0;
+    filter: brightness(calc(1 + var(--flash) * .6)) 
+            contrast(calc(1 + var(--flash) * .14)) 
+            saturate(calc(1 - var(--flash) * .35));
+}
+
+/* Ativa o fallback se o JS detectar necessidade */
+.is-fallback .fallback {
+    opacity: 1;
+    transition: opacity 1.8s ease-out;
+}
+
+.is-fallback .film {
+    display: none;                /* Esconde a tag de vídeo se o fallback estiver ativo */
+}
+
+/* ----------------------------------------------------------
+   5. ATMOSPHERE + LIGHTNING LIGHT (Efeitos de Iluminação)
+   Gera iluminação ambiente, raios, reflexos no chão e neblina.
+   ---------------------------------------------------------- */
+/* Brilho de fundo avermelhado */
+.atmos {
+    inset: 0;
+    opacity: 0;
+    transition: opacity 2.4s ease;
+    mix-blend-mode: screen;       /* Modo de mesclagem que clareia o fundo */
+    background: radial-gradient(ellipse 70% 20% at 50% 50%, rgba(229, 9, 20, .18), transparent 70%);
+}
+
+.is-glow .atmos {
+    opacity: .7;                  /* Ativa o brilho atmosférico */
+}
+
+/* Controlador de atenuação (dimmer) da cena */
+.dimmer {
+    inset: 0;
+    opacity: calc(1 - var(--flash) * .9); /* Diminui a opacidade do escurecimento durante o clarão */
+}
+
+.dim {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+}
+
+.is-fade .dim {
+    opacity: .55;                 /* Escurece levemente a cena */
+    transition: opacity 1.6s ease-in;
+}
+
+.is-storm .dim {
+    opacity: .94;                 /* Escurece quase totalmente para focar na tempestade */
+    transition: opacity 1s ease;
+}
+
+/* Camada de luz emitida pelos raios (focada nos eixos X: --bx1 e --bx2) */
+.lit {
+    inset: 0;
+    mix-blend-mode: soft-light;   /* Realça contornos e destaques com luz suave */
+    opacity: calc(var(--flash) * 1.2); /* Intensidade acoplada ao clarão */
     background:
-        radial-gradient(ellipse 40% 42% at var(--bx1) 14%,rgba(232,239,250,.95),transparent 72%),
-        radial-gradient(ellipse 40% 42% at var(--bx2) 14%,rgba(232,239,250,.95),transparent 72%),
-        linear-gradient(to bottom,rgba(214,226,244,.55),rgba(214,226,244,.25) 60%,rgba(214,226,244,.45))}
-/* Asfalto molhado: listras verticais sob cada raio (reflexo do céu) + brilho geral do chão */
-.wet{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.65);
+        radial-gradient(ellipse 40% 42% at var(--bx1) 14%, rgba(232, 239, 250, .95), transparent 72%), /* Ponto de luz Raio 1 */
+        radial-gradient(ellipse 40% 42% at var(--bx2) 14%, rgba(232, 239, 250, .95), transparent 72%), /* Ponto de luz Raio 2 */
+        linear-gradient(to bottom, rgba(214, 226, 244, .55), rgba(214, 226, 244, .25) 60%, rgba(214, 226, 244, .45)); /* Luz vinda do topo */
+}
+
+/* Reflexo de asfalto molhado sincronizado com as posições dos raios */
+.wet {
+    inset: 0;
+    mix-blend-mode: screen;
+    opacity: calc(var(--flash) * .65);
     background:
-        radial-gradient(ellipse 5% 26% at var(--bx1) 86%,rgba(214,226,244,.55),transparent 75%),
-        radial-gradient(ellipse 5% 26% at var(--bx2) 86%,rgba(214,226,244,.55),transparent 75%),
-        linear-gradient(to bottom,transparent 58%,rgba(210,225,245,.24) 78%,rgba(210,225,245,.05))}
-/* Neblina do horizonte acende com o clarão */
-.mist{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.5);
-    background:linear-gradient(to bottom,transparent 38%,rgba(190,205,228,.32) 52%,transparent 66%)}
-/* Lift global contido (nunca vira tela branca) */
-.flash-lift{inset:0;mix-blend-mode:screen;opacity:calc(var(--flash)*.4);
-    background:radial-gradient(ellipse 90% 60% at 50% 12%,rgba(222,232,246,.9),rgba(205,218,238,.3) 60%,rgba(205,218,238,.05))}
-
-/* 6. FX */
-.fx{inset:0;width:100%;height:100%;pointer-events:none}
-.vignette{inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.72) 100%)}
-.grain{inset:-50%;width:200%;height:200%;pointer-events:none;opacity:.05;background-image:var(--grain);animation:grain .9s steps(6) infinite}
-/* Fumaça: canvas em meia resolução esticado pela CSS (bordas naturalmente macias) */
-.smoke{inset:0;width:100%;height:100%;pointer-events:none}
-
-/* 7. TIPOGRAFIA (kicker no céu, para não competir com o carro) */
-.kicker{left:0;right:0;top:12vh;margin:0 auto;max-width:88vw;text-align:center;font-weight:600;font-size:clamp(9px,1.05vw,14px);
-    letter-spacing:.55em;opacity:0;color:#d9d9d9;text-shadow:0 2px 18px rgba(0,0,0,.8);
-    transition:opacity 1.6s ease,letter-spacing 2.8s var(--ease-cine)}
-.is-kicker .kicker{opacity:.75;letter-spacing:.34em}
-.is-kicker-out .kicker{opacity:0;transition:opacity 1s ease}
-
-/* 8. MARCA
-   A revelação é dirigida pelo JS (--rv 0→1, --gl) em sincronia com a fumaça:
-   1) --gl acende um pequeno brilho no centro; 2) --rv abre uma máscara elíptica a partir do centro
-   (trechos das letras aparecem primeiro), tira o blur e assenta o espaçamento (.20em → .12em, o valor original). */
-.brand{inset:0;display:grid;grid-template-rows:1fr 1fr;justify-items:center;text-align:center;pointer-events:none}
-.brand__line{position:absolute;top:50%;left:50%;width:0;height:1px;opacity:0;transform:translate(-50%,-50%);
-    background:linear-gradient(90deg,transparent,var(--red) 30%,#fff 50%,var(--red) 70%,transparent);
-    box-shadow:0 0 14px 1px rgba(229,9,20,.45);transition:width 1.4s cubic-bezier(.7,0,.2,1),opacity .6s ease}
-.is-brand-line .brand__line{width:min(72vw,760px);opacity:1}
-.is-brand .brand__line{opacity:.35;transition:opacity 1.5s ease}
-.brand__name{position:relative;align-self:end;padding-bottom:1.8vh;font-weight:900;font-size:clamp(38px,9vw,132px);line-height:1}
-.brand__glint{position:absolute;left:50%;top:50%;width:150%;height:300%;pointer-events:none;mix-blend-mode:screen;
-    opacity:var(--gl);transform:translate(-50%,-50%) scale(calc(.25 + var(--gl)*.75));
-    background:radial-gradient(ellipse 30% 22% at 50% 50%,rgba(255,255,255,.75),rgba(255,236,232,.28) 45%,rgba(229,9,20,.14) 70%,transparent 100%)}
-.brand__mask{position:relative;display:inline-block;padding:.15em .12em;
-    opacity:min(1,calc(var(--rv)*3));
-    letter-spacing:calc(.2em - var(--rv)*.08em);margin-right:calc(-.2em + var(--rv)*.08em);
-    filter:blur(calc((1 - var(--rv))*12px));
-    transform:scale(calc(1.06 - var(--rv)*.06));
-    -webkit-mask-image:radial-gradient(ellipse calc(6% + var(--rv)*140%) 170% at 50% 50%,#000 35%,transparent 100%);
-            mask-image:radial-gradient(ellipse calc(6% + var(--rv)*140%) 170% at 50% 50%,#000 35%,transparent 100%)}
-.brand__mask em{font-style:normal;color:var(--red);text-shadow:0 0 24px rgba(229,9,20,.28)}
-/* Reflexo de luz que atravessa as letras (cópia do texto, transparente, só com o gradiente recortado no texto) */
-.brand__mask::after{content:attr(data-text);position:absolute;inset:.15em .12em;white-space:nowrap;pointer-events:none;
-    color:transparent;
-    background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%);
-    background-size:250% 100%;background-repeat:no-repeat;background-position:calc(100% - var(--sh)*100%) 0;
-    -webkit-background-clip:text;background-clip:text}
-.brand__sub{visibility:hidden;align-self:start;padding-top:2.4vh;font-weight:600;font-size:clamp(10px,1.3vw,17px);letter-spacing:.6em;margin-right:-.6em;color:#ddd;
-    opacity:0;transition:opacity 1.6s ease,letter-spacing 2.4s var(--ease-cine)}
-.is-sub .brand__sub{visibility:visible;opacity:.85;letter-spacing:.46em}
-
-/* 9. CONTROLES */
-.veil{inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;transition:opacity 1s ease}
-.is-out .veil{opacity:1}
-.is-skipping .veil{transition-duration:.45s}
-.skip{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:60;display:flex;gap:10px;align-items:center;
-    padding:8px 14px;font-size:10px;font-weight:600;letter-spacing:.22em;color:rgba(255,255,255,.6);
-    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:999px;
-    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .25s,color .25s,box-shadow .25s,opacity .4s}
-.skip i{font-style:normal;font-size:14px;line-height:1}
-.skip:hover{color:#fff;border-color:var(--red);box-shadow:0 0 14px rgba(229,9,20,.3)}
-.skip:focus-visible{outline:2px solid var(--red);outline-offset:3px;color:#fff}
-.is-out .skip{opacity:0}
-
-/* 10. ANIMAÇÕES */
-@keyframes grain{
-    0%{transform:translate(0,0)}20%{transform:translate(-4%,3%)}40%{transform:translate(3%,-5%)}
-    60%{transform:translate(-5%,-2%)}80%{transform:translate(4%,4%)}100%{transform:translate(0,0)}}
-
-/* 11. RESPONSIVO */
-@media (max-width:720px){
-    :root{--px:55%}                 /* telas verticais: mantém a frente do carro no quadro */
-    .kicker{font-size:9px;letter-spacing:.3em;top:14vh}
-    .is-kicker .kicker{letter-spacing:.22em}
-    .grain{animation:none}
-    .brand__sub{letter-spacing:.3em}
-    .is-sub .brand__sub{letter-spacing:.3em}
-}
-@media (max-height:480px) and (orientation:landscape){
-    .kicker{top:8vh}
+        radial-gradient(ellipse 5% 26% at var(--bx1) 86%, rgba(214, 226, 244, .55), transparent 75%),  /* Reflexo do Raio 1 no chão */
+        radial-gradient(ellipse 5% 26% at var(--bx2) 86%, rgba(214, 226, 244, .55), transparent 75%),  /* Reflexo do Raio 2 no chão */
+        linear-gradient(to bottom, transparent 58%, rgba(210, 225, 245, .24) 78%, rgba(210, 225, 245, .05)); /* Brilho geral do solo */
 }
 
-/* 12. ACESSIBILIDADE
-   Reduced motion: a cena continua (imagem estática em vez do vídeo, feita no JS), mas com um único clarão suave,
-   sem tremor, fumaça reduzida e tempos curtos. A marca continua aparecendo. */
-@media (prefers-reduced-motion:reduce){
-    .grain,.kicker{display:none}
-    .is-fallback .fallback,.is-scene .film{transition-duration:.5s}
-    .is-dark .stage{transition-duration:.4s}
-    .brand__line,.brand__sub,.veil{transition-duration:.35s}
+/* Neblina iluminada na linha do horizonte */
+.mist {
+    inset: 0;
+    mix-blend-mode: screen;
+    opacity: calc(var(--flash) * .5);
+    background: linear-gradient(to bottom, transparent 38%, rgba(190, 205, 228, .32) 52%, transparent 66%);
+}
+
+/* Clarão global de fundo que previne estouro de branco puro */
+.flash-lift {
+    inset: 0;
+    mix-blend-mode: screen;
+    opacity: calc(var(--flash) * .4);
+    background: radial-gradient(ellipse 90% 60% at 50% 12%, rgba(222, 232, 246, .9), rgba(205, 218, 238, .3) 60%, rgba(205, 218, 238, .05));
+}
+
+/* ----------------------------------------------------------
+   6. FX (Efeitos Especiais de Pós-Processamento)
+   Vinheta, granulado estilo película de cinema e canvas de fumaça.
+   ---------------------------------------------------------- */
+.fx {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Sombra nas bordas da tela para direcionar a atenção ao centro (Efeito Vinheta) */
+.vignette {
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, .72) 100%);
+}
+
+/* Granulado estilo filme analógico feito com animação keyframe */
+.grain {
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    opacity: .05;                 /* Muito sutil para não poluir o visual */
+    background-image: var(--grain); /* Textura injetada via JS/Asset */
+    animation: grain .9s steps(6) infinite; /* Animação em etapas para simular ruído de película */
+}
+
+/* Canvas da fumaça (renderizado via JS) */
+.smoke {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* ----------------------------------------------------------
+   7. TYPOGRAPHY (Subtítulo/Kicker Superior)
+   Texto introdutório posicionado na parte superior (céu).
+   ---------------------------------------------------------- */
+.kicker {
+    left: 0;
+    right: 0;
+    top: 12vh;
+    margin: 0 auto;
+    max-width: 88vw;
+    text-align: center;
+    font-weight: 600;
+    font-size: clamp(9px, 1.05vw, 14px); /* Tamanho responsivo otimizado */
+    letter-spacing: .55em;         /* Espaçamento largo cinematográfico */
+    opacity: 0;
+    color: #d9d9d9;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, .8);
+    transition: opacity 1.6s ease, letter-spacing 2.8s var(--ease-cine);
+}
+
+.is-kicker .kicker {
+    opacity: .75;
+    letter-spacing: .34em;        /* Aproxima as letras suavemente ao surgir */
+}
+
+.is-kicker-out .kicker {
+    opacity: 0;                   /* Desaparece com suavidade */
+    transition: opacity 1s ease;
+}
+
+/* ----------------------------------------------------------
+   8. BRAND (Logotipo e Animações da Marca)
+   Apresentação da marca principal controlada via JS.
+   ---------------------------------------------------------- */
+.brand {
+    inset: 0;
+    display: grid;
+    grid-template-rows: 1fr 1fr;  /* Divide a tela em duas metades para alinhar o título e subtítulo */
+    justify-items: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* Linha vermelha/branca luminosa que se expande antes da revelação da marca */
+.brand__line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(90deg, transparent, var(--red) 30%, #fff 50%, var(--red) 70%, transparent);
+    box-shadow: 0 0 14px 1px rgba(229, 9, 20, .45);
+    transition: width 1.4s cubic-bezier(.7, 0, .2, 1), opacity .6s ease;
+}
+
+.is-brand-line .brand__line {
+    width: min(72vw, 760px);      /* Expande a linha até a largura limite */
+    opacity: 1;
+}
+
+.is-brand .brand__line {
+    opacity: .35;                 /* Reduz a intensidade da linha após revelar o texto */
+    transition: opacity 1.5s ease;
+}
+
+/* Container do Nome da Marca */
+.brand__name {
+    position: relative;
+    align-self: end;              /* Posiciona na parte inferior da primeira linha do grid */
+    padding-bottom: 1.8vh;
+    font-weight: 900;
+    font-size: clamp(38px, 9vw, 132px); /* Escala de texto fluida da marca */
+    line-line: 1;
+}
+
+/* Brilho do centro do texto da marca (Glint) */
+.brand__glint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 150%;
+    height: 300%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: var(--gl);          /* Intensidade vinda da variável JS */
+    transform: translate(-50%, -50%) scale(calc(.25 + var(--gl) * .75)); /* Escala com o brilho */
+    background: radial-gradient(ellipse 30% 22% at 50% 50%, rgba(255, 255, 255, .75), rgba(255, 236, 232, .28) 45%, rgba(229, 9, 20, .14) 70%, transparent 100%);
+}
+
+/* Máscara de revelação do texto acionada via fumaça (--rv) */
+.brand__mask {
+    position: relative;
+    display: inline-block;
+    padding: .15em .12em;
+    opacity: min(1, calc(var(--rv) * 3));
+    letter-spacing: calc(.2em - var(--rv) * .08em); /* Ajusta o espaçamento das letras na revelação */
+    margin-right: calc(-.2em + var(--rv) * .08em);
+    filter: blur(calc((1 - var(--rv)) * 12px));   /* Remove o desfoque à medida que --rv cresce */
+    transform: scale(calc(1.06 - var(--rv) * .06)); /* Pequeno zoom-out cinematográfico */
+    /* Recorte elíptico que abre do centro para fora usando máscara CSS */
+    -webkit-mask-image: radial-gradient(ellipse calc(6% + var(--rv) * 140%) 170% at 50% 50%, #000 35%, transparent 100%);
+            mask-image: radial-gradient(ellipse calc(6% + var(--rv) * 140%) 170% at 50% 50%, #000 35%, transparent 100%);
+}
+
+/* Estilo para trechos em destaque dentro da marca (ex: itálico ou letras em vermelho) */
+.brand__mask em {
+    font-style: normal;
+    color: var(--red);
+    text-shadow: 0 0 24px rgba(229, 9, 20, .28);
+}
+
+/* Pseudo-elemento ::after que cria o reflexo/varredura de luz (shine) nas letras */
+.brand__mask::after {
+    content: attr(data-text);      /* Duplica o texto usando o atributo HTML data-text */
+    position: absolute;
+    inset: .15em .12em;
+    white-space: nowrap;
+    pointer-events: none;
+    color: transparent;           /* Deixa o texto base invisível para mostrar apenas o gradiente */
+    background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, .75) 50%, transparent 58%);
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    background-position: calc(100% - var(--sh) * 100%) 0; /* Move o brilho através da variável --sh */
+    -webkit-background-clip: text; /* Recorta o gradiente no formato do texto */
+    background-clip: text;
+}
+
+/* Subtítulo da Marca (ex: "PERFORMANCE AUTOMOTIVA") */
+.brand__sub {
+    visibility: hidden;
+    align-self: start;            /* Posiciona no topo da segunda linha do grid */
+    padding-top: 2.4vh;
+    font-weight: 600;
+    font-size: clamp(10px, 1.3vw, 17px);
+    letter-spacing: .6em;
+    margin-right: -.6em;
+    color: #ddd;
+    opacity: 0;
+    transition: opacity 1.6s ease, letter-spacing 2.4s var(--ease-cine);
+}
+
+.is-sub .brand__sub {
+    visibility: visible;
+    opacity: .85;
+    letter-spacing: .46em;        /* Ajusta o espaçamento ao revelar */
+}
+
+/* ----------------------------------------------------------
+   9. CONTROLES (Botão Pular e Cortina de Transição)
+   ---------------------------------------------------------- */
+/* Cortina preta de fechamento da introdução */
+.veil {
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+    transition: opacity 1s ease;
+}
+
+.is-out .veil {
+    opacity: 1;                   /* Cobre a tela de preto ao finalizar */
+}
+
+.is-skipping .veil {
+    transition-duration: .45s;   /* Transição mais rápida caso o usuário clique em pular */
+}
+
+/* Botão de "Pular Intro" estilo glassmorphism */
+.skip {
+    top: max(16px, env(safe-area-inset-top));     /* Garante espaçamento em telas com notch/notch de iPhones */
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 60;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .22em;
+    color: rgba(255, 255, 255, .6);
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 999px;         /* Deixa o botão no formato de pílula */
+    -webkit-backdrop-filter: blur(8px); /* Efeito de vidro fosco */
+    backdrop-filter: blur(8px);
+    transition: border-color .25s, color .25s, box-shadow .25s, opacity .4s;
+}
+
+.skip i {
+    font-style: normal;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Efeito ao passar o mouse sobre o botão pular */
+.skip:hover {
+    color: #fff;
+    border-color: var(--red);
+    box-shadow: 0 0 14px rgba(229, 9, 20, .3);
+}
+
+/* Acessibilidade de navegação por teclado */
+.skip:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+    color: #fff;
+}
+
+.is-out .skip {
+    opacity: 0;                   /* Esconde o botão ao encerrar a intro */
+}
+
+/* ----------------------------------------------------------
+   10. ANIMATIONS (Animações @keyframes)
+   ---------------------------------------------------------- */
+/* Movimentação aleatória do granulado de filme */
+@keyframes grain {
+    0%   { transform: translate(0, 0); }
+    20%  { transform: translate(-4%, 3%); }
+    40%  { transform: translate(3%, -5%); }
+    60%  { transform: translate(-5%, -2%); }
+    80%  { transform: translate(4%, 4%); }
+    100% { transform: translate(0, 0); }
+}
+
+/* ----------------------------------------------------------
+   11. RESPONSIVO (Ajustes para Telas Menores e Orientação)
+   ---------------------------------------------------------- */
+/* Adaptações para Celulares / Telas na Vertical (≤ 720px) */
+@media (max-width: 720px) {
+    :root {
+        --px: 55%;                /* Reajusta o ponto focal horizontal do vídeo para manter o carro em cena */
+    }
+    
+    .kicker {
+        font-size: 9px;
+        letter-spacing: .3em;
+        top: 14vh;
+    }
+    
+    .is-kicker .kicker {
+        letter-spacing: .22em;
+    }
+    
+    .grain {
+        animation: none;          /* Desativa a animação pesada de granulado para poupar bateria/processamento do celular */
+    }
+    
+    .brand__sub {
+        letter-spacing: .3em;
+    }
+    
+    .is-sub .brand__sub {
+        letter-spacing: .3em;
+    }
+}
+
+/* Ajuste para dispositivos na horizontal com pouca altura (ex: Celular deitado) */
+@media (max-height: 480px) and (orientation: landscape) {
+    .kicker {
+        top: 8vh;                 /* Eleva o kicker para não sobrepor os elementos centrais */
+    }
+}
+
+/* ----------------------------------------------------------
+   12. ACESSIBILIDADE (Movimento Reduzido)
+   Atende a usuários que ativaram a opção de "Reduzir Movimento"
+   nas configurações do Sistema Operacional (evita tontura/labirintite).
+   ---------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .grain, .kicker {
+        display: none;            /* Esconde elementos com animações visuais excessivas */
+    }
+    
+    /* Acelera e suaviza os tempos de transição de todos os elementos chave */
+    .is-fallback .fallback, 
+    .is-scene .film {
+        transition-duration: .5s;
+    }
+    
+    .is-dark .stage {
+        transition-duration: .4s;
+    }
+    
+    .brand__line, 
+    .brand__sub, 
+    .veil {
+        transition-duration: .35s;
+    }
 }

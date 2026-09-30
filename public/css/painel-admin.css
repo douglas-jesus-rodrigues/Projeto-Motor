@@ -1,144 +1,140 @@
-/* Custom Properties - Centralização do Design System */
+/* ==========================================================
+   Painel de Administração — MotorFlex
+   Design System Centralizado
+   ========================================================== */
+
+/* Custom Properties — Variáveis globais
+   Definição única de cores, sombras e padrões para todo o site
+*/
 :root {
-    --primary: #e50914;
-    --primary-hover: #b5070f;
-    --danger: #d9534f;
-    --danger-hover: #b52b27;
-    --bg-main: #f4f7f6;
-    --bg-card: #ffffff;
-    --text-main: #222222;
-    --text-muted: #666666;
-    --text-light: #999999;
-    --border-color: #e1e8ed;
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --radius: 10px;
-    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --primary: #e50914;                  /* Vermelho marca MotorFlex */
+    --primary-hover: #b5070f;            /* Tom mais escuro no hover */
+    --danger: #d9534f;                   /* Cor de perigo / sair / excluir */
+    --danger-hover: #b52b27;             /* Perigo — estado hover */
+    --bg-main: #f4f7f6;                  /* Fundo geral da página (claro) */
+    --bg-card: #ffffff;                  /* Fundo dos cartões e elementos */
+    --text-main: #222222;                /* Texto principal */
+    --text-muted: #666666;               /* Texto secundário */
+    --text-light: #999999;               /* Texto bem suave / rótulos */
+    --border-color: #e1e8ed;             /* Cor padrão de bordas */
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);   /* Sombra leve */
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.03);   /* Sombra média */
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);   /* Sombra em destaque */
+    --radius: 10px;                      /* Arredondamento padrão */
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Curva suave padrão */
 }
 
-/* Reset Básico e Acessibilidade */
+/* Reset Básico e Acessibilidade
+   Normaliza estilos entre navegadores
+*/
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box;              /* Tamanho inclui borda e preenchimento */
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
-
 body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
+    background-color: var(--bg-main);     /* Fundo da página */
+    color: var(--text-main);              /* Cor do texto */
     display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
+    flex-direction: column;               /* Estrutura vertical */
+    min-height: 100vh;                    /* Ocupa altura total da tela */
+    text-rendering: optimizeLegibility;   /* Melhora legibilidade das fontes */
+    -webkit-font-smoothing: antialiased;  /* Fonte mais nítida no WebKit */
 }
 
-/* Cabeçalho do Admin */
+/* Cabeçalho do Admin — fixo no topo */
 .header {
     background-color: var(--bg-card);
     padding: 15px 30px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between;       /* Logo à esquerda, menu à direita */
     align-items: center;
     box-shadow: var(--shadow-sm);
     border-bottom: 2px solid var(--border-color);
     position: sticky;
-    top: 0;
-    z-index: 100;
+    top: 0;                               /* Fica fixo ao rolar */
+    z-index: 100;                         /* Garante que fica acima dos outros elementos */
 }
-
 .header .logo h1 {
     font-size: 1.5rem;
     color: #1a1a1a;
     font-weight: 700;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.5px;               /* Espaçamento reduzido entre letras */
 }
-
 .header .logo span {
-    color: var(--primary);
+    color: var(--primary);                /* Destaque da marca em vermelho */
 }
-
 .nav-menu {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 24px;                            /* Espaçamento entre itens */
 }
-
 .nav-menu a {
     text-decoration: none;
     color: var(--text-muted);
     font-weight: 600;
     font-size: 0.95rem;
-    transition: var(--transition);
+    transition: var(--transition);         /* Transição suave de cor */
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px;                             /* Espaço entre ícone e texto */
     padding: 6px 0;
-    position: relative;
+    position: relative;                   /* Contexto para a linha decorativa */
 }
-
-/* Linha decorativa sutil no hover */
+/* Linha decorativa sutil que aparece abaixo do link no hover */
 .nav-menu a::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 0;
+    width: 0;                             /* Começa invisível */
     height: 2px;
     background-color: var(--primary);
     transition: var(--transition);
 }
-
 .nav-menu a:hover::after {
-    width: 100%;
+    width: 100%;                          /* Expande para a largura total */
 }
-
 .nav-menu a:hover {
-    color: var(--primary);
+    color: var(--primary);                /* Texto fica vermelho no hover */
 }
-
-/* Links com foco visível para acessibilidade */
+/* Links com foco visível para acessibilidade via teclado */
 .nav-menu a:focus-visible,
 .btn-card:focus-visible,
 .btn-config:focus-visible {
     outline: 2px solid var(--primary);
-    outline-offset: 4px;
+    outline-offset: 4px;                  /* Espaçamento entre o elemento e o contorno */
     border-radius: 4px;
 }
-
 .nav-menu a.sair {
-    color: var(--danger);
+    color: var(--danger);                 /* Link de sair em tom de perigo */
 }
-
 .nav-menu a.sair::after {
-    background-color: var(--danger);
+    background-color: var(--danger);      /* Linha em cor de perigo */
 }
-
 .nav-menu a.sair:hover {
     color: var(--danger-hover);
 }
 
-/* Container Principal */
+/* Container Principal — centraliza e limita largura */
 .container {
     max-width: 1200px;
     width: 100%;
-    margin: 40px auto;
+    margin: 40px auto;                    /* Centraliza horizontalmente */
     padding: 0 24px;
-    flex: 1;
+    flex: 1;                              /* Ocupa espaço restante no fluxo flex */
 }
 
-/* Seção de Boas-Vindas */
+/* Seção de Boas-Vindas — cabeçalho da área de conteúdo */
 .boas-vindas {
     background: var(--bg-card);
     padding: 30px;
     border-radius: var(--radius);
     box-shadow: var(--shadow-md);
     margin-bottom: 35px;
-    border-left: 5px solid var(--primary);
+    border-left: 5px solid var(--primary); /* Faixa vermelha decorativa à esquerda */
 }
-
 .boas-vindas h2 {
     font-size: 1.4rem;
     margin-bottom: 8px;
@@ -146,24 +142,21 @@ body {
     align-items: center;
     gap: 10px;
 }
-
 .boas-vindas h2 i {
-    color: var(--primary);
+    color: var(--primary);                /* Ícone em vermelho */
 }
-
 .boas-vindas p {
     color: var(--text-muted);
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.5;                     /* Espaçamento entre linhas do texto */
 }
 
-/* Grid de Estatísticas Otimizado */
+/* Grid de Estatísticas — cartões responsivos */
 .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Colunas automáticas */
+    gap: 24px;                            /* Espaço entre cartões */
 }
-
 .card {
     background: var(--bg-card);
     padding: 30px;
@@ -171,32 +164,28 @@ body {
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between;       /* Empurra botão para baixo */
     transition: var(--transition);
     border: 1px solid var(--border-color);
 }
-
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: transparent;
+    transform: translateY(-4px);          /* Levanta o cartão no hover */
+    box-shadow: var(--shadow-lg);         /* Sombra mais pronunciada */
+    border-color: transparent;            /* Esconde borda no destaque */
 }
-
 .card-content h3 {
     font-size: 0.85rem;
     color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+    text-transform: uppercase;             /* Transforma em maiúsculas */
+    letter-spacing: 0.8px;                /* Espaçamento entre letras */
     margin-bottom: 12px;
 }
-
 .card-content p {
-    font-size: 2.25rem;
+    font-size: 2.25rem;                    /* Número em destaque grande */
     font-weight: 700;
     margin-bottom: 24px;
     letter-spacing: -0.5px;
 }
-
 .btn-card {
     text-decoration: none;
     color: var(--primary);
@@ -206,29 +195,27 @@ body {
     align-items: center;
     gap: 6px;
     transition: var(--transition);
-    align-self: flex-start; /* Evita que o link estique na largura do card */
+    align-self: flex-start;               /* Evita que o link estique na largura do card */
 }
-
 .btn-card:hover {
     color: var(--primary-hover);
 }
-
-/* Movimento sutil do ícone dentro do botão */
+/* Movimento sutil do ícone no hover */
 .btn-card:hover i, 
 .btn-card:hover svg {
-    transform: translateX(4px);
+    transform: translateX(4px);            /* Desloca ícone para a direita */
     transition: var(--transition);
 }
 
 /* ==========================================
    MENU DROPDOWN DE CONFIGURAÇÕES (NOVO)
+   Botão que abre lista de opções
    ========================================== */
 .nav-item-dropdown {
-    position: relative;
+    position: relative;                   /* Contexto para o menu suspenso */
     display: inline-block;
 }
-
-/* Estilo do botão de engrenagem substituto */
+/* Botão de engrenagem que aciona o menu */
 .btn-config {
     cursor: pointer;
     background: none;
@@ -242,17 +229,15 @@ body {
     padding: 6px 0;
     transition: var(--transition);
 }
-
 .btn-config:hover {
-    color: var(--primary);
+    color: var(--primary);                /* Fica vermelho no hover */
 }
-
-/* Caixa de opções que fica oculta por padrão */
+/* Caixa de opções — oculta por padrão */
 .dropdown-menu {
     display: none;
     position: absolute;
-    right: 0;
-    top: 100%;
+    right: 0;                             /* Alinha à direita do botão */
+    top: 100%;                            /* Fica logo abaixo do botão */
     background-color: var(--bg-card);
     min-width: 190px;
     box-shadow: var(--shadow-lg);
@@ -262,14 +247,12 @@ body {
     z-index: 1000;
     margin-top: 8px;
 }
-
-/* Classe utilitária injetada via JS para abrir a caixinha */
+/* Classe injetada via JavaScript para mostrar o menu */
 .dropdown-menu.mostrar {
     display: block;
 }
-
 .dropdown-menu a {
-    color: var(--text-muted) !important;
+    color: var(--text-muted) !important;  /* Sobrescreve estilos gerais */
     padding: 10px 16px !important;
     text-decoration: none;
     display: flex !important;
@@ -279,31 +262,28 @@ body {
     font-weight: 500 !important;
     transition: background-color 0.2s ease;
 }
-
 .dropdown-menu a::after {
-    display: none !important; /* Desativa a linha vermelha do menu padrão */
+    display: none !important;             /* Desativa a linha vermelha do menu principal */
 }
-
 .dropdown-menu a:hover {
-    background-color: var(--bg-main);
+    background-color: var(--bg-main);     /* Fundo cinza claro no hover */
     color: var(--primary) !important;
 }
-
 /* Opção de Sair dentro da caixinha */
 .dropdown-menu a.sair-item {
     color: var(--danger) !important;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color); /* Linha separadora acima */
     margin-top: 5px;
     padding-top: 12px !important;
     cursor: pointer;
 }
-
 .dropdown-menu a.sair-item:hover {
     color: var(--danger-hover) !important;
 }
 
 /* ==========================================
    MODAL DE CONFIRMAÇÃO DE SAÍDA (NOVO)
+   Tela de confirmação ao clicar em Sair
    ========================================== */
 .modal-overlay {
     display: none;
@@ -312,21 +292,19 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5); /* Fundo escurecido semi-transparente */
     z-index: 2000;
     justify-content: center;
     align-items: center;
-    opacity: 0;
+    opacity: 0;                          /* Começa invisível */
     transition: opacity 0.3s ease;
 }
-
-/* Injetado via JS para subir a tela escura */
+/* Classe injetada via JS para mostrar o modal */
 .modal-overlay.mostrar-modal {
     display: flex;
-    opacity: 1;
+    opacity: 1;                          /* Torna visível com transição suave */
 }
-
-/* Container branco da mensagem */
+/* Caixa branca com a mensagem */
 .modal-container {
     background-color: var(--bg-card);
     padding: 30px;
@@ -335,41 +313,35 @@ body {
     max-width: 400px;
     width: 90%;
     text-align: center;
-    transform: scale(0.8);
+    transform: scale(0.8);               /* Começa reduzido */
     transition: transform 0.3s ease;
 }
-
 .modal-overlay.mostrar-modal .modal-container {
-    transform: scale(1);
+    transform: scale(1);                 /* Cresce para tamanho normal */
 }
-
-/* Ícone de alerta grande */
+/* Ícone de aviso grande */
 .modal-container i {
     color: var(--danger);
     font-size: 3rem;
     margin-bottom: 15px;
 }
-
 .modal-container h3 {
     font-size: 1.3rem;
     color: var(--text-main);
     margin-bottom: 10px;
 }
-
 .modal-container p {
     color: var(--text-muted);
     font-size: 0.95rem;
     margin-bottom: 24px;
     line-height: 1.4;
 }
-
 .modal-botoes {
     display: flex;
     justify-content: center;
     gap: 15px;
 }
-
-/* Botões internos do modal */
+/* Botões dentro do modal */
 .btn-modal {
     padding: 10px 20px;
     border: none;
@@ -379,45 +351,39 @@ body {
     cursor: pointer;
     transition: var(--transition);
 }
-
 .btn-cancelar {
     background-color: var(--border-color);
     color: var(--text-muted);
 }
-
 .btn-cancelar:hover {
-    background-color: #cbd5e1;
+    background-color: #cbd5e1;           /* Tom mais escuro no hover */
 }
-
 .btn-confirmar-sair {
     background-color: var(--danger);
     color: #ffffff;
 }
-
 .btn-confirmar-sair:hover {
     background-color: var(--danger-hover);
 }
 
-/* Responsividade Adaptada para Recursos Modernos */
+/* Responsividade — adaptação para telas menores */
 @media (max-width: 768px) {
     .header {
-        flex-direction: column;
+        flex-direction: column;           /* Empilha logo e menu */
         gap: 20px;
         padding: 20px;
         text-align: center;
     }
-
     .nav-menu {
         width: 100%;
         justify-content: center;
         gap: 16px;
-        flex-wrap: wrap;
+        flex-wrap: wrap;                  /* Quebra linha se não couber */
     }
     
     .nav-menu a::after {
-        display: none; /* Remove a linha em telas de toque */
+        display: none;                    /* Remove a linha decorativa em telas de toque */
     }
-
     .nav-item-dropdown {
         width: 100%;
         display: flex;
@@ -425,21 +391,21 @@ body {
     }
     
     .dropdown-menu {
-        position: static;
+        position: static;                 /* Deixa de ser flutuante */
         width: 100%;
         box-shadow: none;
         border: none;
-        background-color: var(--bg-main);
+        background-color: var(--bg-main); /* Mesmo fundo da página */
         margin-top: 4px;
     }
     
     .modal-botoes {
-        flex-direction: column;
+        flex-direction: column;           /* Botões empilhados */
         gap: 10px;
     }
     
     .btn-modal {
-        width: 100%;
+        width: 100%;                      /* Ocupam largura total */
     }
 }
 
@@ -448,7 +414,7 @@ body {
     * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important; /* Transições praticamente instantâneas */
         scroll-behavior: auto !important;
     }
 }

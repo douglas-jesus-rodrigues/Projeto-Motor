@@ -1,214 +1,229 @@
+/* Reset geral: remove estilos padrão do navegador para todos os elementos */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;                  /* Remove margem externa padrão */
+    padding: 0;                 /* Remove espaçamento interno padrão */
+    box-sizing: border-box;     /* Faz com que borda e preenchimento não aumentem a largura total do elemento */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Define a fonte padrão da página */
 }
 
+/* Estilização do corpo da página */
 body {
-    background-color: #12121a;
-    color: #e1e1e6;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding: 20px;
+    background-color: #12121a;  /* Cor de fundo: tom escuro azulado */
+    color: #e1e1e6;             /* Cor do texto principal: cinza bem claro */
+    min-height: 100vh;          /* Garante que o corpo ocupe pelo menos a altura total da tela */
+    display: flex;              /* Usa layout flexível para centralizar o conteúdo */
+    justify-content: center;    /* Centraliza horizontalmente */
+    align-items: center;        /* Centraliza verticalmente */
+    position: relative;         /* Define como referência para elementos posicionados absolutamente */
+    padding: 20px;              /* Espaçamento interno nas bordas da página */
 }
 
-/* Botão Voltar ao Topo */
+/* Botão de navegação para voltar à página anterior */
 .btn-voltar-topo {
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    color: #a0a0b2;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    transition: color 0.2s, transform 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    position: absolute;         /* Fica fixo em relação ao body, sem interferir no restante do layout */
+    top: 30px;                  /* Distância de 30px a partir do topo */
+    left: 30px;                 /* Distância de 30px a partir da borda esquerda */
+    color: #a0a0b2;             /* Cor do texto: cinza suave */
+    text-decoration: none;      /* Remove o sublinhado padrão de links */
+    font-weight: 600;           /* Fonte em negrito médio */
+    font-size: 14px;            /* Tamanho do texto */
+    transition: color 0.2s, transform 0.2s; /* Animação suave para cor e posição ao passar o mouse */
+    display: inline-flex;       /* Permite alinhar ícone e texto lado a lado */
+    align-items: center;        /* Alinha verticalmente ao centro */
+    gap: 6px;                   /* Espaço entre o ícone e o texto */
 }
 
+/* Efeito ao passar o mouse sobre o botão voltar */
 .btn-voltar-topo:hover {
-    color: #ff1e27;
-    transform: translateX(-3px);
+    color: #ff1e27;             /* Muda para a cor de destaque (vermelho) */
+    transform: translateX(-3px);/* Desloca levemente para a esquerda */
 }
 
-/* Container Principal */
+/* Contêiner que envolve o cartão de login/recuperação */
 .login-container {
-    width: 100%;
-    max-width: 420px;
+    width: 100%;                /* Largura total disponível */
+    max-width: 420px;           /* Limite máximo de largura — não fica maior que isso em telas grandes */
 }
 
-/* Card de Recuperação */
+/* Cartão principal com o formulário */
 .login-card {
-    background-color: #181824;
-    padding: 40px 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    border: 1px solid #282838;
+    background-color: #181824;  /* Fundo um pouco mais claro que o fundo da página */
+    padding: 40px 30px;         /* Espaçamento interno: vertical | horizontal */
+    border-radius: 12px;        /* Cantos arredondados */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Sombra escura para dar profundidade */
+    border: 1px solid #282838;  /* Borda sutil para separar do fundo */
 }
 
+/* Título principal dentro do cartão */
 .login-card h1 {
-    font-size: 28px;
-    font-weight: bold;
-    color: #ffffff;
-    margin-bottom: 10px;
+    font-size: 28px;            /* Tamanho grande do título */
+    font-weight: bold;          /* Negrito forte */
+    color: #ffffff;             /* Texto branco */
+    margin-bottom: 10px;        /* Espaço abaixo do título */
 }
 
+/* Parte destacada do título */
 .login-card h1 span {
-    color: #ff1e27;
+    color: #ff1e27;             /* Cor vermelha de destaque */
 }
 
+/* Texto de instrução abaixo do título */
 .login-card p {
-    font-size: 14px;
-    color: #a0a0b2;
-    margin-bottom: 25px;
-    line-height: 1.5;
+    font-size: 14px;            /* Tamanho menor que o título */
+    color: #a0a0b2;             /* Cor cinza suave */
+    margin-bottom: 25px;        /* Espaço abaixo do parágrafo */
+    line-height: 1.5;           /* Espaçamento entre linhas para facilitar leitura */
 }
 
-/* Campos do Formulário */
+/* Grupo de cada campo do formulário (rótulo + entrada) */
 .campo {
-    margin-bottom: 20px;
+    margin-bottom: 20px;        /* Espaço abaixo de cada campo */
 }
 
+/* Rótulo de cada campo */
 .campo label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #c4c4cc;
-    margin-bottom: 8px;
+    display: block;             /* Ocupa linha inteira, fica acima do campo */
+    font-size: 13px;            /* Tamanho reduzido */
+    font-weight: 600;           /* Negrito médio */
+    color: #c4c4cc;             /* Cor cinza clara */
+    margin-bottom: 8px;         /* Espaço entre rótulo e campo */
 }
 
+/* Campo de entrada de dados */
 .campo input {
-    width: 100%;
-    padding: 12px 16px;
-    background-color: #12121a;
-    border: 1px solid #282838;
-    border-radius: 6px;
-    color: #ffffff;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;                /* Largura total do bloco */
+    padding: 12px 16px;         /* Espaçamento interno confortável */
+    background-color: #12121a;  /* Fundo igual ao da página */
+    border: 1px solid #282838;  /* Borda sutil */
+    border-radius: 6px;         /* Cantos levemente arredondados */
+    color: #ffffff;             /* Texto branco digitado pelo usuário */
+    font-size: 14px;            /* Tamanho da fonte */
+    outline: none;              /* Remove contorno padrão do navegador ao focar */
+    transition: border-color 0.2s, box-shadow 0.2s; /* Animação suave na borda e sombra */
 }
 
+/* Estilo quando o campo está ativo/clicado */
 .campo input:focus {
-    border-color: #ff1e27;
-    box-shadow: 0 0 0 3px rgba(255, 30, 39, 0.15);
+    border-color: #ff1e27;      /* Borda fica vermelha */
+    box-shadow: 0 0 0 3px rgba(255, 30, 39, 0.15); /* Brilho suave ao redor do campo */
 }
 
+/* Texto de dica dentro do campo (quando vazio) */
 .campo input::placeholder {
-    color: #686878;
+    color: #686878;             /* Cor cinza escura, discreta */
 }
 
-/* Botão de Envio */
+/* Botão principal de envio */
 .btn-login {
-    width: 100%;
-    padding: 12px;
-    background-color: #ff1e27;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    margin-top: 5px;
+    width: 100%;                /* Largura total */
+    padding: 12px;              /* Espaçamento interno vertical */
+    background-color: #ff1e27;  /* Fundo vermelho chamativo */
+    color: #ffffff;             /* Texto branco */
+    border: none;               /* Sem borda */
+    border-radius: 6px;        /* Cantos arredondados */
+    font-size: 15px;            /* Tamanho do texto */
+    font-weight: 600;           /* Negrito médio */
+    cursor: pointer;           /* Muda o cursor para mãozinha */
+    transition: background-color 0.2s, transform 0.1s; /* Animação suave */
+    margin-top: 5px;            /* Pequeno espaço acima do botão */
 }
 
+/* Efeito ao passar o mouse sobre o botão */
 .btn-login:hover {
-    background-color: #e01922;
+    background-color: #e01922;  /* Vermelho um pouco mais escuro */
 }
 
+/* Efeito ao clicar/apertar o botão */
 .btn-login:active {
-    transform: scale(0.98);
+    transform: scale(0.98);     /* Reduz levemente o tamanho dando sensação de clique */
 }
 
-/* Estado de carregamento do botão (útil para quando disparar o fetch) */
+/* Estilo quando o botão está desativado (ex: enviando formulário) */
 .btn-login:disabled {
-    background-color: #5a1e22;
-    cursor: not-allowed;
-    opacity: 0.7;
+    background-color: #5a1e22;  /* Tom bem mais escuro de vermelho */
+    cursor: not-allowed;        /* Cursor de proibido */
+    opacity: 0.7;               /* Levemente transparente */
 }
 
-/* Link de Retorno ao Login */
+/* Área com link para outra página */
 .cadastro {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 13px;
-    color: #a0a0b2;
+    text-align: center;         /* Texto centralizado */
+    margin-top: 25px;           /* Espaço acima */
+    font-size: 13px;            /* Fonte pequena */
+    color: #a0a0b2;             /* Cor cinza suave */
 }
 
+/* Estilo do link dentro da área */
 .cadastro a {
-    color: #ff1e27;
-    text-decoration: none;
-    font-weight: 600;
-    margin-left: 4px;
-    transition: color 0.2s;
+    color: #ff1e27;             /* Cor de destaque vermelha */
+    text-decoration: none;      /* Sem sublinhado */
+    font-weight: 600;           /* Negrito médio */
+    margin-left: 4px;           /* Pequeno espaço à esquerda do link */
+    transition: color 0.2s;     /* Animação suave na cor */
 }
 
+/* Efeito ao passar o mouse no link */
 .cadastro a:hover {
-    color: #e01922;
-    text-decoration: underline;
+    color: #e01922;             /* Vermelho mais escuro */
+    text-decoration: underline; /* Sublinha ao passar o mouse */
 }
 
-/* Mensagens de Feedback (Sucesso / Erro) */
+/* Caixa de mensagem flutuante de feedback */
 #mensagem {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 14px 22px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    animation: fadeInOut 0.3s ease;
-    max-width: 350px;
+    position: fixed;            /* Fica fixa na tela, não rola com a página */
+    top: 20px;                  /* Distância do topo */
+    right: 20px;                /* Distância da borda direita */
+    padding: 14px 22px;         /* Espaçamento interno */
+    border-radius: 8px;        /* Cantos arredondados */
+    font-size: 14px;            /* Tamanho do texto */
+    font-weight: 600;           /* Negrito médio */
+    display: none;              /* Começa escondida */
+    z-index: 1000;              /* Garante que fique acima de tudo */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); /* Sombra para destaque */
+    animation: fadeInOut 0.3s ease; /* Animação de entrada */
+    max-width: 350px;           /* Largura máxima */
 }
 
+/* Estilo para mensagem de SUCESSO */
 #mensagem.sucesso {
-    background-color: #04d361;
-    color: #12121a;
-    display: block;
-    border-left: 5px solid #028a3f;
+    background-color: #04d361;  /* Fundo verde brilhante */
+    color: #12121a;             /* Texto escuro para contraste */
+    display: block;             /* Torna visível */
+    border-left: 5px solid #028a3f; /* Faixa verde escura na esquerda */
 }
 
+/* Estilo para mensagem de ERRO */
 #mensagem.erro {
-    background-color: #ff1e27;
-    color: #ffffff;
-    display: block;
-    border-left: 5px solid #a81017;
+    background-color: #ff1e27;  /* Fundo vermelho */
+    color: #ffffff;             /* Texto branco */
+    display: block;             /* Torna visível */
+    border-left: 5px solid #a81017; /* Faixa vermelha escura na esquerda */
 }
 
+/* Animação de aparecer: vem de cima suavemente */
 @keyframes fadeInOut {
     from {
-        opacity: 0;
-        transform: translateY(-10px);
+        opacity: 0;             /* Começa invisível */
+        transform: translateY(-10px); /* Começa 10px acima */
     }
     to {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 1;             /* Fica totalmente visível */
+        transform: translateY(0); /* Desce para a posição normal */
     }
 }
 
-/* Responsividade para telas menores */
+/* Ajustes para telas menores (celulares) */
 @media (max-width: 480px) {
     body {
-        padding: 15px;
-        align-items: flex-start;
-        padding-top: 80px;
+        padding: 15px;          /* Reduz espaçamento nas bordas */
+        align-items: flex-start;/* Alinha o conteúdo no topo em vez de centralizar */
+        padding-top: 80px;      /* Espaço maior no topo para não sobrepor o botão voltar */
     }
-
     .btn-voltar-topo {
-        top: 20px;
-        left: 20px;
+        top: 20px;              /* Ajusta a distância do topo */
+        left: 20px;             /* Ajusta a distância da esquerda */
     }
-
     .login-card {
-        padding: 30px 20px;
+        padding: 30px 20px;     /* Reduz espaçamento interno do cartão */
     }
 }

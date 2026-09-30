@@ -1,70 +1,76 @@
 /* =========================================================================
    1. RESET E ESTILOS BASE
+   Normalização e configurações globais do projeto
    ========================================================================= */
+
+/* Reset universal — remove margens e preenchimentos padrão */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Largura inclui borda e padding */
 }
 
+/* Variáveis globais — paleta de cores, medidas e transições */
 :root {
-    --primary: #e50914;
-    --primary-hover: #b80710;
-    --bg-grad-1: #030305;
-    --bg-grad-2: #120507;
-    --bg-grad-3: #1a080c;
-    --card-bg: rgba(20, 20, 20, 0.82);
-    --border-color: rgba(255, 255, 255, 0.08);
-    --text-main: #ffffff;
-    --text-muted: #b3b3b3;
-    --error-color: #ff4d4d;
-    --radius-sm: 10px;
-    --radius-lg: 22px;
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --primary: #e50914;                  /* Vermelho principal da marca */
+    --primary-hover: #b80710;            /* Vermelho escuro para hover */
+    --bg-grad-1: #030305;                /* Tom mais escuro do fundo */
+    --bg-grad-2: #120507;                /* Tom intermediário do fundo */
+    --bg-grad-3: #1a080c;                /* Tom mais claro do fundo */
+    --card-bg: rgba(20, 20, 20, 0.82);   /* Fundo dos cartões com transparência */
+    --border-color: rgba(255, 255, 255, 0.08); /* Cor padrão de bordas */
+    --text-main: #ffffff;                 /* Texto principal — branco */
+    --text-muted: #b3b3b3;                /* Texto secundário — cinza claro */
+    --error-color: #ff4d4d;               /* Cor de erro / perigo */
+    --radius-sm: 10px;                    /* Arredondamento pequeno */
+    --radius-lg: 22px;                    /* Arredondamento grande */
+    --transition-fast: 0.2s ease;         /* Transição rápida */
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transição suave padrão */
 }
 
+/* Estilo do corpo da página com fundo gradiente e efeitos de raio */
 body {
     font-family: Arial, Helvetica, sans-serif;
-    min-height: 100vh;
+    min-height: 100vh; /* Ocupa altura total da tela */
     background: 
         radial-gradient(circle at 15% 15%, rgba(229, 9, 20, 0.12) 0%, transparent 45%),
         radial-gradient(circle at 85% 85%, rgba(184, 7, 16, 0.08) 0%, transparent 50%),
         linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
-    background-attachment: fixed;
+    background-attachment: fixed; /* Fundo fixo ao rolar */
     color: var(--text-main);
     line-height: 1.5;
 }
 
 /* =========================================================================
    2. CABEÇALHO / HEADER
+   Barra de navegação fixa no topo com logo e links
    ========================================================================= */
 .header {
-    background: rgba(17, 17, 17, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(17, 17, 17, 0.95); /* Fundo escuro semi-transparente */
+    backdrop-filter: blur(10px);        /* Desfoque do conteúdo atrás */
+    -webkit-backdrop-filter: blur(10px); /* Compatibilidade Safari */
     border-bottom: 1px solid var(--border-color);
     padding: 20px 50px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Logo à esquerda, menu à direita */
     align-items: center;
     position: sticky;
-    top: 0;
-    z-index: 100;
+    top: 0; /* Fica fixo no topo ao rolar */
+    z-index: 100; /* Garante que fica acima dos outros elementos */
 }
 
 .header h1 {
     font-size: 1.8rem;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.5px; /* Espaçamento entre letras */
 }
 
 .header h1 span {
-    color: var(--primary);
+    color: var(--primary); /* Destaque da marca em vermelho */
 }
 
 .header nav {
     display: flex;
-    gap: 25px;
+    gap: 25px; /* Espaçamento entre itens do menu */
     align-items: center;
 }
 
@@ -74,14 +80,15 @@ body {
     font-size: 0.95rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px; /* Espaço entre ícone e texto */
     transition: all var(--transition-fast);
 }
 
 .header a:hover {
-    color: var(--primary);
+    color: var(--primary); /* Fica vermelho no hover */
 }
 
+/* Botão Sair com destaque */
 .sair {
     background: var(--primary);
     padding: 10px 16px;
@@ -93,21 +100,23 @@ body {
 
 .sair:hover {
     background: var(--primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(229, 9, 20, 0.4);
+    transform: translateY(-2px); /* Levanta o botão no hover */
+    box-shadow: 0 6px 15px rgba(229, 9, 20, 0.4); /* Sombra mais intensa */
 }
 
 /* =========================================================================
    3. CONTAINER PRINCIPAL
+   Área central que limita e centraliza o conteúdo
    ========================================================================= */
 .container {
-    max-width: 1100px;
-    margin: auto;
+    max-width: 1100px; /* Largura máxima do conteúdo */
+    margin: auto; /* Centraliza horizontalmente */
     padding: 40px 20px;
 }
 
 /* =========================================================================
    4. SEÇÃO DO PERFIL (AVATAR + NOME CENTRALIZADO)
+   Cartão de boas-vindas com foto do usuário e nome
    ========================================================================= */
 .boas-vindas {
     display: flex;
@@ -118,40 +127,43 @@ body {
     gap: 16px;
     padding: 32px 24px;
     margin: 20px 0 40px 0;
-    background: rgba(18, 18, 24, 0.75);
+    background: rgba(18, 18, 24, 0.75); /* Fundo com transparência */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
-    border-top: 3px solid var(--primary);
+    border-top: 3px solid var(--primary); /* Faixa vermelha no topo */
     border-radius: var(--radius-lg);
     box-shadow: 
         0 20px 50px rgba(0, 0, 0, 0.6), 
-        0 0 25px rgba(229, 9, 20, 0.1);
+        0 0 25px rgba(229, 9, 20, 0.1); /* Brilho sutil vermelho */
 }
 
+/* Container do avatar com posição relativa para os botões */
 .perfil-avatar-wrapper {
     position: relative;
     width: 96px;
     height: 96px;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Não encolhe */
 }
 
+/* Foto de perfil circular */
 .perfil-avatar {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #ff1e27;
-    box-shadow: 0 0 16px rgba(255, 30, 39, 0.45);
+    box-shadow: 0 0 16px rgba(255, 30, 39, 0.45); /* Brilho ao redor */
     background-color: #0c0d11;
 }
 
 .perfil-avatar img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Preenche sem distorcer */
 }
 
+/* Botão de trocar foto — canto inferior direito */
 .btn-trocar-foto {
     position: absolute;
     bottom: 0;
@@ -173,9 +185,10 @@ body {
 
 .btn-trocar-foto:hover {
     background: #ff1e27;
-    transform: scale(1.1);
+    transform: scale(1.1); /* Aumenta ligeiramente */
 }
 
+/* Botão de remover foto — canto inferior esquerdo */
 .btn-remover-foto {
     position: absolute;
     bottom: 0;
@@ -201,6 +214,7 @@ body {
     transform: scale(1.1);
 }
 
+/* Texto de boas-vindas */
 .boas-vindas-texto {
     text-align: center;
     margin-top: 5px;
@@ -226,11 +240,12 @@ body {
 
 /* =========================================================================
    5. CARDS DE ATALHO
+   Grade com acessos rápidos às funcionalidades
    ========================================================================= */
 .cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 25px;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+    gap: 25px; /* Espaço entre cartões */
 }
 
 .card {
@@ -242,22 +257,23 @@ body {
     transition: all var(--transition-normal);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between; /* Empurra botão para baixo */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .card:hover {
-    transform: translateY(-6px);
-    border-color: rgba(229, 9, 20, 0.3);
-    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.15);
-    background: #181818;
+    transform: translateY(-6px); /* Levanta o cartão */
+    border-color: rgba(229, 9, 20, 0.3); /* Borda vermelha sutil */
+    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.15); /* Sombra com tom vermelho */
+    background: #181818; /* Fundo mais claro */
 }
 
+/* Ícone do cartão */
 .card-icon {
     font-size: 2rem;
     color: var(--primary);
     margin-bottom: 20px;
-    background: rgba(229, 9, 20, 0.1);
+    background: rgba(229, 9, 20, 0.1); /* Fundo circular transparente */
     width: 60px;
     height: 60px;
     display: flex;
@@ -279,6 +295,7 @@ body {
     line-height: 1.5;
 }
 
+/* Botão dentro do cartão */
 .btn-card {
     display: inline-flex;
     align-items: center;
@@ -291,11 +308,11 @@ body {
     font-size: 0.9rem;
     font-weight: bold;
     transition: all var(--transition-fast);
-    width: fit-content;
+    width: fit-content; /* Largura ajusta ao conteúdo */
 }
 
 .card:hover .btn-card {
-    background: var(--primary);
+    background: var(--primary); /* Fica vermelho quando o cartão está em hover */
     color: white;
 }
 
@@ -305,12 +322,14 @@ body {
 
 /* =========================================================================
    6. MENU DROPDOWN DE CONFIGURAÇÕES (GLASSMORPHISM)
+   Botão que abre lista de opções com efeito vidro
    ========================================================================= */
 .nav-item-dropdown {
-    position: relative;
+    position: relative; /* Contexto para o menu suspenso */
     display: inline-block;
 }
 
+/* Botão de acionamento do menu */
 .btn-config {
     cursor: pointer;
     background: none;
@@ -329,15 +348,16 @@ body {
 
 .btn-config:hover {
     color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.05); /* Fundo claro sutil */
 }
 
+/* Rotação do ícone quando menu está aberto */
 .btn-config svg {
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn-config[aria-expanded="true"] svg {
-    transform: rotate(90deg);
+    transform: rotate(90deg); /* Gira ícone em 90 graus */
     color: var(--primary);
 }
 
@@ -346,6 +366,7 @@ body {
     color: #ffffff;
 }
 
+/* Caixa do menu suspenso — oculta por padrão */
 .dropdown-menu {
     display: block;
     position: absolute;
@@ -360,24 +381,26 @@ body {
     padding: 8px;
     z-index: 1000;
     margin-top: 14px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-15px) scale(0.93);
+    opacity: 0; /* Começa invisível */
+    pointer-events: none; /* Não recebe clique quando fechado */
+    transform: translateY(-15px) scale(0.93); /* Começa acima e menor */
     transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.3s ease;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
+/* Classe injetada via JS para mostrar o menu */
 .dropdown-menu.mostrar {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1); /* Desce e cresce suavemente */
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 
-                0 0 20px rgba(229, 9, 20, 0.15);
+                0 0 20px rgba(229, 9, 20, 0.15); /* Brilho vermelho */
     border-color: rgba(229, 9, 20, 0.3);
 }
 
+/* Itens do menu */
 .dropdown-menu a {
     color: #ccc !important;
     padding: 10px 14px !important;
@@ -397,12 +420,13 @@ body {
 .dropdown-menu a:hover {
     background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
-    transform: translateX(4px) !important;
+    transform: translateX(4px) !important; /* Desloca para a direita */
 }
 
+/* Item de Sair com separação visual */
 .dropdown-menu a.sair-item {
     color: var(--error-color) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.08); /* Linha separadora */
     margin-top: 6px;
     padding-top: 14px !important;
     border-radius: 0 0 8px 8px;
@@ -416,6 +440,7 @@ body {
 
 /* =========================================================================
    7. MODAL DE CONFIRMAÇÃO DE SAÍDA
+   Janela flutuante para confirmar se o usuário deseja realmente sair
    ========================================================================= */
 .modal-overlay {
     display: none;
@@ -424,10 +449,10 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.75); /* Fundo escurecido */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 2000;
+    z-index: 2000; /* Acima de tudo */
     justify-content: center;
     align-items: center;
     opacity: 0;
@@ -436,9 +461,10 @@ body {
 
 .modal-overlay.mostrar-modal {
     display: flex;
-    opacity: 1;
+    opacity: 1; /* Torna visível */
 }
 
+/* Caixa branca da mensagem */
 .modal-container {
     background: #141414;
     border: 1px solid var(--border-color);
@@ -448,12 +474,12 @@ body {
     max-width: 400px;
     width: 90%;
     text-align: center;
-    transform: scale(0.8);
+    transform: scale(0.8); /* Começa menor */
     transition: transform 0.3s ease;
 }
 
 .modal-overlay.mostrar-modal .modal-container {
-    transform: scale(1);
+    transform: scale(1); /* Cresce para tamanho normal */
 }
 
 .modal-container svg {
@@ -480,6 +506,7 @@ body {
     gap: 15px;
 }
 
+/* Botões do modal */
 .btn-modal {
     padding: 12px 24px;
     border: none;
@@ -512,28 +539,32 @@ body {
 
 /* =========================================================================
    8. RESPONSIVIDADE
+   Adaptação para telas menores
    ========================================================================= */
+
+/* Telas até 900px — 2 colunas */
 @media(max-width: 900px) {
     .cards {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
+/* Telas até 768px — 1 coluna e ajustes gerais */
 @media(max-width: 768px) {
     .header {
-        flex-direction: column;
+        flex-direction: column; /* Empilha logo e menu */
         gap: 15px;
         padding: 15px 20px;
     }
     
     .header nav {
-        flex-wrap: wrap;
+        flex-wrap: wrap; /* Quebra linha se não couber */
         justify-content: center;
         gap: 15px;
     }
     
     .cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Coluna única */
     }
     
     .boas-vindas {
@@ -555,20 +586,20 @@ body {
         width: 90%;
         max-width: 280px;
         left: 50%;
-        transform: translateX(-50%) translateY(-10px) scale(0.95);
+        transform: translateX(-50%) translateY(-10px) scale(0.95); /* Centralizado */
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     }
-
+    
     .dropdown-menu.mostrar {
         transform: translateX(-50%) translateY(0) scale(1);
     }
     
     .modal-botoes {
-        flex-direction: column;
+        flex-direction: column; /* Botões empilhados */
         gap: 10px;
     }
     
     .btn-modal {
-        width: 100%;
+        width: 100%; /* Ocupam largura total */
     }
 }

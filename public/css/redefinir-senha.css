@@ -1,67 +1,77 @@
+/* ==========================================================================
+   REDEFINIÇÃO DE SENHA — Página de recuperação
+   Tema escuro com identidade vermelha MotorFlex
+   ========================================================================== */
+
+/* Reset e configurações base */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Largura inclui borda e preenchimento */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: #0f0f13;
-    color: #e1e1e6;
-    min-height: 100vh;
+    background-color: #0f0f13;       /* Fundo escuro base */
+    color: #e1e1e6;                  /* Texto principal — cinza claro */
+    min-height: 100vh;               /* Ocupa altura total da tela */
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center;         /* Centraliza horizontalmente */
+    align-items: center;             /* Centraliza verticalmente */
     position: relative;
-    overflow-x: hidden;
+    overflow-x: hidden;              /* Evita rolagem horizontal */
 }
 
-/* Sistema de Alerta/Mensagens */
+/* ---------- Sistema de Mensagens / Alertas ---------- */
+/* Caixa flutuante no topo da tela */
 #mensagem {
     position: fixed;
     top: 25px;
     left: 50%;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateX(-50%) translateY(-20px); /* Começa acima */
     padding: 14px 24px;
     border-radius: 8px;
     font-weight: 600;
     font-size: 14px;
     text-align: center;
-    z-index: 1000;
-    opacity: 0;
+    z-index: 1000;                   /* Fica sobre todos os elementos */
+    opacity: 0;                      /* Invisível por padrão */
     visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Animação elástica */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
 
+/* Estado de erro */
 #mensagem.erro {
-    background-color: #ff1e27;
+    background-color: #ff1e27;       /* Vermelho */
     color: #ffffff;
-    opacity: 1;
+    opacity: 1;                      /* Torna visível */
     visibility: visible;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0); /* Desce para posição final */
 }
 
+/* Estado de sucesso */
 #mensagem.sucesso {
-    background-color: #00b37e;
+    background-color: #00b37e;       /* Verde */
     color: #ffffff;
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
 }
 
-/* Container do Login / Redefinição */
+/* ---------- Container Principal ---------- */
 .login-container {
     width: 100%;
-    max-width: 420px;
+    max-width: 420px;                /* Largura máxima */
     padding: 20px;
 }
 
+/* Cartão com fundo e bordas */
 .login-card {
-    background-color: #16161f;
+    background-color: #16161f;       /* Fundo um pouco mais claro que o body */
     padding: 40px 35px;
     border-radius: 12px;
-    border: 1px solid #2a2a3c;
+    border: 1px solid #2a2a3c;       /* Borda sutil */
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
@@ -73,25 +83,25 @@ body {
     font-weight: 700;
     color: #ffffff;
     margin-bottom: 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.5px;          /* Texto mais compacto */
 }
-
 .login-card h1 span {
-    color: #ff1e27;
+    color: #ff1e27;                   /* Destaque vermelho no nome/marca */
 }
 
 .login-card p {
-    color: #a0a0b2;
+    color: #a0a0b2;                   /* Texto secundário */
     font-size: 14px;
     margin-bottom: 30px;
     text-align: center;
 }
 
-/* Formulário e Campos */
+/* ---------- Formulário ---------- */
 #formRedefinirSenha {
     width: 100%;
 }
 
+/* Grupo de campo */
 .campo {
     margin-bottom: 20px;
     width: 100%;
@@ -103,36 +113,36 @@ body {
     font-weight: 600;
     color: #c4c4cc;
     margin-bottom: 8px;
-    text-transform: uppercase;
+    text-transform: uppercase;        /* Letras maiúsculas */
     letter-spacing: 0.5px;
 }
 
 .campo input {
     width: 100%;
     padding: 14px 16px;
-    background-color: #0f0f13;
+    background-color: #0f0f13;       /* Mesmo fundo do body */
     border: 1px solid #2a2a3c;
     border-radius: 8px;
     color: #ffffff;
     font-size: 15px;
-    outline: none;
+    outline: none;                   /* Remove contorno padrão */
     transition: all 0.2s ease-in-out;
 }
 
 .campo input::placeholder {
-    color: #525266;
+    color: #525266;                   /* Texto de dica mais apagado */
 }
 
 .campo input:focus {
-    border-color: #ff1e27;
-    box-shadow: 0 0 0 3px rgba(255, 30, 39, 0.15);
+    border-color: #ff1e27;           /* Borda vermelha ao focar */
+    box-shadow: 0 0 0 3px rgba(255, 30, 39, 0.15); /* Brilho suave */
 }
 
-/* Botão de Ação */
+/* ---------- Botão de Ação Principal ---------- */
 .btn-login {
     width: 100%;
     padding: 14px;
-    background-color: #ff1e27;
+    background-color: #ff1e27;       /* Vermelho principal */
     color: #ffffff;
     border: none;
     border-radius: 8px;
@@ -145,39 +155,41 @@ body {
 }
 
 .btn-login:hover {
-    background-color: #e01921;
-    transform: translateY(-1px);
+    background-color: #e01921;       /* Vermelho mais escuro */
+    transform: translateY(-1px);     /* Leve sobe */
     box-shadow: 0 6px 16px rgba(255, 30, 39, 0.4);
 }
 
 .btn-login:active {
-    transform: translateY(0);
+    transform: translateY(0);        /* Volta ao clicar */
     box-shadow: 0 2px 8px rgba(255, 30, 39, 0.2);
 }
 
 .btn-login:disabled {
-    background-color: #2a2a3c;
+    background-color: #2a2a3c;       /* Cinza desativado */
     color: #7c7c8a;
-    cursor: not-allowed;
+    cursor: not-allowed;             /* Ícone proibido */
     box-shadow: none;
     transform: none;
 }
 
+/* ---------- Campo com Botão Mostrar/Ocultar Senha ---------- */
 .input-wrapper {
-    position: relative;
+    position: relative;              /* Referência para o botão absoluto */
     width: 100%;
 }
 
 .input-wrapper input {
     width: 100%;
-    padding-right: 60px;
+    padding-right: 60px;             /* Espaço reservado para o botão */
 }
 
+/* Botão revelar senha */
 .btn-mostrar-senha {
     position: absolute;
     right: 12px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%);    /* Centraliza verticalmente */
     background: transparent;
     border: none;
     color: #a0a0b2;
@@ -189,5 +201,5 @@ body {
 }
 
 .btn-mostrar-senha:hover {
-    color: #ffffff;
+    color: #ffffff;                  /* Fica branco ao passar o mouse */
 }

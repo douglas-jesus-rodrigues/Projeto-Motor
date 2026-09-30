@@ -1,134 +1,140 @@
 /* =========================================
    VARIÁVEIS DE DESIGN SYSTEM (MotorFlex)
+   Definição de cores, medidas e padrões reutilizáveis — facilita manutenção
 ========================================= */
 :root {
-    --bg-body: #060606;
-    --bg-card: #111113;
-    --bg-input: rgba(255, 255, 255, 0.04);
+    --bg-body: #060606;                      /* Cor de fundo da página (preto muito escuro) */
+    --bg-card: #111113;                      /* Fundo dos blocos/cards (cinza escuro) */
+    --bg-input: rgba(255, 255, 255, 0.04);  /* Fundo dos campos de entrada (branco quase transparente) */
     
-    --primary: #e50914;
-    --primary-hover: #ff1e27;
-    --primary-glow: rgba(229, 9, 20, 0.25);
+    --primary: #e50914;                      /* Cor principal de destaque — vermelho */
+    --primary-hover: #ff1e27;                /* Tom mais claro do vermelho para efeito de hover */
+    --primary-glow: rgba(229, 9, 20, 0.25); /* Brilho/sombra suave na cor principal */
     
-    --text-main: #ffffff;
-    --text-muted: #9ca3af;
+    --text-main: #ffffff;                    /* Cor do texto principal (branco) */
+    --text-muted: #9ca3af;                   /* Texto secundário/apagado (cinza) */
     
-    --border-light: rgba(255, 255, 255, 0.08);
-    --border-focus: rgba(229, 9, 20, 0.6);
+    --border-light: rgba(255, 255, 255, 0.08); /* Borda sutil */
+    --border-focus: rgba(229, 9, 20, 0.6);      /* Borda destacada ao focar no campo */
     
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
+    --radius-sm: 8px;                        /* Arredondamento pequeno */
+    --radius-md: 12px;                       /* Arredondamento médio */
+    --radius-lg: 20px;                       /* Arredondamento grande */
     
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animação padrão suave */
 }
 
+/* Reset básico: remove estilos padrão do navegador */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Borda e preenchimento não aumentam a largura total */
 }
 
 body {
-    background-color: var(--bg-body);
+    background-color: var(--bg-body); /* Cor de fundo base */
+    /* Camadas de fundo: gradiente radial + linhas de grade sutis */
     background-image: 
         radial-gradient(circle at 50% 0%, rgba(229, 9, 20, 0.08) 0%, transparent 50%),
         linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-    background-size: 100% 100%, 35px 35px, 35px 35px;
-    color: var(--text-main);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 40px 20px;
+    background-size: 100% 100%, 35px 35px, 35px 35px; /* Tamanho das camadas de fundo */
+    color: var(--text-main); /* Cor do texto principal */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Fonte do sistema */
+    display: flex;            /* Centraliza o formulário na tela */
+    justify-content: center;  /* Centraliza horizontalmente */
+    align-items: center;      /* Centraliza verticalmente */
+    min-height: 100vh;        /* Ocupa pelo menos a altura total da tela */
+    padding: 40px 20px;       /* Espaçamento nas bordas (topo/base e lados) */
 }
 
+/* Animação de entrada: aparece crescendo e descendo levemente */
 @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.96) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    from { opacity: 0; transform: scale(0.96) translateY(10px); } /* Começa invisível, menor e abaixo */
+    to { opacity: 1; transform: scale(1) translateY(0); }        /* Termina visível, no tamanho e posição normal */
 }
 
 .form-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    padding: 45px;
-    border-radius: var(--radius-lg);
-    width: 100%;
-    max-width: 760px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.05);
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    background: var(--bg-card);               /* Fundo escuro do cartão */
+    border: 1px solid var(--border-light);    /* Borda sutil */
+    padding: 45px;                             /* Espaçamento interno */
+    border-radius: var(--radius-lg);           /* Cantos bem arredondados */
+    width: 100%;                               /* Largura total disponível */
+    max-width: 760px;                          /* Largura máxima — não passa disso */
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.05); /* Sombra forte + brilho sutil vermelho */
+    position: relative;                        /* Referência para elementos filhos posicionados */
+    overflow: hidden;                           /* Esconde o que ultrapassar as bordas */
+    backdrop-filter: blur(10px);                /* Desfoque no fundo atrás */
+    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Executa a animação de entrada */
 }
 
+/* Faixa colorida no topo do formulário */
 .form-container::before {
-    content: '';
-    position: absolute;
+    content: '';                /* Necessário para pseudo-elemento */
+    position: absolute;         /* Fica fixo no topo */
     top: 0;
     left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #ff1e27, #8b0000);
+    width: 100%;                /* Largura total */
+    height: 4px;                /* Altura fina */
+    background: linear-gradient(90deg, #ff1e27, #8b0000); /* Gradiente vermelho */
 }
 
 .form-header {
-    text-align: center;
-    margin-bottom: 35px;
+    text-align: center;         /* Texto centralizado */
+    margin-bottom: 35px;        /* Espaço abaixo do cabeçalho */
 }
 
 .header-badge {
-    display: inline-block;
-    background: rgba(229, 9, 20, 0.1);
-    color: #ff4d55;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    margin-bottom: 15px;
-    border: 1px solid rgba(229, 9, 20, 0.2);
+    display: inline-block;      /* Comporta como bloco, mas só ocupa o necessário */
+    background: rgba(229, 9, 20, 0.1); /* Fundo vermelho bem suave */
+    color: #ff4d55;             /* Cor do texto em tom vermelho claro */
+    font-size: 0.75rem;        /* Fonte pequena */
+    font-weight: 700;           /* Negrito */
+    text-transform: uppercase;  /* Tudo maiúsculo */
+    letter-spacing: 1.5px;     /* Espaçamento entre letras */
+    padding: 6px 14px;          /* Espaçamento interno */
+    border-radius: 20px;       /* Formato pílula */
+    margin-bottom: 15px;        /* Espaço abaixo */
+    border: 1px solid rgba(229, 9, 20, 0.2); /* Borda vermelha sutil */
 }
 
 .form-header h2 {
-    font-size: 2rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-    letter-spacing: -0.5px;
+    font-size: 2rem;            /* Tamanho grande do título */
+    font-weight: 800;           /* Negrito forte */
+    margin-bottom: 8px;         /* Espaço abaixo do título */
+    letter-spacing: -0.5px;     /* Aproxima as letras */
 }
 
 .form-header p {
-    color: var(--text-muted);
+    color: var(--text-muted);   /* Cor apagada para o texto complementar */
     font-size: 0.95rem;
 }
 
 .form-section {
-    background: rgba(255, 255, 255, 0.01);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: var(--radius-md);
-    padding: 25px;
-    margin-bottom: 25px;
-    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.01); /* Fundo quase transparente */
+    border: 1px solid rgba(255, 255, 255, 0.03); /* Borda bem suave */
+    border-radius: var(--radius-md); /* Arredondamento médio */
+    padding: 25px;              /* Espaçamento interno */
+    margin-bottom: 25px;        /* Espaço abaixo da seção */
+    transition: var(--transition); /* Animação suave ao interagir */
 }
 
+/* Efeito ao passar o mouse sobre a seção */
 .form-section:hover {
-    border-color: rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.015);
+    border-color: rgba(255, 255, 255, 0.06); /* Clareia a borda */
+    background: rgba(255, 255, 255, 0.015);  /* Clareia levemente o fundo */
 }
 
 .section-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-light);
+    display: flex;              /* Ícone e texto lado a lado */
+    align-items: center;        /* Alinha verticalmente ao centro */
+    gap: 12px;                  /* Espaço entre ícone e texto */
+    margin-bottom: 20px;        /* Espaço abaixo do título */
+    padding-bottom: 12px;       /* Espaçamento interno embaixo */
+    border-bottom: 1px solid var(--border-light); /* Linha divisória abaixo do título */
 }
 
-.section-icon { font-size: 1.2rem; }
+.section-icon { font-size: 1.2rem; } /* Tamanho do ícone da seção */
 
 .section-title h3 {
     font-size: 1.05rem;
@@ -137,16 +143,16 @@ body {
 }
 
 .input-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
+    display: grid;              /* Layout em grade */
+    grid-template-columns: repeat(2, 1fr); /* Duas colunas de largura igual */
+    gap: 18px;                  /* Espaço entre os campos */
 }
 
-.full-width { grid-column: 1 / -1; }
+.full-width { grid-column: 1 / -1; } /* Ocupa da primeira à última coluna = largura total */
 
 .input-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: column;     /* Rótulo acima do campo */
 }
 
 label {
@@ -159,52 +165,56 @@ label {
 }
 
 input, select {
-    background-color: var(--bg-input) !important;
+    background-color: var(--bg-input) !important; /* Fundo do campo — !important garante prioridade */
     border: 1px solid var(--border-light);
-    color: var(--text-main) !important;
-    padding: 13px 16px;
+    color: var(--text-main) !important; /* Cor do texto dentro do campo */
+    padding: 13px 16px;          /* Espaçamento interno */
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
-    outline: none;
+    outline: none;               /* Remove contorno padrão do navegador */
     transition: var(--transition);
-    width: 100%;
+    width: 100%;                 /* Largura total do bloco */
 }
 
+/* Cor do texto de dica dentro do campo */
 input::placeholder, select::placeholder { color: rgba(255, 255, 255, 0.2); }
 
+/* Estilo quando o campo está focado (clicado) */
 input:focus, select:focus {
-    border-color: var(--primary);
-    background-color: rgba(229, 9, 20, 0.02) !important;
-    box-shadow: 0 0 0 4px var(--primary-glow);
+    border-color: var(--primary);              /* Borda vermelha */
+    background-color: rgba(229, 9, 20, 0.02) !important; /* Fundo com tom vermelho suave */
+    box-shadow: 0 0 0 4px var(--primary-glow);  /* Brilho ao redor */
 }
 
-input.preenchido, select.preenchido { border-color: rgba(22, 163, 74, 0.3); }
+/* Estilo quando o campo está preenchido/validado */
+input.preenchido, select.preenchido { border-color: rgba(22, 163, 74, 0.3); } /* Borda esverdeada */
 
 /* =========================================
    STEPPER COMPACTO (BOTÕES LADO A LADO)
+   Grupo de campo com botões de incremento/decremento à direita
 ========================================= */
 .stepper-wrapper {
-    position: relative;
+    position: relative;         /* Permite posicionar os botões sobre o campo */
     display: flex;
     align-items: center;
 }
 
 .stepper-wrapper input {
-    padding-right: 48px; /* Abre espaço para os mini botões à direita */
+    padding-right: 48px; /* Reserva espaço na direita para os botões */
 }
 
 .stepper-btns {
-    position: absolute;
-    right: 4px;
+    position: absolute;  /* Fica sobre o campo */
+    right: 4px;          /* Afastamento da borda direita */
     display: flex;
-    flex-direction: column;
-    height: calc(100% - 8px);
-    width: 34px;
-    gap: 2px;
+    flex-direction: column; /* Botões um acima do outro */
+    height: calc(100% - 8px); /* Altura quase igual ao campo */
+    width: 34px;         /* Largura fixa dos botões */
+    gap: 2px;            /* Espaço entre os dois botões */
 }
 
 .btn-step {
-    flex: 1;
+    flex: 1;             /* Cada botão ocupa metade da altura disponível */
     background: rgba(255, 255, 255, 0.06);
     border: none;
     color: var(--text-muted);
@@ -218,20 +228,22 @@ input.preenchido, select.preenchido { border-color: rgba(22, 163, 74, 0.3); }
 }
 
 .btn-step:hover {
-    background: var(--primary);
-    color: #ffffff;
+    background: var(--primary); /* Fundo vermelho ao passar o mouse */
+    color: #ffffff;             /* Ícone/branco */
 }
 
-/* Select customizado */
+/* Select customizado — remove seta padrão e coloca a nossa */
 select {
-    appearance: none;
+    appearance: none; /* Remove aparência padrão do navegador */
+    /* Seta personalizada como imagem embutida em base64 */
     background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
-    background-position: right 16px top 50%;
+    background-position: right 16px top 50%; /* Posiciona a seta à direita e centralizada */
     background-size: 10px auto;
     cursor: pointer;
 }
 
+/* Estilo das opções do menu suspenso */
 select option {
     background-color: #151515 !important;
     color: #ffffff !important;
@@ -239,16 +251,16 @@ select option {
 }
 
 .destaque-preco input {
-    color: #ff4d55 !important;
-    font-weight: 700;
+    color: #ff4d55 !important; /* Cor vermelha clara para o preço */
+    font-weight: 700;           /* Negrito */
 }
 
 .form-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 30px;
-    padding-top: 20px;
+    justify-content: flex-end;  /* Botões alinhados à direita */
+    gap: 15px;                  /* Espaço entre os botões */
+    margin-top: 30px;           /* Espaço acima da área de botões */
+    padding-top: 20px;          /* Espaçamento interno acima */
 }
 
 .btn-secundario {
@@ -257,7 +269,7 @@ select option {
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    background: transparent;
+    background: transparent;     /* Sem fundo */
     color: var(--text-muted);
     border: 1px solid var(--border-light);
     text-decoration: none;
@@ -265,12 +277,12 @@ select option {
 }
 
 .btn-secundario:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05); /* Fundo leve ao passar o mouse */
+    color: var(--text-main);               /* Texto fica branco */
 }
 
 .btn-primario {
-    background: linear-gradient(135deg, var(--primary) 0%, #b80710 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #b80710 100%); /* Fundo com gradiente vermelho */
     color: #fff;
     font-size: 0.95rem;
     font-weight: 600;
@@ -278,18 +290,19 @@ select option {
     border-radius: var(--radius-sm);
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); /* Sombra avermelhada */
     transition: var(--transition);
 }
 
 .btn-primario:hover {
-    background: linear-gradient(135deg, var(--primary-hover) 0%, #cc0a12 100%);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, var(--primary-hover) 0%, #cc0a12 100%); /* Gradiente mais claro */
+    transform: translateY(-2px); /* Sobe levemente */
 }
 
+/* Ajustes para telas menores (celulares) */
 @media (max-width: 650px) {
-    .input-grid { grid-template-columns: 1fr; }
-    .form-container { padding: 30px 20px; }
-    .form-actions { flex-direction: column-reverse; }
-    .btn-secundario, .btn-primario { width: 100%; }
+    .input-grid { grid-template-columns: 1fr; } /* Coloca os campos em coluna única */
+    .form-container { padding: 30px 20px; }     /* Reduz espaçamento interno */
+    .form-actions { flex-direction: column-reverse; } /* Botões em coluna, invertendo a ordem */
+    .btn-secundario, .btn-primario { width: 100%; } /* Botões ocupam largura total */
 }

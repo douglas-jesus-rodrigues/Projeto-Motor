@@ -1,191 +1,188 @@
 /* ==========================================
    VARIÁVEIS
    ========================================== */
+/* Definimos variáveis CSS para reutilizar cores, medidas e valores por todo o código — facilita manutenção e alterações */
 :root {
-    --bg: #060607;
-    --surface: #111114;
-    --surface-2: #17171c;
-    --surface-3: #1f1f26;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.18);
-    --accent: #e50914;
-    --accent-hover: #ff1e27;
-    --accent-dark: #b80710;
-    --text: #f4f5f7;
-    --text-muted: #9ca3af;
-    --text-soft: #b6bac2;
-    --success: #4ade80;
-    --radius: 16px;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --bg: #060607;                     /* Cor de fundo principal da página (preto bem escuro) */
+    --surface: #111114;                /* Fundo de elementos/cards (cinza muito escuro) */
+    --surface-2: #17171c;              /* Tom um pouco mais claro para camadas secundárias */
+    --surface-3: #1f1f26;              /* Tom ainda mais claro para destaque ou hover */
+    --border: rgba(255, 255, 255, 0.08);/* Borda sutil com branco quase transparente */
+    --border-strong: rgba(255, 255, 255, 0.18); /* Borda mais visível/destacada */
+    --accent: #e50914;                  /* Cor de destaque principal — vermelho estilo Netflix */
+    --accent-hover: #ff1e27;            /* Tom mais claro do destaque para efeito de passar o mouse */
+    --accent-dark: #b80710;             /* Tom mais escuro do destaque */
+    --text: #f4f5f7;                    /* Cor principal do texto (branco suave) */
+    --text-muted: #9ca3af;              /* Texto com menor destaque (cinza claro) */
+    --text-soft: #b6bac2;               /* Texto com suavidade intermediária */
+    --success: #4ade80;                 /* Cor para mensagens/valores positivos (verde) */
+    --radius: 16px;                     /* Arredondamento padrão de cantos */
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45); /* Sombra padrão com desfoque */
 }
-
+/* Reset básico: remove margens e preenchimentos padrão de todos os elementos */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Faz com que a borda e preenchimento não aumentem a largura total do elemento */
 }
-
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: smooth; /* Faz a rolagem da página ser suave ao clicar em links de navegação interna */
 }
-
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background:
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Fonte do sistema — carrega rápido e fica nativo em cada aparelho */
+    background: /* Duas camadas de fundo: um gradiente radial e a cor sólida */
         radial-gradient(900px 400px at 85% -5%, rgba(229, 9, 20, 0.10), transparent 60%),
         var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
+    color: var(--text);               /* Cor do texto principal */
+    min-height: 100vh;                /* Garante que o corpo ocupe pelo menos a altura total da tela */
+    -webkit-font-smoothing: antialiased; /* Deixa as fontes mais nítidas em navegadores WebKit */
 }
-
+/* Quando a classe modal-aberto estiver no body, bloqueia a rolagem da página */
 body.modal-aberto {
     overflow: hidden;
 }
-
+/* Qualquer elemento com atributo hidden fica escondido definitivamente */
 [hidden] {
     display: none !important;
 }
 
 /* ==========================================
-   HEADER
+   HEADER — CABEÇALHO
    ========================================== */
 .header {
-    background: rgba(14, 14, 16, 0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 18px 50px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    background: rgba(14, 14, 16, 0.88); /* Fundo quase preto com transparência */
+    backdrop-filter: blur(12px);       /* Efeito de desfoque no fundo atrás do cabeçalho */
+    -webkit-backdrop-filter: blur(12px); /* Versão para navegadores WebKit */
+    border-bottom: 1px solid var(--border); /* Linha divisória abaixo do cabeçalho */
+    padding: 18px 50px;                /* Espaçamento interno vertical e horizontal */
+    display: flex;                      /* Usa layout flexível para organizar os filhos */
+    justify-content: space-between;     /* Coloca elementos nas extremidades (esq e dir) */
+    align-items: center;                /* Alinha verticalmente ao centro */
+    position: sticky;                    /* Cabeçalho fica fixo no topo ao rolar a página */
+    top: 0;                             /* Fixa na distância 0 do topo */
+    z-index: 100;                       /* Garante que fique acima de outros elementos */
 }
-
+/* Estilo do link que envolve o logo */
 .header .logo {
-    text-decoration: none;
-    color: var(--text);
+    text-decoration: none; /* Remove sublinhado do link */
+    color: var(--text);    /* Usa cor do texto principal */
 }
-
+/* Título do logo */
 .header h1 {
-    font-size: 1.7rem;
-    letter-spacing: 0.5px;
+    font-size: 1.7rem;       /* Tamanho da fonte */
+    letter-spacing: 0.5px;  /* Espaçamento entre letras */
 }
-
+/* Parte colorida do logo */
 .header h1 span {
-    color: var(--accent);
+    color: var(--accent); /* Usa a cor de destaque */
 }
-
+/* Área de navegação */
 .header nav {
-    display: flex;
-    gap: 22px;
-    align-items: center;
+    display: flex;       /* Organiza links em linha */
+    gap: 22px;           /* Espaço entre os links */
+    align-items: center; /* Alinha verticalmente */
 }
-
+/* Cada link do menu */
 .header nav a {
-    color: var(--text-soft);
-    text-decoration: none;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    transition: color 0.2s ease, background 0.2s ease;
+    color: var(--text-soft);               /* Cor suave para os links */
+    text-decoration: none;                  /* Sem sublinhado */
+    font-size: 0.95rem;                     /* Tamanho da fonte */
+    display: flex;                          /* Permite alinhar ícone e texto */
+    align-items: center;                    /* Centraliza ícone e texto verticalmente */
+    gap: 8px;                               /* Espaço entre ícone e texto */
+    padding: 8px 12px;                      /* Espaçamento interno */
+    border-radius: 8px;                     /* Cantos arredondados */
+    transition: color 0.2s ease, background 0.2s ease; /* Animação suave ao passar o mouse */
 }
-
+/* Efeito ao passar o mouse sobre os links */
 .header nav a:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.06);
+    color: #fff;                         /* Fica branco */
+    background: rgba(255, 255, 255, 0.06); /* Fundo levemente claro */
 }
 
 /* ==========================================
-   LAYOUT
+   LAYOUT — ESTRUTURA DA PÁGINA
    ========================================== */
 .detalhes-container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 28px 20px 60px;
+    max-width: 1200px; /* Largura máxima do conteúdo */
+    margin: auto;       /* Centraliza na tela */
+    padding: 28px 20px 60px; /* Espaçamento interno: topo | lados | base */
 }
-
+/* Estado de carregamento */
 .loading-state {
-    text-align: center;
-    padding: 110px 0;
-    color: var(--text-muted);
+    text-align: center;      /* Texto centralizado */
+    padding: 110px 0;        /* Espaçamento vertical grande */
+    color: var(--text-muted);/* Cor do texto apagada */
     font-size: 1.1rem;
 }
-
+/* Ícone de carregamento */
 .loading-state i {
-    font-size: 3rem;
-    color: var(--accent);
-    margin-bottom: 20px;
+    font-size: 3rem;        /* Tamanho grande */
+    color: var(--accent);   /* Cor de destaque */
+    margin-bottom: 20px;    /* Espaço abaixo do ícone */
 }
-
+/* Navegação em trilha (ex: Início → Veículos → Detalhes) */
 .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex;         /* Itens em linha */
+    align-items: center;   /* Alinha ao centro */
+    gap: 10px;             /* Espaço entre itens */
     font-size: 0.85rem;
     color: var(--text-muted);
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: wrap;       /* Quebra linha em telas pequenas */
 }
-
+/* Links da trilha */
 .breadcrumb a {
     color: var(--text-soft);
     text-decoration: none;
 }
-
 .breadcrumb a:hover {
-    color: var(--accent);
+    color: var(--accent); /* Fica vermelho ao passar o mouse */
 }
-
+/* Ícone de separação */
 .breadcrumb i {
     font-size: 0.65rem;
 }
-
+/* Área principal com duas colunas */
 .conteudo-principal {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 28px;
-    align-items: start;
+    display: grid;                   /* Usa layout de grade */
+    grid-template-columns: 1.35fr 1fr; /* Coluna esquerda maior que a direita */
+    gap: 28px;                       /* Espaço entre colunas */
+    align-items: start;              /* Alinha ao topo */
 }
-
-/* Coluna direita acompanha a rolagem no desktop */
+/* Coluna direita fica fixa ao rolar a página */
 .coluna-direita {
     position: sticky;
-    top: 92px;
+    top: 92px; /* Distância do topo quando fixa */
 }
 
 /* ==========================================
-   CARDS
+   CARDS — BLOCOS DE CONTEÚDO
    ========================================== */
 .info-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 26px;
-    margin-bottom: 22px;
-    box-shadow: var(--shadow);
+    background: var(--surface);       /* Fundo escuro */
+    border: 1px solid var(--border);  /* Borda sutil */
+    border-radius: var(--radius);     /* Cantos arredondados */
+    padding: 26px;                     /* Espaçamento interno */
+    margin-bottom: 22px;               /* Espaço abaixo do card */
+    box-shadow: var(--shadow);         /* Sombra para dar profundidade */
 }
-
+/* Título dos cards */
 .info-card h3 {
     font-size: 1.05rem;
     margin-bottom: 18px;
-    display: flex;
+    display: flex;          /* Alinha ícone e texto */
     align-items: center;
     gap: 10px;
     color: var(--text);
 }
-
+/* Ícone ao lado do título */
 .info-card h3 i {
     color: var(--accent);
 }
 
 /* ==========================================
-   GALERIA
+   GALERIA DE FOTOS
    ========================================== */
 .galeria-card {
     background: var(--surface);
@@ -195,42 +192,42 @@ body.modal-aberto {
     margin-bottom: 22px;
     box-shadow: var(--shadow);
 }
-
+/* Área da foto principal */
 .foto-principal-wrapper {
-    position: relative;
+    position: relative;    /* Permite posicionar elementos filhos sobre a imagem */
     width: 100%;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 10; /* Proporção da imagem (largura/altura) */
     border-radius: 12px;
-    overflow: hidden;
-    cursor: zoom-in;
+    overflow: hidden;      /* Esconde partes que ultrapassem */
+    cursor: zoom-in;       /* Mostra ícone de lupa ao passar o mouse */
     background: var(--surface-2);
 }
-
+/* A imagem principal */
 .foto-principal-wrapper img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease, opacity 0.25s ease;
+    object-fit: cover;     /* Preenche o espaço sem distorcer */
+    transition: transform 0.4s ease, opacity 0.25s ease; /* Animação suave */
 }
-
+/* Efeito de zoom suave ao passar o mouse */
 .foto-principal-wrapper:hover img {
     transform: scale(1.03);
 }
-
+/* Camada escura gradiente na parte inferior da foto */
 .foto-principal-wrapper::after {
-    content: "";
+    content: "";           /* Necessário para pseudo-elementos */
     position: absolute;
-    inset: auto 0 0 0;
+    inset: auto 0 0 0;     /* Largura total, fixa embaixo */
     height: 30%;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
-    pointer-events: none;
+    pointer-events: none;  /* Não interfere em cliques */
 }
-
+/* Etiqueta de zoom */
 .zoom-badge {
     position: absolute;
     bottom: 14px;
     right: 14px;
-    z-index: 2;
+    z-index: 2;            /* Fica sobre a imagem */
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
     color: #fff;
@@ -243,7 +240,7 @@ body.modal-aberto {
     border: 1px solid var(--border);
     pointer-events: none;
 }
-
+/* Botão de favoritar */
 .btn-favoritar-detalhe {
     position: absolute;
     top: 14px;
@@ -255,7 +252,7 @@ body.modal-aberto {
     color: #fff;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: 50%;     /* Formato circular */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -263,51 +260,50 @@ body.modal-aberto {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
+/* Efeito ao passar o mouse no botão de favoritar */
 .btn-favoritar-detalhe:hover {
     background: rgba(229, 9, 20, 0.85);
-    transform: scale(1.08);
+    transform: scale(1.08); /* Cresce levemente */
     border-color: var(--accent);
 }
-
+/* Coração preenchido */
 .btn-favoritar-detalhe i.fa-solid.fa-heart {
     color: #ff2b36;
 }
-
+/* Coração branco no hover */
 .btn-favoritar-detalhe:hover i.fa-solid.fa-heart {
     color: #fff;
 }
-
+/* Área das miniaturas */
 .miniaturas {
     display: flex;
     gap: 10px;
     margin-top: 12px;
-    overflow-x: auto;
+    overflow-x: auto; /* Permite rolagem horizontal se não couberem todas */
     padding-bottom: 4px;
 }
-
+/* Botão de cada miniatura */
 .miniaturas button {
-    flex: 0 0 auto;
+    flex: 0 0 auto;    /* Não encolhe nem estica */
     width: 92px;
     height: 64px;
     border-radius: 10px;
     overflow: hidden;
-    border: 2px solid transparent;
+    border: 2px solid transparent; /* Borda invisível como espaço reservado */
     background: var(--surface-2);
     cursor: pointer;
-    opacity: 0.65;
+    opacity: 0.65;     /* Um pouco apagada */
     transition: all 0.2s ease;
 }
-
+/* Clareia ao passar o mouse */
 .miniaturas button:hover {
     opacity: 1;
 }
-
+/* Miniatura ativa (foto exibida) */
 .miniaturas button.ativa {
-    border-color: var(--accent);
+    border-color: var(--accent); /* Borda vermelha */
     opacity: 1;
 }
-
 .miniaturas img {
     width: 100%;
     height: 100%;
@@ -316,57 +312,57 @@ body.modal-aberto {
 }
 
 /* ==========================================
-   DESCRIÇÃO
+   DESCRIÇÃO DO ANÚNCIO
    ========================================== */
 .descricao-card p {
     color: var(--text-soft);
-    line-height: 1.7;
+    line-height: 1.7;        /* Espaçamento entre linhas confortável para leitura */
     font-size: 0.95rem;
-    white-space: pre-line;
+    white-space: pre-line;   /* Respeita quebras de linha do texto original */
 }
 
 /* ==========================================
-   CABEÇALHO DO ANÚNCIO
+   CABEÇALHO DO ANÚNCIO (TÍTULO, PREÇO, ETC)
    ========================================== */
 .header-anuncio-card {
-    background: linear-gradient(145deg, #131317, #1a1a20);
+    background: linear-gradient(145deg, #131317, #1a1a20); /* Fundo com gradiente sutil */
     border-color: var(--border-strong);
 }
-
+/* Etiqueta da marca */
 .badge-marca {
     display: inline-block;
     background: rgba(229, 9, 20, 0.12);
     color: #ff5a62;
     font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
+    font-weight: 700;         /* Negrito */
+    text-transform: uppercase;/* Tudo maiúsculo */
+    letter-spacing: 1.2px;    /* Espaçamento entre letras */
     padding: 5px 12px;
-    border-radius: 20px;
+    border-radius: 20px;      /* Formato pílula */
     margin-bottom: 12px;
     border: 1px solid rgba(229, 9, 20, 0.28);
 }
-
+/* Título principal do anúncio */
 .header-anuncio-card h1 {
     font-size: 1.9rem;
-    font-weight: 800;
+    font-weight: 800;         /* Negrito forte */
     line-height: 1.15;
     margin-bottom: 6px;
 }
-
+/* Versão/modelo complementar */
 .versao-texto {
     color: var(--text-muted);
     font-size: 0.95rem;
     margin-bottom: 16px;
 }
-
+/* Linha de fichas resumo */
 .resumo-chips {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap;          /* Quebra linha em telas pequenas */
     gap: 8px;
     margin-bottom: 20px;
 }
-
+/* Cada ficha/etiqueta do resumo */
 .chip-resumo {
     display: inline-flex;
     align-items: center;
@@ -375,16 +371,16 @@ body.modal-aberto {
     border: 1px solid var(--border);
     color: var(--text-soft);
     padding: 6px 12px;
-    border-radius: 999px;
+    border-radius: 999px;     /* Cantos totalmente arredondados */
     font-size: 0.8rem;
     font-weight: 600;
 }
-
+/* Ícone dentro da ficha */
 .chip-resumo i {
     color: var(--accent);
     font-size: 0.75rem;
 }
-
+/* Rótulo "Preço" */
 .preco-label {
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -392,16 +388,16 @@ body.modal-aberto {
     color: var(--text-muted);
     margin-bottom: 2px;
 }
-
+/* Valor do preço em destaque */
 .preco-destaque {
     font-size: 2.3rem;
     font-weight: 800;
-    color: var(--success);
-    letter-spacing: -0.5px;
+    color: var(--success);    /* Verde */
+    letter-spacing: -0.5px;   /* Aproxima um pouco as letras */
 }
 
 /* ==========================================
-   CONTATO / GESTÃO
+   CONTATO E BOTÕES DE AÇÃO
    ========================================== */
 .contato-card p {
     color: var(--text-muted);
@@ -409,9 +405,9 @@ body.modal-aberto {
     line-height: 1.55;
     margin-bottom: 18px;
 }
-
+/* Botão principal de proposta */
 .btn-proposta {
-    width: 100%;
+    width: 100%;              /* Largura total do card */
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
     color: #fff;
     border: none;
@@ -428,25 +424,24 @@ body.modal-aberto {
     box-shadow: 0 4px 15px rgba(229, 9, 20, 0.35);
     transition: all 0.25s ease;
 }
-
+/* Efeito ao passar o mouse */
 .btn-proposta:hover {
     background: linear-gradient(135deg, var(--accent-hover) 0%, #cc0a12 100%);
-    transform: translateY(-2px);
+    transform: translateY(-2px); /* Sobe levemente */
     box-shadow: 0 8px 22px rgba(229, 9, 20, 0.5);
 }
-
+/* Botão secundário (estilo mais suave) */
 .btn-proposta.secundario {
     background: var(--surface-2);
     border: 1px solid var(--border-strong);
     box-shadow: none;
 }
-
 .btn-proposta.secundario:hover {
     background: var(--surface-3);
     border-color: var(--accent);
     box-shadow: none;
 }
-
+/* Selo "Anunciante Dono" */
 .selo-dono {
     display: inline-flex;
     align-items: center;
@@ -462,14 +457,14 @@ body.modal-aberto {
 }
 
 /* ==========================================
-   ESPECIFICAÇÕES
+   ESPECIFICAÇÕES TÉCNICAS
    ========================================== */
 .specs-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* Duas colunas de largura igual */
     gap: 14px;
 }
-
+/* Cada item de especificação */
 .spec-item {
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid var(--border);
@@ -480,21 +475,20 @@ body.modal-aberto {
     gap: 14px;
     transition: border-color 0.2s ease, background 0.2s ease;
 }
-
+/* Destaque ao passar o mouse */
 .spec-item:hover {
     border-color: rgba(229, 9, 20, 0.4);
     background: rgba(229, 9, 20, 0.05);
 }
-
 .spec-item i {
     font-size: 1.2rem;
     color: var(--accent);
     width: 24px;
     text-align: center;
 }
-
+/* Rótulo do item */
 .spec-label {
-    display: block;
+    display: block;            /* Fica em linha separada */
     font-size: 0.7rem;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -502,26 +496,25 @@ body.modal-aberto {
     font-weight: 600;
     margin-bottom: 2px;
 }
-
+/* Valor do item */
 .spec-value {
     font-size: 0.95rem;
     font-weight: 700;
     color: #fff;
 }
-
+/* Caixa de dica de segurança */
 .dica-seguranca {
     display: flex;
     gap: 14px;
     align-items: flex-start;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px dashed var(--border-strong);
+    border: 1px dashed var(--border-strong); /* Borda tracejada */
     border-radius: 12px;
     padding: 16px 18px;
     color: var(--text-muted);
     font-size: 0.82rem;
     line-height: 1.5;
 }
-
 .dica-seguranca i {
     color: var(--success);
     font-size: 1.2rem;
@@ -529,49 +522,48 @@ body.modal-aberto {
 }
 
 /* ==========================================
-   LIGHTBOX
+   LIGHTBOX — VISUALIZADOR DE IMAGENS EM TELA CHEIA
    ========================================== */
 .modal-imagem-overlay {
-    position: fixed;
-    inset: 0;
+    position: fixed;           /* Fica fixo na tela toda */
+    inset: 0;                 /* Ocupa todos os lados — atalho para top/right/bottom/left: 0 */
     background: rgba(0, 0, 0, 0.88);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
+    z-index: 9999;            /* Fica acima de tudo */
+    opacity: 0;               /* Começa invisível */
+    visibility: hidden;       /* Não aparece nem para leitura de tela */
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-
+/* Classe para ativar/exibir o lightbox */
 .modal-imagem-overlay.ativo {
     opacity: 1;
     visibility: visible;
 }
-
+/* Caixa interna com a imagem */
 .modal-imagem-conteudo {
     position: relative;
     max-width: 90%;
     max-height: 88%;
-    transform: scale(0.92);
+    transform: scale(0.92);   /* Começa um pouco menor */
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
+/* Animação de crescimento ao abrir */
 .modal-imagem-overlay.ativo .modal-imagem-conteudo {
     transform: scale(1);
 }
-
 .modal-imagem-conteudo img {
     display: block;
     max-width: 100%;
-    max-height: 85vh;
-    object-fit: contain;
+    max-height: 85vh;         /* Altura máxima relativa à tela */
+    object-fit: contain;       /* Mostra a imagem inteira sem cortar */
     border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);
 }
-
+/* Botão de fechar */
 .modal-fechar {
     position: absolute;
     top: -46px;
@@ -583,13 +575,12 @@ body.modal-aberto {
     cursor: pointer;
     transition: color 0.2s;
 }
-
 .modal-fechar:hover {
     color: var(--accent);
 }
 
 /* ==========================================
-   MODAIS (LOGIN / PROPOSTA)
+   MODAIS — JANELAS DE AVISO E PROPOSTA
    ========================================== */
 .modal-aviso-overlay {
     position: fixed;
@@ -602,9 +593,9 @@ body.modal-aberto {
     align-items: center;
     justify-content: center;
     padding: 16px;
-    animation: fadeInModal 0.25s ease-out forwards;
+    animation: fadeInModal 0.25s ease-out forwards; /* Animação de entrada */
 }
-
+/* Conteúdo dos modais */
 .modal-aviso-conteudo,
 .modal-proposta {
     position: relative;
@@ -616,12 +607,11 @@ body.modal-aberto {
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
     animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-
 .modal-aviso-conteudo {
     max-width: 400px;
     text-align: center;
 }
-
+/* Ícone do aviso */
 .modal-aviso-icone {
     width: 60px;
     height: 60px;
@@ -635,27 +625,24 @@ body.modal-aberto {
     justify-content: center;
     margin: 0 auto 18px;
 }
-
 .modal-aviso-conteudo h3 {
     color: #fff;
     font-size: 1.2rem;
     margin-bottom: 8px;
 }
-
 .modal-aviso-conteudo p {
     color: var(--text-muted);
     font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: 24px;
 }
-
+/* Área de botões do aviso */
 .modal-aviso-acoes {
     display: flex;
     gap: 12px;
 }
-
 .btn-modal-cancelar {
-    flex: 1;
+    flex: 1;                  /* Ocupa 1 parte do espaço disponível */
     background: var(--surface-2);
     color: var(--text);
     border: 1px solid var(--border-strong);
@@ -666,13 +653,11 @@ body.modal-aberto {
     cursor: pointer;
     transition: background 0.2s ease;
 }
-
 .btn-modal-cancelar:hover {
     background: var(--surface-3);
 }
-
 .btn-modal-entrar {
-    flex: 1.4;
+    flex: 1.4;                /* Ocupa 1,4x mais espaço que o botão cancelar */
     background: var(--accent);
     color: #fff;
     border: none;
@@ -687,23 +672,19 @@ body.modal-aberto {
     cursor: pointer;
     transition: background 0.2s ease, transform 0.1s ease;
 }
-
 .btn-modal-entrar:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
 }
-
 .btn-modal-entrar:disabled {
     opacity: 0.7;
     cursor: wait;
     transform: none;
 }
-
 /* Modal de proposta */
 .modal-proposta {
     max-width: 520px;
 }
-
 .modal-proposta h3 {
     font-size: 1.25rem;
     display: flex;
@@ -711,18 +692,16 @@ body.modal-aberto {
     gap: 10px;
     margin-bottom: 6px;
 }
-
 .modal-proposta h3 i {
     color: var(--accent);
 }
-
 .modal-proposta-sub {
     color: var(--text-muted);
     font-size: 0.88rem;
     line-height: 1.5;
     margin-bottom: 18px;
 }
-
+/* Botão fechar do modal de proposta */
 .modal-proposta-fechar {
     position: absolute;
     top: 14px;
@@ -734,11 +713,10 @@ body.modal-aberto {
     cursor: pointer;
     line-height: 1;
 }
-
 .modal-proposta-fechar:hover {
     color: #fff;
 }
-
+/* Resumo do veículo dentro do modal */
 .proposta-veiculo {
     display: flex;
     align-items: center;
@@ -749,7 +727,6 @@ body.modal-aberto {
     padding: 10px;
     margin-bottom: 18px;
 }
-
 .proposta-veiculo img {
     width: 84px;
     height: 58px;
@@ -757,19 +734,17 @@ body.modal-aberto {
     border-radius: 8px;
     background: var(--surface-3);
 }
-
 .proposta-veiculo strong {
     display: block;
     font-size: 0.95rem;
     margin-bottom: 3px;
 }
-
 .proposta-veiculo span {
     color: var(--success);
     font-weight: 700;
     font-size: 0.9rem;
 }
-
+/* Rótulo de campo */
 .proposta-label {
     display: block;
     font-size: 0.75rem;
@@ -779,10 +754,10 @@ body.modal-aberto {
     color: var(--text-muted);
     margin-bottom: 8px;
 }
-
+/* Caixa de texto da proposta */
 #propostaTexto {
     width: 100%;
-    resize: vertical;
+    resize: vertical;         /* Permite que o usuário aumente a altura */
     min-height: 110px;
     background: var(--surface-2);
     color: var(--text);
@@ -792,22 +767,21 @@ body.modal-aberto {
     font: inherit;
     font-size: 0.92rem;
     line-height: 1.5;
-    outline: none;
+    outline: none;            /* Remove contorno padrão do navegador */
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
+/* Destaque ao focar na caixa de texto */
 #propostaTexto:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18);
 }
-
+/* Fichas de sugestão rápida */
 .proposta-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin: 12px 0 22px;
 }
-
 .proposta-chips button {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-soft);
@@ -819,7 +793,6 @@ body.modal-aberto {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .proposta-chips button:hover {
     border-color: var(--accent);
     color: #fff;
@@ -827,77 +800,69 @@ body.modal-aberto {
 }
 
 /* ==========================================
-   TOAST
+   TOAST — MENSAGEM FLUTUANTE
    ========================================== */
 .toast {
     position: fixed;
     bottom: 26px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%); /* Centraliza horizontalmente */
     z-index: 11000;
     background: var(--surface-3);
     color: #fff;
     border: 1px solid var(--border-strong);
-    border-left: 4px solid var(--accent);
+    border-left: 4px solid var(--accent); /* Destaque na lateral */
     padding: 13px 20px;
     border-radius: 10px;
     font-size: 0.9rem;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
     animation: fadeInModal 0.25s ease-out;
-    max-width: calc(100% - 32px);
+    max-width: calc(100% - 32px); /* Respeita as bordas da tela */
 }
-
+/* Animação de aparecer */
 @keyframes fadeInModal {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
+/* Animação de crescer e aparecer */
 @keyframes scaleUpModal {
     from { transform: translateY(15px) scale(0.96); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 /* ==========================================
-   RESPONSIVIDADE
+   RESPONSIVIDADE — AJUSTES PARA TELAS MENORES
    ========================================== */
-@media (max-width: 960px) {
+@media (max-width: 960px) { /* Para telas até 960px de largura */
     .conteudo-principal {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Coloca tudo em uma coluna só */
     }
-
     .coluna-direita {
-        position: static;
+        position: static; /* Deixa de ser fixa e segue o fluxo normal */
     }
-
     .header {
-        padding: 14px 20px;
+        padding: 14px 20px; /* Reduz espaçamento */
     }
 }
-
-@media (max-width: 560px) {
+@media (max-width: 560px) { /* Para celulares/telas muito pequenas */
     .header {
-        flex-direction: column;
+        flex-direction: column; /* Coloca logo e menu um abaixo do outro */
         gap: 8px;
     }
-
     .header-anuncio-card h1 {
-        font-size: 1.55rem;
+        font-size: 1.55rem; /* Reduz tamanho da fonte */
     }
-
     .preco-destaque {
         font-size: 2rem;
     }
-
     .specs-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Itens de especificação em coluna única */
     }
-
     .modal-aviso-acoes {
-        flex-direction: column-reverse;
+        flex-direction: column-reverse; /* Inverte ordem dos botões (principal por último) */
     }
-
     .modal-proposta,
     .modal-aviso-conteudo {
-        padding: 24px 20px;
+        padding: 24px 20px; /* Reduz espaçamento interno */
     }
 }

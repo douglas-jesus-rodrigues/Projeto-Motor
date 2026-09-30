@@ -2,487 +2,1018 @@
    MOTORFLEX — DESIGN TOKENS (TEMA VERMELHO)
    Paleta inspirada em painel esportivo: grafite profundo + vermelho vivo.
    ========================================================================== */
-   :root {
+
+/* Seleciona o elemento raiz (<html>), ideal para declarar variáveis globais (Design Tokens) */
+:root {
+    /* Define a cor de fundo principal (quase preta) */
     --bg: #0a0c0f;
+    
+    /* Define uma cor de fundo alternativa para criar textura e profundidade */
     --bg-texture: #0d1013;
+    
+    /* Define a cor dos cartões/superfícies de primeiro nível */
     --surface: #14181f;
+    
+    /* Define a cor para superfícies de segundo nível (como inputs ou hovers) */
     --surface-2: #1b2029;
+    
+    /* Define a cor para superfícies de terceiro nível (elementos em destaque/ativos) */
     --surface-3: #232a35;
+    
+    /* Define a cor da borda sutil em formato RGBA (branco com 8% de opacidade) */
     --border: rgba(255, 255, 255, 0.08);
+    
+    /* Define a cor da borda mais visível (branco com 16% de opacidade) */
     --border-strong: rgba(255, 255, 255, 0.16);
 
+    /* Define a cor padrão de texto principal */
     --text: #eef1f5;
+    
+    /* Define a cor para textos secundários ou menos importantes */
     --text-muted: #8b93a1;
+    
+    /* Define a cor para textos muito discretos/desativados */
     --text-faint: #5b6270;
 
     /* Cores de Destaque Atualizadas para Vermelho Esportivo */
+    
+    /* Cor de destaque principal (Vermelho puro) */
     --accent: #ff0000;
+    
+    /* Cor de destaque ao passar o mouse (Vermelho mais claro) */
     --accent-hover: #ff3333;
+    
+    /* Cor de fundo suave usando o tom de destaque (Vermelho com 14% de opacidade) */
     --accent-soft: rgba(255, 0, 0, 0.14);
+    
+    /* Cor para bordas de elementos com destaque vermelho (40% de opacidade) */
     --accent-border: rgba(255, 0, 0, 0.4);
 
+    /* Cor para indicar sucesso/confirmação (Verde) */
     --success: #3ecf8e;
+    
+    /* Fundo suave para alertas de sucesso */
     --success-soft: rgba(62, 207, 142, 0.14);
+    
+    /* Cor para indicar erro/perigo (Vermelho claro/Rosado) */
     --danger: #e5636a;
+    
+    /* Fundo suave para alertas de erro */
     --danger-soft: rgba(229, 99, 106, 0.12);
 
+    /* Raio de arredondamento pequeno para botões/inputs (6px) */
     --radius-sm: 6px;
+    
+    /* Raio de arredondamento médio para cartões pequenos (10px) */
     --radius-md: 10px;
+    
+    /* Raio de arredondamento grande para containers principais (16px) */
     --radius-lg: 16px;
 
+    /* Sombra suave configurada para os cartões */
     --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+    
+    /* Tipografia para títulos principais */
     --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+    
+    /* Tipografia para o corpo do texto e leitura geral */
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
+/* Seletor universal (*), inclui pseudo-elementos ::before e ::after */
 *, *::before, *::after {
+    /* Faz com que padding e border sejam incluídos no cálculo do tamanho total do elemento */
     box-sizing: border-box;
+    
+    /* Remove as margens padrão do navegador de todos os elementos */
     margin: 0;
+    
+    /* Remove os espaçamentos internos padrão de todos os elementos */
     padding: 0;
 }
 
+/* Classe utilitária para acessibilidade (Screen Readers / Leitores de Tela) */
 .sr-only {
+    /* Tira o elemento do fluxo normal do documento */
     position: absolute;
+    
+    /* Define tamanho mínimo imperceptível */
     width: 1px;
     height: 1px;
+    
+    /* Esconde o conteúdo que transbordar esse 1px */
     overflow: hidden;
+    
+    /* Recorta o elemento tornando-o invisível visualmente */
     clip: rect(0 0 0 0);
+    
+    /* Impede que o texto quebre linhas */
     white-space: nowrap;
 }
 
+/* Aplica estilo ao focar elementos através do teclado (Acessibilidade) */
 :focus-visible {
+    /* Cria uma linha de foco visível na cor vermelha de destaque */
     outline: 2px solid var(--accent-hover);
+    
+    /* Afasta a linha de foco do elemento em 2px */
     outline-offset: 2px;
+    
+    /* Arredonda os cantos do contorno de foco */
     border-radius: 4px;
 }
 
+/* Media query que identifica se o usuário solicitou redução de animações nas configurações do sistema */
 @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    /* Para todos os elementos, reduz drasticamente o tempo de animação e transição */
+    * { 
+        animation-duration: 0.01ms !important; 
+        transition-duration: 0.01ms !important; 
+    }
 }
 
+/* Estilização do corpo da página (<body>) */
 body {
+    /* Combina um gradiente radial vermelho suave no topo com um gradiente linear escuro de fundo */
     background:
         radial-gradient(ellipse 900px 500px at 15% -10%, rgba(255, 0, 0, 0.08), transparent 60%),
         linear-gradient(180deg, var(--bg-texture) 0%, #060708 100%);
+        
+    /* Aplica a cor do texto principal */
     color: var(--text);
+    
+    /* Aplica a fonte do corpo da página */
     font-family: var(--font-body);
+    
+    /* Define o espaçamento interno do body (topo, laterais, baixo) */
     padding: 28px 16px 60px;
+    
+    /* Garante que o fundo ocupe no mínimo 100% da altura da tela */
     min-height: 100vh;
+    
+    /* Define o espaçamento entre as linhas de texto para boa leitura */
     line-height: 1.5;
 }
 
+/* Container centralizador de largura máxima */
 .container {
+    /* Define a largura máxima do conteúdo da página */
     max-width: 1280px;
+    
+    /* Centraliza o container horizontalmente na tela */
     margin: 0 auto;
 }
 
+/* Estilização padrão para os títulos principais da aplicação */
 h1, h2, h3 {
+    /* Aplica a fonte 'Oswald' configurada nas variáveis */
     font-family: var(--font-display);
+    
+    /* Define o peso semi-negrito para as fontes */
     font-weight: 600;
+    
+    /* Espaçamento sutil entre as letras do título */
     letter-spacing: 0.2px;
 }
 
 /* ---------------------------------------------------------------- */
 /* NAVEGAÇÃO                                                        */
 /* ---------------------------------------------------------------- */
+
+/* Barra de navegação principal */
 .navbar {
+    /* Define a cor de fundo do container da navbar */
     background: var(--surface);
+    
+    /* Habilita o layout Flexbox */
     display: flex;
+    
+    /* Alinha os itens verticalmente ao centro */
     align-items: center;
+    
+    /* Espaçamento entre os links de navegação */
     gap: 4px;
+    
+    /* Borda levemente arredondada no bloco da navbar */
     border-radius: var(--radius-md);
+    
+    /* Espaço abaixo da barra de navegação */
     margin-bottom: 28px;
+    
+    /* Borda sutil em volta da navbar */
     border: 1px solid var(--border);
+    
+    /* Espaçamento interno da navbar */
     padding: 6px;
+    
+    /* Permite que os links dobrem de linha se a tela for muito pequena */
     flex-wrap: wrap;
 }
 
+/* Estilização comum para botões de voltar e links da navbar */
 .nav-back-btn, .navbar a.nav-link {
+    /* Cor de texto secundária */
     color: var(--text-muted);
+    
+    /* Espaçamento interno vertical e horizontal do botão */
     padding: 10px 16px;
+    
+    /* Remove o sublinhado padrão dos links */
     text-decoration: none;
+    
+    /* Tamanho da fonte do link */
     font-size: 0.87rem;
+    
+    /* Peso da fonte em negrito */
     font-weight: 600;
+    
+    /* Canto arredondado nos links */
     border-radius: var(--radius-sm);
+    
+    /* Transição suave de cores ao passar o mouse */
     transition: background-color 0.15s ease, color 0.15s ease;
+    
+    /* Transforma o elemento em flex no fluxo do texto */
     display: inline-flex;
+    
+    /* Alinha texto e ícone internamente ao centro */
     align-items: center;
+    
+    /* Espaço entre ícone e texto */
     gap: 7px;
 }
 
+/* Efeito Hover no botão voltar */
 .nav-back-btn:hover {
+    /* Fundo fica levemente mais claro */
     background: var(--surface-2);
+    
+    /* Texto fica na cor principal (mais brilhante) */
     color: var(--text);
 }
 
+/* Estado ativo da aba selecionada na navegação */
 .navbar a.nav-link.active {
+    /* Aplica a cor vermelha de destaque no fundo */
     background: var(--accent);
+    
+    /* Texto fica branco puro para dar contraste */
     color: #ffffff;
 }
 
+/* Estado Hover para links que NÃO estão ativos */
 .navbar a.nav-link:not(.active):hover {
+    /* Destaque sutil com cor de fundo secundária */
     background: var(--surface-2);
+    
+    /* Texto passa a ser principal */
     color: var(--text);
 }
 
+/* Esconde as abas inativas por padrão */
 .page-tab { display: none; }
+
+/* Exibe a aba que contém a classe active */
 .page-tab.active { display: block; }
 
+/* Título de seção com barra indicadora vermelha à esquerda */
 .section-title {
+    /* Tamanho de fonte do título */
     font-size: 1.15rem;
+    
+    /* Cor do texto em branco */
     color: #fff;
+    
+    /* Distância inferior para o próximo elemento */
     margin-bottom: 16px;
+    
+    /* Cria o detalhe da barra vermelha vertical no lado esquerdo */
     border-left: 3px solid var(--accent);
+    
+    /* Espaçamento entre a barra vermelha e o texto do título */
     padding-left: 12px;
 }
 
+/* Linha de cabeçalho com múltiplos elementos lado a lado */
 .section-header-row {
+    /* Exibe os elementos lado a lado via Flexbox */
     display: flex;
+    
+    /* Alinha o texto pela linha de base das fontes */
     align-items: baseline;
+    
+    /* Empurra o título para a esquerda e o contador para a direita */
     justify-content: space-between;
+    
+    /* Espaçamento entre os itens */
     gap: 12px;
+    
+    /* Margem inferior discreta */
     margin-bottom: 4px;
 }
 
+/* Estilização do texto do contador de resultados */
 .result-count {
+    /* Fonte menor que o texto padrão */
     font-size: 0.82rem;
+    
+    /* Cor de texto discreta */
     color: var(--text-faint);
 }
 
 /* ---------------------------------------------------------------- */
 /* CATÁLOGO — LAYOUT                                                 */
 /* ---------------------------------------------------------------- */
+
+/* Estrutura principal do catálogo dividida em colunas */
 .catalog-layout {
+    /* Define layout em grelha CSS Grid */
     display: grid;
+    
+    /* Cria 2 colunas: 1ª fixa com 272px (filtros) e 2ª flexível ocupando o resto (produtos) */
     grid-template-columns: 272px 1fr;
+    
+    /* Espaçamento entre os filtros e o catálogo */
     gap: 24px;
+    
+    /* Alinha os itens ao topo das suas respectivas colunas */
     align-items: start;
 }
 
+/* Painel de filtro lateral na coluna esquerda */
 .sidebar-filter {
+    /* Cor do fundo do painel */
     background: var(--surface);
+    
+    /* Borda fina em volta do painel */
     border: 1px solid var(--border);
+    
+    /* Arredondamento dos cantos do painel */
     border-radius: var(--radius-lg);
+    
+    /* Espaçamento interno */
     padding: 20px;
+    
+    /* Faz o painel seguir a rolagem da página (fixo na tela) */
     position: sticky;
+    
+    /* Define o ponto onde o painel fica fixo no topo da janela (20px do topo) */
     top: 20px;
 }
 
+/* Grid vertical de agrupamento de filtros */
 .filter-vertical-grid {
+    /* Exibe os campos de filtro em pilha vertical */
     display: flex;
     flex-direction: column;
+    
+    /* Espaçamento vertical entre os campos de filtro */
     gap: 14px;
+    
+    /* Distância inferior para os botões de ação */
     margin-bottom: 20px;
 }
 
+/* Área de botões no filtro */
 .filter-actions {
+    /* Organiza os botões do filtro verticalmente */
     display: flex;
     flex-direction: column;
+    
+    /* Espaçamento de 10px entre os botões */
     gap: 10px;
 }
 
+/* Coluna principal do catálogo onde ficam os carros */
 .catalog-content {
+    /* Empilha banners, seções e os grids de veículos */
     display: flex;
     flex-direction: column;
+    
+    /* Distância vertical entre as seções do catálogo */
     gap: 32px;
 }
 
+/* Garante altura mínima para evitar quebras de layout durante o carregamento */
 .featured-banner, .catalog-section, .top-deals-section { min-height: 60px; }
 
-/* Destaque */
+/* Card do veículo em destaque principal */
 .featured-car {
+    /* Define layout em grid para o banner principal */
     display: grid;
+    
+    /* Cria 2 colunas: imagem fixa com 220px e informações ocupando o resto */
     grid-template-columns: 220px 1fr;
+    
+    /* Espaçamento entre imagem e informações */
     gap: 18px;
+    
+    /* Gradiente em diagonal para o fundo do destaque */
     background: linear-gradient(135deg, var(--surface-2), var(--surface));
+    
+    /* Borda exterior */
     border: 1px solid var(--border);
+    
+    /* Cantos bastante arredondados */
     border-radius: var(--radius-lg);
+    
+    /* Corta imagens ou elementos que ultrapassarem os limites dos cantos arredondados */
     overflow: hidden;
+    
+    /* Altura mínima do destaque */
     min-height: 140px;
 }
 
+/* Imagem do carro em destaque */
 .featured-car img {
+    /* Preenche toda a largura da coluna de 220px */
     width: 100%;
+    
+    /* Preenche toda a altura da coluna */
     height: 100%;
+    
+    /* Garante a altura mínima do elemento pai */
     min-height: 140px;
+    
+    /* Corta a imagem proporcionalmente sem distorcê-la */
     object-fit: cover;
 }
 
+/* Painel de dados do veículo em destaque */
 .featured-car .featured-info {
+    /* Organiza textos e preço verticalmente */
     display: flex;
     flex-direction: column;
+    
+    /* Centraliza os elementos verticalmente dentro do box */
     justify-content: center;
+    
+    /* Espaçamento interno vertical entre os textos */
     gap: 6px;
+    
+    /* Preenchimento interno do container das informações */
     padding: 16px 20px 16px 0;
+    
+    /* Tamanho da fonte do texto explicativo */
     font-size: 0.95rem;
+    
+    /* Cor atenuada para os dados secundários do destaque */
     color: var(--text-muted);
 }
 
+/* Preço no banner de destaque */
 .featured-car .featured-info .price {
+    /* Fonte em estilo esportivo ('Oswald') */
     font-family: var(--font-display);
+    
+    /* Tamanho do texto do preço */
     font-size: 1.3rem;
+    
+    /* Cor vermelha chamativa no preço */
     color: var(--accent-hover);
 }
 
+/* Responsividade do banner de destaque para dispositivos móveis pequenos */
 @media (max-width: 560px) {
+    /* Transforma as colunas do destaque em uma única coluna vertical */
     .featured-car { grid-template-columns: 1fr; }
+    
+    /* Limita a altura da imagem quando empilhada acima do texto */
     .featured-car img { max-height: 160px; }
 }
 
-/* Grade de veículos */
+/* Grid de cards de veículos no catálogo */
 .cars-grid {
+    /* Layout em grid responsivo */
     display: grid;
+    
+    /* Cria automaticamente quantas colunas couberem, com no mínimo 250px por card */
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    
+    /* Espaço entre os cards de veículos */
     gap: 18px;
+    
+    /* Margem acima do grid */
     margin-top: 14px;
 }
 
+/* Estrutura do card individual do veículo */
 .card-item-catalogo {
+    /* Cor do fundo do card */
     background: var(--surface);
+    
+    /* Cor base do texto */
     color: var(--text);
+    
+    /* Arredondamento do card */
     border-radius: var(--radius-md);
+    
+    /* Esconde estouro de imagem no arredondamento */
     overflow: hidden;
+    
+    /* Borda sutil no card */
     border: 1px solid var(--border);
+    
+    /* Organiza imagem, conteúdo e rodapé verticalmente */
     display: flex;
     flex-direction: column;
+    
+    /* Transição suave nos efeitos de hover */
     transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
+/* Efeito ao passar o mouse sobre o card de veículo */
 .card-item-catalogo:hover {
+    /* Borda do card fica mais visível */
     border-color: var(--border-strong);
+    
+    /* Eleva ligeiramente o card em 3px para passar efeito 3D */
     transform: translateY(-3px);
+    
+    /* Projeta uma sombra abaixo do card */
     box-shadow: var(--shadow-card);
 }
 
+/* Container de imagem do card */
 .card-img-wrapper {
+    /* Ocupa toda a largura do card */
     width: 100%;
+    
+    /* Altura fixa do contêiner de imagem */
     height: 190px;
+    
+    /* Esconde o zoom da imagem no hover */
     overflow: hidden;
+    
+    /* Fundo de carregamento enquanto a imagem baixa */
     background: var(--surface-2);
+    
+    /* Permite posicionar o botão de favoritar absoluto sobre ele */
     position: relative;
 }
 
+/* Elemento de imagem dentro do card */
 .card-img-wrapper img {
+    /* Preenche todo o wrapper */
     width: 100%;
     height: 100%;
+    
+    /* Ajusta a imagem sem distorcer as proporções originais */
     object-fit: cover;
+    
+    /* Garante exibição em bloco */
     display: block;
+    
+    /* Transição suave do efeito de zoom */
     transition: transform 0.3s ease;
 }
 
+/* Efeito Zoom na imagem quando o card recebe hover */
 .card-item-catalogo:hover .card-img-wrapper img {
+    /* Aplica leve aproximação de 3% na imagem */
     transform: scale(1.03);
 }
 
-/* BOTÃO DE FAVORITAR NO CATÁLOGO (IDÊNTICO AO DE DETALHES) */
+/* BOTÃO DE FAVORITAR NO CATÁLOGO */
 .btn-favoritar {
+    /* Posiciona o botão no canto superior direito sobre a imagem */
     position: absolute;
     top: 12px;
     right: 12px;
+    
+    /* Fundo escuro semi-transparente */
     background: rgba(0, 0, 0, 0.6);
+    
+    /* Efeito moderno de desfoque no fundo atrás do botão (Glassmorphism) */
     backdrop-filter: blur(6px);
+    
+    /* Borda sutil e semi-transparente */
     border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    /* Ícone em branco */
     color: #fff;
+    
+    /* Dimensões do botão circular (largura e altura iguais) */
     width: 38px;
     height: 38px;
+    
+    /* Transforma o elemento num círculo perfeito */
     border-radius: 50%;
+    
+    /* Centraliza o ícone do coração internamente */
     display: flex;
     align-items: center;
     justify-content: center;
+    
+    /* Tamanho do ícone interior */
     font-size: 1.1rem;
+    
+    /* Altera o ponteiro para o ícone de clique */
     cursor: pointer;
+    
+    /* Garante que o botão fique acima da imagem */
     z-index: 10;
+    
+    /* Transição suave de cor e escalonamento */
     transition: all 0.2s ease;
 }
 
+/* Efeito Hover do botão de favoritar */
 .btn-favoritar:hover {
+    /* Fundo fica avermelhado ao passar o mouse */
     background: rgba(229, 9, 20, 0.85);
+    
+    /* Aumenta ligeiramente o tamanho do botão em 8% */
     transform: scale(1.08);
+    
+    /* Borda acende em vermelho puro */
     border-color: #ff0000;
 }
 
+/* Corpo com as informações do card */
 .card-corpo {
+    /* Preenchimento interno do corpo do card */
     padding: 16px;
+    
+    /* Empilha título, versão e detalhes */
     display: flex;
     flex-direction: column;
+    
+    /* Faz o corpo crescer e preencher o espaço restante garantindo alinhamento dos rodapés */
     flex-grow: 1;
+    
+    /* Espaçamento de 8px entre os textos */
     gap: 8px;
 }
 
+/* Título do modelo no card */
 .card-corpo h3 {
+    /* Cor do texto em branco */
     color: #fff;
+    
+    /* Tamanho do texto */
     font-size: 1.02rem;
+    
+    /* Peso semi-negrito */
     font-weight: 600;
+    
+    /* Fonte comum para legibilidade */
     font-family: var(--font-body);
 }
 
+/* Texto indicando a versão do veículo */
 .card-versao {
+    /* Cor do texto em tom cinza neutro */
     color: var(--text-muted);
+    
+    /* Tamanho da fonte menor */
     font-size: 0.82rem;
 }
 
+/* Texto de detalhes adicionais (Ano, KM, Câmbio) */
 .card-detalhes {
+    /* Cor de texto sutil/apagada */
     color: var(--text-faint);
+    
+    /* Tamanho reduzido para os dados secundários */
     font-size: 0.78rem;
 }
 
+/* Rodapé do card (Preço + Botão) */
 .card-footer {
+    /* Layout Flex para preço na esquerda e botão na direita */
     display: flex;
+    
+    /* Alinha os itens pela base inferior */
     align-items: flex-end;
+    
+    /* Espaça preço e botão nas pontas opostas */
     justify-content: space-between;
+    
+    /* Empurra o rodapé para o final do card caso os textos sejam curtos */
     margin-top: auto;
+    
+    /* Distância superior do rodapé */
     padding-top: 12px;
+    
+    /* Separação por uma linha de borda sutil */
     border-top: 1px solid var(--border);
 }
 
+/* Rótulo "Preço à vista" ou similar acima do valor */
 .card-footer .rotulo-preco {
+    /* Texto bem pequeno */
     font-size: 0.72rem;
+    
+    /* Cor apagada */
     color: var(--text-faint);
+    
+    /* Força quebra de linha acima do preço */
     display: block;
+    
+    /* Espaço em relação ao preço */
     margin-bottom: 2px;
 }
 
+/* Valor monetário do carro */
 .card-preco {
+    /* Fonte estilo velocímetro/esportiva */
     font-family: var(--font-display);
+    
+    /* Tamanho grande e destacado */
     font-size: 1.15rem;
+    
+    /* Negrito */
     font-weight: 600;
+    
+    /* Cor do valor em vermelho vivo */
     color: var(--accent-hover);
 }
 
+/* Botão "Ver Detalhes" dentro do card */
 .btn-detalhes {
+    /* Cor de fundo vermelha principal */
     background: var(--accent);
+    
+    /* Texto branco */
     color: #ffffff;
+    
+    /* Espaçamento interno (Cima/Baixo, Esquerda/Direita) */
     padding: 7px 14px;
+    
+    /* Canto levemente arredondado */
     border-radius: var(--radius-sm);
+    
+    /* Tamanho da fonte */
     font-size: 0.8rem;
+    
+    /* Texto em negrito destacado */
     font-weight: 700;
+    
+    /* Remove sublinhado do link */
     text-decoration: none;
+    
+    /* Transição de cor suave ao passar o mouse */
     transition: background-color 0.15s ease;
 }
 
+/* Efeito Hover do botão ver detalhes */
 .btn-detalhes:hover { background: var(--accent-hover); }
 
+/* Caixa exibida quando não há carros cadastrados ou encontrados nos filtros */
 .empty-state {
+    /* Ocupa todas as colunas do grid do catálogo */
     grid-column: 1 / -1;
+    
+    /* Espaçamento interno */
     padding: 40px 20px;
+    
+    /* Alinha a mensagem de aviso ao centro */
     text-align: center;
+    
+    /* Cor atenuada para mensagem neutra */
     color: var(--text-faint);
+    
+    /* Cria uma borda tracejada em volta da caixa */
     border: 1px dashed var(--border);
+    
+    /* Arredondamento do bloco */
     border-radius: var(--radius-md);
 }
 
-/* Principais ofertas */
+/* Seção de Principais Ofertas em formato simplificado */
 .top-deals {
+    /* Grid responsivo para ofertas secundárias */
     display: grid;
+    
+    /* Colunas flexíveis com mínimo de 220px cada */
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    
+    /* Espaço entre as ofertas */
     gap: 14px;
+    
+    /* Margem superior */
     margin-top: 12px;
 }
 
+/* Card compacto de oferta individual */
 .deal-item {
+    /* Alinha imagem e detalhes lado a lado */
     display: flex;
+    
+    /* Espaço horizontal entre a foto e o texto */
     gap: 10px;
+    
+    /* Cor de fundo */
     background: var(--surface);
+    
+    /* Borda sutil */
     border: 1px solid var(--border);
+    
+    /* Arredondamento suave */
     border-radius: var(--radius-sm);
+    
+    /* Espaçamento interno */
     padding: 10px;
+    
+    /* Alinha os itens verticalmente ao centro */
     align-items: center;
 }
 
+/* Imagem miniatura da oferta */
 .deal-item img {
+    /* Quadrado perfeito de 56px */
     width: 56px;
     height: 56px;
+    
+    /* Corta a imagem sem distorção */
     object-fit: cover;
+    
+    /* Cantos levemente arredondados */
     border-radius: 6px;
+    
+    /* Impede que a imagem encolha se o título do carro for muito grande */
     flex-shrink: 0;
 }
 
+/* Título compacto na oferta */
 .deal-title { font-size: 0.85rem; font-weight: 600; }
+
+/* Preço compacto na oferta */
 .deal-price { color: var(--accent-hover); font-weight: 700; font-size: 0.85rem; }
 
 /* ---------------------------------------------------------------- */
 /* FORMULÁRIOS                                                      */
 /* ---------------------------------------------------------------- */
+
+/* Container de formulário estilizado em card */
 .card-anuncio {
+    /* Cor de fundo do formulário */
     background: var(--surface);
+    
+    /* Borda do container */
     border: 1px solid var(--border);
+    
+    /* Arredondamento das pontas */
     border-radius: var(--radius-lg);
+    
+    /* Espaçamento interno amplo */
     padding: 28px;
 }
 
+/* Grid de alinhamento dos campos de formulário */
 .form-grid {
+    /* Organização em Grid CSS */
     display: grid;
+    
+    /* Cria 2 colunas de larguras rigorosamente iguais */
     grid-template-columns: repeat(2, 1fr);
+    
+    /* Espaçamento entre as linhas e colunas de campos */
     gap: 16px;
 }
 
+/* Agrupamento vertical do rótulo (<label>) e do campo (<input>) */
 .grupo {
+    /* Layout vertical dos elementos do input */
     display: flex;
     flex-direction: column;
+    
+    /* Distância de 6px entre o label e o input */
     gap: 6px;
 }
 
+/* Estilo dos rótulos/labels de cada campo */
 .grupo label {
+    /* Tamanho de fonte do rótulo */
     font-size: 0.82rem;
+    
+    /* Peso da fonte levemente em negrito */
     font-weight: 600;
+    
+    /* Cor do rótulo */
     color: var(--text-muted);
 }
 
+/* Estilização universal dos campos de entrada do formulário */
 .grupo input, .grupo select, .grupo textarea {
+    /* Preenche 100% da largura do elemento pai */
     width: 100%;
+    
+    /* Espaçamento interno de digitação */
     padding: 10px 12px;
+    
+    /* Cor do fundo dos inputs (mais escuro que o card) */
     background: var(--surface-2);
+    
+    /* Borda sutil para contornar o campo */
     border: 1px solid var(--border-strong);
+    
+    /* Canto arredondado do input */
     border-radius: var(--radius-sm);
+    
+    /* Cor da fonte digitada (Branco) */
     color: #fff;
+    
+    /* Tipografia utilizada */
     font-family: var(--font-body);
+    
+    /* Tamanho do texto digitado */
     font-size: 0.88rem;
+    
+    /* Remove a linha azul/preta padrão do navegador ao focar */
     outline: none;
+    
+    /* Transições de cor na seleção do campo */
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* Estilização dos textos informativos padrão (Placeholders) */
 .grupo input::placeholder, .grupo textarea::placeholder { color: var(--text-faint); }
 
+/* Estado Focus (Quando o usuário clica ou digita no campo) */
 .grupo input:focus, .grupo select:focus, .grupo textarea:focus {
+    /* Altera a cor da borda para vermelho */
     border-color: var(--accent);
+    
+    /* Adiciona um anel vermelho suave ao redor do campo em foco */
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+/* Estado de erro na validação via atributo HTML `aria-invalid="true"` */
 .grupo input[aria-invalid="true"], .grupo select[aria-invalid="true"] {
+    /* Troca a borda para a cor vermelho-alerta de erro */
     border-color: var(--danger);
 }
 
+/* Classe utilitária para fazer um campo ocupar as 2 colunas do formulário */
 .grupo-full { grid-column: 1 / -1; }
 
+/* Wrapper para posicionar o símbolo "R$" sobre o input monetário */
 .input-money-wrapper { position: relative; display: flex; align-items: center; }
 
+/* Posição estática do prefixo "R$" */
 .input-money-wrapper .prefixo {
+    /* Posicionamento absoluto fixado no canto esquerdo interno do input */
     position: absolute;
     left: 12px;
+    
+    /* Cor discreta */
     color: var(--text-muted);
     font-size: 0.85rem;
+    
+    /* Impede que o clique do mouse seja capturado pelo prefixo, focando no input abaixo dele */
     pointer-events: none;
 }
 
+/* Afasta o texto digitado no input de moeda para não encavalar no "R$" */
 .input-money-wrapper input { padding-left: 36px; }
 
+/* Botão vermelho principal para submissão de formulários */
 .btn-primario {
+    /* Ocupa toda a largura do contêiner */
     width: 100%;
+    
+    /* Espaçamento interno vertical */
     padding: 12px;
+    
+    /* Fundo vermelho */
     background: var(--accent);
+    
+    /* Texto branco */
     color: #ffffff;
+    
+    /* Negrito */
     font-weight: 700;
     font-family: var(--font-body);
+    
+    /* Remove bordas nativas de botão */
     border: none;
+    
+    /* Cantos arredondados */
     border-radius: var(--radius-sm);
+    
+    /* Transforma o cursor em mãozinha de clique */
     cursor: pointer;
+    
+    /* Transição suave ao passar o mouse */
     transition: background-color 0.15s ease;
     font-size: 0.92rem;
 }
 
+/* Efeito Hover do botão primário */
 .btn-primario:hover { background: var(--accent-hover); }
-.btn-primario:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* Estado desativado do botão principal (ex: formulário incompleto) */
+.btn-primario:disabled { 
+    /* Reduz a opacidade para indicar bloqueio */
+    opacity: 0.55; 
+    
+    /* Muda o ponteiro para um símbolo de bloqueio/não permitido */
+    cursor: not-allowed; 
+}
+
+/* Botão secundário estilizado com fundo escuro */
 .btn-secundario {
     width: 100%;
     background: var(--surface-2);
@@ -495,51 +1026,81 @@ h1, h2, h3 {
     transition: background-color 0.15s ease;
 }
 
+/* Hover do botão secundário */
 .btn-secundario:hover { background: var(--surface-3); }
 
+/* Badge/Etiqueta visual indicativa de item "Novo" ou "Destaque" */
 .badge-novo {
+    /* Fundo em vermelho suave */
     background: var(--accent-soft);
+    
+    /* Borda fina em tom vermelho */
     border: 1px solid var(--accent-border);
+    
+    /* Texto em vermelho claro */
     color: var(--accent-hover);
+    
+    /* Texto pequeno em negrito */
     font-size: 0.72rem;
     font-weight: 700;
+    
+    /* Preenchimento do balãozinho */
     padding: 4px 11px;
+    
+    /* Arredondamento formato pílula */
     border-radius: 20px;
+    
+    /* Exibição em bloco alinhado ao texto */
     display: inline-block;
+    
+    /* Espaço abaixo da etiqueta */
     margin-bottom: 10px;
 }
 
+/* Cabeçalho do formulário */
 .topo h2 { font-size: 1.5rem; margin-bottom: 5px; }
 .topo p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 22px; }
 
+/* Mensagem de erro abaixo dos campos com falha de validação */
 .erro-texto {
+    /* Texto na cor vermelha de erro */
     color: var(--danger);
     font-size: 0.75rem;
+    
+    /* Garante altura de 1 linha mesmo quando vazio para evitar pulo de layout (Layout Shift) */
     min-height: 1em;
     display: block;
 }
 
-/* Anúncio (formulário largo) */
+/* Variação de card compacto para formulários mais amplos */
 .card-compacto {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 26px 32px;
+    
+    /* Limita a largura máxima do formulário centralizado */
     max-width: 1100px;
     margin: 0 auto;
 }
 
+/* Título e descrição do formulário compacto */
 .topo-compacto h2 { font-size: 1.3rem; margin-bottom: 4px; }
 .topo-compacto p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
 
+/* Grid de 2 colunas com lacunas menores para formulários densos */
 .form-grid-compacta {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    
+    /* Espaçamento: 14px vertical e 20px horizontal */
     gap: 14px 20px;
 }
 
+/* Ajuste proporcional nos rótulos do formulário compacto */
 .form-grid-compacta .grupo label { font-size: 0.78rem; }
 
+/* Padronização de altura em 38px para inputs do formulário compacto */
 .form-grid-compacta .grupo input,
 .form-grid-compacta .grupo select {
     padding: 8px 10px;
@@ -547,52 +1108,75 @@ h1, h2, h3 {
     height: 38px;
 }
 
+/* Ajustes na caixa de texto multilinha (textarea) do formulário compacto */
 .form-grid-compacta .grupo textarea {
     padding: 8px 10px;
     font-size: 0.85rem;
     height: 56px;
+    
+    /* Bloqueia o redimensionamento manual pelo usuário para não quebrar o layout */
     resize: none;
 }
 
+/* Recuo do prefixo de moeda no formulário compacto */
 .form-grid-compacta .input-money-wrapper .prefixo { left: 10px; font-size: 0.8rem; }
 .form-grid-compacta .input-money-wrapper input { padding-left: 32px; }
 
+/* Variantes para botões compactos */
 .btn-compacto { padding: 12px 18px; font-size: 0.9rem; width: 100%; margin-top: 18px; }
 
-/* Upload de foto */
+/* Componente personalizado de upload de fotos do anúncio */
 .upload-foto-container { display: flex; align-items: center; gap: 8px; }
 
+/* Caixinha de Arrastar/Selecionar imagem */
 .dropzone-compacta-mini {
+    /* Preenche o espaço disponível mantendo flexibilidade */
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     padding: 0 12px;
+    
+    /* Mesma altura dos inputs padrão */
     height: 38px;
+    
+    /* Borda pontilhada sinalizando zona de drag/drop ou upload */
     border: 1px dashed var(--border-strong);
     border-radius: 5px;
     background: var(--surface-2);
     color: var(--text-muted);
     font-size: 0.8rem;
     cursor: pointer;
+    
+    /* Trata nomes de arquivos muito longos sem quebrar linha */
     white-space: nowrap;
     overflow: hidden;
+    
+    /* Adiciona reticências (...) caso o nome do arquivo ultrapasse a largura */
     text-overflow: ellipsis;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
+/* Hover da zona de upload */
 .dropzone-compacta-mini:hover { border-color: var(--accent); color: #fff; }
 
+/* Exibição da miniatura da foto carregada */
 #miniaturaPreview {
+    /* Dimensões quadradas idênticas à altura dos inputs (38px) */
     width: 38px;
     height: 38px;
+    
+    /* Mantém a proporção da imagem sem achatar */
     object-fit: cover;
     border-radius: 5px;
     border: 1px solid var(--border-strong);
+    
+    /* Impede que a foto seja esmagada por outros elementos flex */
     flex-shrink: 0;
 }
 
+/* Botão "Ver foto" em tamanho real */
 .btn-ver-foto {
     display: inline-flex;
     align-items: center;
@@ -610,48 +1194,82 @@ h1, h2, h3 {
     transition: background-color 0.15s ease;
 }
 
+/* Hover do botão "Ver Foto" desde que NÃO esteja desativado (:not(:disabled)) */
 .btn-ver-foto:hover:not(:disabled) { background: var(--surface-3); }
+
+/* Estilo do botão "Ver Foto" quando está desativado (sem foto anexada) */
 .btn-ver-foto:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ---------------------------------------------------------------- */
-/* MODAL DE PRÉ-VISUALIZAÇÃO                                         */
+/* MODAL DE PRÉ-VISUALIZAÇÃO                                        */
 /* ---------------------------------------------------------------- */
+
+/* Fundo escuro cobrindo a tela (Overlay do Modal) */
 .modal-foto {
+    /* Escondido por padrão até que receba a classe `.ativo` via JavaScript */
     display: none;
+    
+    /* Fixado em relação à janela do navegador */
     position: fixed;
+    
+    /* Atalho CSS para top:0, right:0, bottom:0, left:0 (cobre a tela inteira) */
     inset: 0;
+    
+    /* Fundo preto com 82% de opacidade */
     background: rgba(4, 5, 6, 0.82);
+    
+    /* Aplica o efeito de desfoque no conteúdo ao fundo do modal */
     backdrop-filter: blur(6px);
+    
+    /* Garante que o modal fique acima de TODOS os outros elementos da página */
     z-index: 9999;
+    
+    /* Centraliza a caixa de diálogo no meio exato da tela */
     align-items: center;
     justify-content: center;
 }
 
+/* Classe atribuída via JS para exibir o modal ativo */
 .modal-foto.ativo { display: flex; }
 
+/* Caixa interna contendo os dados do Modal */
 .modal-conteudo {
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
     padding: 18px;
+    
+    /* Evita que o modal ultrapasse as margens da tela em monitores menores */
     max-width: 90%;
     max-height: 85%;
+    
+    /* Alinha o título, a imagem e o botão de fechar verticalmente */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 14px;
+    
+    /* Projeta uma sombra forte para destaque do modal */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 }
 
+/* Título interno do modal */
 .modal-conteudo h3 { font-size: 0.95rem; color: #fff; }
 
+/* Imagem expandida exibida no modal */
 .modal-conteudo img {
+    /* Impede que a imagem ultrapasse o tamanho da caixa */
     max-width: 100%;
+    
+    /* Limita a altura máxima da imagem para não quebrar a tela */
     max-height: 350px;
     border-radius: 6px;
+    
+    /* Preserva totalmente as proporções originais da foto */
     object-fit: contain;
 }
 
+/* Botão de Fechar o modal */
 .btn-fechar-modal {
     background: var(--accent);
     color: #ffffff;
@@ -663,11 +1281,14 @@ h1, h2, h3 {
     cursor: pointer;
 }
 
+/* Hover do botão fechar modal */
 .btn-fechar-modal:hover { background: var(--accent-hover); }
 
 /* ---------------------------------------------------------------- */
 /* FINANCIAMENTO                                                    */
 /* ---------------------------------------------------------------- */
+
+/* Card de resultados do simulador de financiamento */
 .fin-result-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -676,34 +1297,54 @@ h1, h2, h3 {
     margin-top: 20px;
 }
 
+/* Grid de resumo dos dados do financiamento (Parcelas, Entrada, Total) */
 .fin-summary-grid {
     display: grid;
+    
+    /* Cria colunas dinâmicas conforme a largura do container */
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
     margin-top: 15px;
 }
 
+/* Rótulos de informação do financiamento */
 .fin-item span { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px; }
+
+/* Valores numéricos em destaque no financiamento */
 .fin-item strong { font-family: var(--font-display); font-size: 1.15rem; color: #fff; }
+
+/* Destaque em verde para valores calculados positivos/finais */
 .highlight-price { color: var(--success) !important; }
 
 /* ---------------------------------------------------------------- */
-/* NOTIFICAÇÕES (toast)                                             */
+/* NOTIFICAÇÕES (Toast)                                             */
 /* ---------------------------------------------------------------- */
+
+/* Container fixo que abriga as mensagens de notificação flutuantes no canto da tela */
 .toast-container {
+    /* Fixado no canto inferior direito da tela */
     position: fixed;
     bottom: 20px;
     right: 20px;
+    
+    /* Empilha múltiplas notificações caso ocorram simultaneamente */
     display: flex;
     flex-direction: column;
     gap: 10px;
+    
+    /* Camada altíssima para ficar sobre todos os componentes */
     z-index: 10000;
+    
+    /* Largura máxima da caixinha de mensagem */
     max-width: 340px;
 }
 
+/* Balão da notificação Toast */
 .toast {
     background: var(--surface-2);
     border: 1px solid var(--border-strong);
+    
+    /* Cria uma faixa vertical vermelha no lado esquerdo do aviso */
     border-left: 3px solid var(--accent);
     border-radius: var(--radius-sm);
     padding: 12px 14px;
@@ -712,19 +1353,33 @@ h1, h2, h3 {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
+/* Caso a notificação seja de Sucesso, muda a faixa esquerda para verde */
 .toast.sucesso { border-left-color: var(--success); }
+
+/* Caso a notificação seja de Erro, muda a faixa esquerda para vermelho-alerta */
 .toast.erro { border-left-color: var(--danger); }
 
 /* ---------------------------------------------------------------- */
 /* RESPONSIVIDADE                                                   */
 /* ---------------------------------------------------------------- */
+
+/* Regras aplicadas para telas com largura até 900px (Tablets e telas médias) */
 @media (max-width: 900px) {
+    /* Desfaz as 2 colunas do catálogo e empilha o filtro acima dos produtos */
     .catalog-layout { grid-template-columns: 1fr; }
+    
+    /* Desativa a rolagem fixa do painel de filtros */
     .sidebar-filter { position: static; }
+    
+    /* Formulários passam de 2 colunas para 1 coluna */
     .form-grid { grid-template-columns: 1fr; }
 }
 
+/* Regras aplicadas para telas com largura até 600px (Smartphones) */
 @media (max-width: 600px) {
+    /* Transforma o formulário compacto em uma única coluna vertical */
     .form-grid-compacta { grid-template-columns: 1fr; }
+    
+    /* Reduz o espaçamento interno em telas pequenas para economizar espaço */
     .card-compacto { padding: 20px; }
 }

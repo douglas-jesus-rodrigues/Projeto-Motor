@@ -1,216 +1,709 @@
 /* ==========================================================================
    USUÁRIOS (ADMIN) — CSS independente, mesmo visual do painel da empresa
+   Mantido integralmente com comentários e formatação padronizada
    ========================================================================== */
+
+/* ---------- VARIÁVEIS GLOBAIS DE COR E ESTILO ---------- */
+/* Definimos todas as cores, espaçamentos e animações em um só lugar para facilitar manutenção */
 :root {
-    --primary: #e50914;
-    --primary-hover: #b80710;
-    --bg: #08080a;
-    --surface: #121216;
-    --surface-2: #1a1a20;
-    --text: #ffffff;
-    --text-muted: #a0a0b0;
-    --border: rgba(255, 255, 255, 0.1);
-    --radius: 14px;
-    --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    --c-admin: #ff4b55;
-    --c-empresa: #f5a524;
-    --c-individual: #5aa9ff;
-    color-scheme: dark;
+    --primary: #e50914;          /* Cor principal — vermelho destaque */
+    --primary-hover: #b80710;    /* Tom mais escuro para hover no botão principal */
+    --bg: #08080a;                /* Cor de fundo da página */
+    --surface: #121216;          /* Fundo de cartões e elementos */
+    --surface-2: #1a1a20;        /* Fundo secundário — cabeçalhos da tabela */
+    --text: #ffffff;             /* Texto padrão — branco */
+    --text-muted: #a0a0b0;       /* Texto secundário — cinza suave */
+    --border: rgba(255, 255, 255, 0.1); /* Borda sutil — branco com transparência */
+    --radius: 14px;              /* Arredondamento padrão de cantos */
+    --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Curva de animação suave */
+    --c-admin: #ff4b55;          /* Cor do tipo Administrador — vermelho claro */
+    --c-empresa: #f5a524;        /* Cor do tipo Empresa — laranja/dourado */
+    --c-individual: #5aa9ff;    /* Cor do tipo Usuário Individual — azul */
+    color-scheme: dark;          /* Indica ao navegador que é tema escuro */
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-[hidden] { display: none !important; }
+/* Reset básico: remove margens e preenchimentos padrão, garante cálculo correto de largura */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+/* Elementos com atributo hidden ficam ocultos com prioridade máxima */
+[hidden] { 
+    display: none !important; 
+}
+
+/* Estilo do corpo da página */
 body {
-    min-height: 100vh; color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.5;
-    background: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(229, 9, 20, 0.12), transparent 70%), var(--bg);
+    min-height: 100vh;            /* Ocupa pelo menos a altura total da tela */
+    color: var(--text);           /* Cor do texto principal */
+    font-family: 'Inter', system-ui, sans-serif; /* Fonte: Inter ou padrão do sistema */
+    line-height: 1.5;             /* Espaçamento entre linhas */
+    /* Fundo com gradiente sutil em cima + cor sólida */
+    background: radial-gradient(ellipse 60% 40% at 50% -10%, 
+        rgba(229, 9, 20, 0.12), 
+        transparent 70%), 
+        var(--bg);
 }
-a { color: inherit; text-decoration: none; }
-button, input { font-family: inherit; }
 
-/* ---------- Topo ---------- */
+/* Links — herdam cor do texto pai sem sublinhado */
+a { 
+    color: inherit; 
+    text-decoration: none; 
+}
+
+/* Botões e campos de entrada usam a mesma fonte do resto do site */
+button, input { 
+    font-family: inherit; 
+}
+
+/* ---------- BARRA SUPERIOR (TOPO) ---------- */
 .topbar {
-    position: sticky; top: 0; z-index: 100; height: 70px; padding: 0 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    background: rgba(8, 8, 10, 0.9); backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
+    position: sticky;             /* Fica fixa no topo ao rolar a página */
+    top: 0;                        /* Alinhada na borda superior */
+    z-index: 100;                  /* Garante que fique acima de outros elementos */
+    height: 70px;                  /* Altura fixa da barra */
+    padding: 0 24px;               /* Espaçamento interno nas laterais */
+    display: flex;                  /* Layout flexível para alinhar itens */
+    align-items: center;           /* Centraliza verticalmente */
+    justify-content: space-between; /* Espaça logo e navegação nas extremidades */
+    background: rgba(8, 8, 10, 0.9); /* Fundo semi-transparente */
+    backdrop-filter: blur(12px);   /* Efeito de desfoque no fundo */
+    border-bottom: 1px solid var(--border); /* Linha divisória inferior */
 }
-.logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: baseline; gap: 10px; }
-.logo span { color: var(--primary); margin-left: -8px; }
-.logo small { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; letter-spacing: 0; padding-left: 10px; border-left: 1px solid var(--border); }
 
-.topnav { display: flex; align-items: center; gap: 6px; }
+/* Logotipo */
+.logo { 
+    font-size: 1.5rem; 
+    font-weight: 800;              /* Negrito forte */
+    letter-spacing: -0.5px;       /* Espaçamento reduzido entre letras */
+    display: flex; 
+    align-items: baseline; 
+    gap: 10px;                     /* Espaço entre elementos do logo */
+}
+.logo span { 
+    color: var(--primary);         /* Parte do logo em cor destaque */
+    margin-left: -8px;             /* Aproximação visual */
+}
+.logo small { 
+    color: var(--text-muted);      /* Texto menor em cor suave */
+    font-size: 0.8rem; 
+    font-weight: 500; 
+    letter-spacing: 0; 
+    padding-left: 10px; 
+    border-left: 1px solid var(--border); /* Linha separadora */
+}
+
+/* Navegação do topo */
+.topnav { 
+    display: flex; 
+    align-items: center; 
+    gap: 6px;                      /* Espaço entre links */
+}
 .topnav a {
-    display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 50px;
-    color: var(--text-muted); font-size: 0.88rem; font-weight: 500; transition: var(--ease);
+    display: flex; 
+    align-items: center; 
+    gap: 8px;                      /* Espaço entre ícone e texto */
+    padding: 8px 14px;             /* Área de clique confortável */
+    border-radius: 50px;           /* Formato de pílula */
+    color: var(--text-muted);      /* Cor inicial suave */
+    font-size: 0.88rem; 
+    font-weight: 500; 
+    transition: var(--ease);       /* Animação suave ao passar o mouse */
 }
-.topnav a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+.topnav a:hover { 
+    color: var(--text);            /* Fica branco no hover */
+    background: rgba(255, 255, 255, 0.06); /* Fundo clarinho */
+}
 
-/* ---------- Layout ---------- */
-.wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px 64px; }
+/* ---------- ESTRUTURA PRINCIPAL / CONTEÚDO ---------- */
+.wrap { 
+    max-width: 1100px;             /* Largura máxima do conteúdo */
+    margin: 0 auto;                /* Centraliza na tela */
+    padding: 28px 24px 64px;       /* Espaçamento interno — inferior maior para não cortar conteúdo */
+}
 
+/* Botão "Voltar" */
 .voltar {
-    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 8px 16px;
-    font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
-    background: var(--surface); border: 1px solid var(--border); border-radius: 50px; transition: var(--ease);
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    margin-bottom: 18px; 
+    padding: 8px 16px;
+    font-size: 0.85rem; 
+    font-weight: 600; 
+    color: var(--text-muted);
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 50px; 
+    transition: var(--ease);
 }
-.voltar:hover { color: var(--text); border-color: var(--primary); transform: translateX(-2px); }
+.voltar:hover { 
+    color: var(--text); 
+    border-color: var(--primary);  /* Borda fica vermelha no hover */
+    transform: translateX(-2px);   /* Leve deslocamento à esquerda */
+}
 
-.hero { margin-bottom: 24px; }
-.hero h1 { display: flex; align-items: center; gap: 12px; font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; }
-.hero h1 i { color: var(--primary); font-size: 1.4rem; }
-.hero p { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+/* Cabeçalho da seção — título e descrição */
+.hero { 
+    margin-bottom: 24px; 
+}
+.hero h1 { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    font-size: 1.7rem; 
+    font-weight: 800; 
+    letter-spacing: -0.5px; 
+}
+.hero h1 i { 
+    color: var(--primary);         /* Ícone em cor principal */
+    font-size: 1.4rem; 
+}
+.hero p { 
+    color: var(--text-muted); 
+    font-size: 0.95rem; 
+    margin-top: 4px; 
+}
 
-/* ---------- Resumo ---------- */
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 24px; }
+/* ---------- CARDS DE ESTATÍSTICAS / RESUMO ---------- */
+.stats { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); 
+    gap: 14px;                     /* Espaço entre os cards */
+    margin-bottom: 24px; 
+}
+
+/* Card individual de estatística */
 .stat {
-    --c: var(--text-muted);
-    display: flex; align-items: center; gap: 14px; padding: 18px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: var(--ease);
+    --c: var(--text-muted);        /* Cor padrão — sobrescrita por tipo */
+    display: flex; 
+    align-items: center; 
+    gap: 14px; 
+    padding: 18px;
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius); 
+    transition: var(--ease);
 }
-.stat:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.2); }
-.stat--admin { --c: var(--c-admin); }
-.stat--empresa { --c: var(--c-empresa); }
+.stat:hover { 
+    transform: translateY(-2px);   /* Levanta levemente no hover */
+    border-color: rgba(255, 255, 255, 0.2); /* Borda mais visível */
+}
+/* Sobrescrevem a cor --c conforme o tipo */
+.stat--admin     { --c: var(--c-admin); }
+.stat--empresa   { --c: var(--c-empresa); }
 .stat--individual { --c: var(--c-individual); }
+
+/* Círculo com ícone */
 .stat-icone {
-    width: 46px; height: 46px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center;
-    color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent);
+    width: 46px; 
+    height: 46px; 
+    flex-shrink: 0;                /* Não encolhe */
+    border-radius: 12px; 
+    display: grid; 
+    place-items: center;           /* Centraliza ícone perfeitamente */
+    color: var(--c); 
+    background: color-mix(in srgb, var(--c) 14%, transparent); /* Fundo da cor com transparência */
     border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
 }
-.stat span { display: block; color: var(--text-muted); font-size: 0.82rem; }
-.stat strong { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
+.stat span { 
+    display: block;                /* Fica em linha separada */
+    color: var(--text-muted); 
+    font-size: 0.82rem; 
+}
+.stat strong { 
+    font-size: 1.7rem; 
+    font-weight: 800; 
+    line-height: 1.1;              /* Linha mais justa para número grande */
+}
 
-/* ---------- Busca e filtros ---------- */
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 12px; }
-.search-box { position: relative; flex: 1 1 320px; max-width: 460px; }
-.search-box i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+/* ---------- BARRA DE FERRAMENTAS: BUSCA E FILTROS ---------- */
+.toolbar { 
+    display: flex; 
+    flex-wrap: wrap;               /* Quebra linha em telas pequenas */
+    align-items: center; 
+    gap: 14px; 
+    margin-bottom: 12px; 
+}
+
+/* Caixa de pesquisa */
+.search-box { 
+    position: relative;            /* Para posicionar ícone dentro */
+    flex: 1 1 320px;              /* Cresce e encolhe, tamanho mínimo 320px */
+    max-width: 460px; 
+}
+.search-box i { 
+    position: absolute; 
+    left: 16px; 
+    top: 50%; 
+    transform: translateY(-50%);   /* Centraliza verticalmente */
+    color: var(--text-muted); 
+    pointer-events: none;          /* Não atrapalha clique no input */
+}
 .search-box input {
-    width: 100%; height: 46px; padding: 0 16px 0 44px; color: var(--text); font-size: 0.95rem; outline: none;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 50px; transition: var(--ease);
+    width: 100%; 
+    height: 46px; 
+    padding: 0 16px 0 44px;        /* Espaço à esquerda para o ícone */
+    color: var(--text); 
+    font-size: 0.95rem; 
+    outline: none;                  /* Remove contorno padrão */
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 50px; 
+    transition: var(--ease);
 }
-.search-box input::placeholder { color: #6d6d7c; }
-.search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18); }
+.search-box input::placeholder { 
+    color: #6d6d7c;                /* Texto de dica mais suave */
+}
+.search-box input:focus { 
+    border-color: var(--primary); 
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18); /* Brilho suave ao focar */
+}
 
-.filtros { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Filtros — botões em formato de pílula */
+.filtros { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+}
 .chip {
-    height: 38px; padding: 0 16px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
-    background: var(--surface); border: 1px solid var(--border); border-radius: 50px; transition: var(--ease);
+    height: 38px; 
+    padding: 0 16px; 
+    cursor: pointer; 
+    font-size: 0.85rem; 
+    font-weight: 600; 
+    color: var(--text-muted);
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 50px; 
+    transition: var(--ease);
 }
-.chip:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.3); }
-.chip.ativo { color: #fff; background: var(--primary); border-color: var(--primary); box-shadow: 0 4px 14px rgba(229, 9, 20, 0.3); }
-.chip:focus-visible, .btn-acao:focus-visible, .voltar:focus-visible, .btn-modal:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.chip:hover { 
+    color: var(--text); 
+    border-color: rgba(255, 255, 255, 0.3); 
+}
+.chip.ativo { 
+    color: #fff; 
+    background: var(--primary);    /* Fundo vermelho quando selecionado */
+    border-color: var(--primary); 
+    box-shadow: 0 4px 14px rgba(229, 9, 20, 0.3); /* Sombra de destaque */
+}
 
-.contador { min-height: 1.4em; margin: 0 4px 10px; color: var(--text-muted); font-size: 0.82rem; }
+/* Estilo de foco acessível — para navegação por teclado */
+.chip:focus-visible, 
+.btn-acao:focus-visible, 
+.voltar:focus-visible, 
+.btn-modal:focus-visible { 
+    outline: 2px solid var(--primary); 
+    outline-offset: 2px; 
+}
 
-/* ---------- Tabela ---------- */
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.table-responsive { overflow-x: auto; }
-.users-table { width: 100%; border-collapse: collapse; text-align: left; }
+/* Contador de resultados */
+.contador { 
+    min-height: 1.4em;             /* Reserva espaço para não saltar layout */
+    margin: 0 4px 10px; 
+    color: var(--text-muted); 
+    font-size: 0.82rem; 
+}
+
+/* ---------- TABELA DE USUÁRIOS ---------- */
+.card { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius); 
+    overflow: hidden;              /* Corta cantos arredondados do conteúdo interno */
+}
+
+/* Contêiner para rolagem horizontal em telas pequenas */
+.table-responsive { 
+    overflow-x: auto; 
+}
+
+.users-table { 
+    width: 100%; 
+    border-collapse: collapse;     /* Linhas juntas sem espaço entre bordas */
+    text-align: left; 
+}
+
+/* Cabeçalho da tabela */
 .users-table th {
-    padding: 14px 18px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); white-space: nowrap;
+    padding: 14px 18px; 
+    font-size: 0.72rem; 
+    font-weight: 700; 
+    letter-spacing: 0.08em;        /* Letras mais espaçadas = visual mais técnico */
+    text-transform: uppercase; 
+    color: var(--text-muted); 
+    background: var(--surface-2); 
+    border-bottom: 1px solid var(--border); 
+    white-space: nowrap;           /* Não quebra texto */
 }
-.users-table td { padding: 14px 18px; font-size: 0.92rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.users-table tbody tr:last-child td { border-bottom: none; }
-.users-table tbody tr { transition: background 0.2s; }
-.users-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
-.th-acoes, .col-acoes { text-align: right; }
-.col-id { color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.col-email { color: var(--text-muted); word-break: break-word; }
 
-.user { display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* Células */
+.users-table td { 
+    padding: 14px 18px; 
+    font-size: 0.92rem; 
+    border-bottom: 1px solid var(--border); 
+    vertical-align: middle;        /* Alinha conteúdo ao centro vertical */
+}
+/* Remove borda da última linha */
+.users-table tbody tr:last-child td { 
+    border-bottom: none; 
+}
+/* Linha com hover */
+.users-table tbody tr { 
+    transition: background 0.2s; 
+}
+.users-table tbody tr:hover { 
+    background: rgba(255, 255, 255, 0.03); /* Fundo clarinho ao passar o mouse */
+}
+
+/* Coluna de alinhamento à direita */
+.th-acoes, .col-acoes { 
+    text-align: right; 
+}
+
+/* Coluna de ID — fonte monoespaçada para números alinhados */
+.col-id { 
+    color: var(--text-muted); 
+    font-variant-numeric: tabular-nums; 
+    white-space: nowrap; 
+}
+.col-email { 
+    color: var(--text-muted); 
+    word-break: break-word;        /* Quebra e-mail longo sem estourar layout */
+}
+
+/* Linha de usuário: avatar + nome */
+.user { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    min-width: 0;                  /* Permite encolher corretamente */
+}
+
+/* Avatar circular com cor gerada dinamicamente */
 .avatar {
-    width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
-    font-size: 0.8rem; font-weight: 800; color: #fff;
-    background: hsl(var(--h, 0) 55% 32%); border: 1px solid hsl(var(--h, 0) 60% 48%);
+    width: 38px; 
+    height: 38px; 
+    flex-shrink: 0; 
+    border-radius: 50%; 
+    display: grid; 
+    place-items: center;
+    font-size: 0.8rem; 
+    font-weight: 800; 
+    color: #fff;
+    background: hsl(var(--h, 0) 55% 32%); /* Matiz --h definido inline no HTML */
+    border: 1px solid hsl(var(--h, 0) 60% 48%);
 }
-.user strong { font-weight: 600; }
+.user strong { 
+    font-weight: 600; 
+}
+
+/* Etiqueta "Você" para identificar o próprio usuário */
 .voce {
-    margin-left: 8px; padding: 2px 8px; font-style: normal; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
-    text-transform: uppercase; color: var(--text-muted); border: 1px solid var(--border); border-radius: 50px;
+    margin-left: 8px; 
+    padding: 2px 8px; 
+    font-style: normal; 
+    font-size: 0.68rem; 
+    font-weight: 700; 
+    letter-spacing: 0.05em;
+    text-transform: uppercase; 
+    color: var(--text-muted); 
+    border: 1px solid var(--border); 
+    border-radius: 50px;
 }
 
-/* Badges de tipo */
+/* ---------- ETIQUETAS DE TIPO DE USUÁRIO ---------- */
 .badge {
-    --c: var(--text-muted);
-    display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 50px;
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
-    color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+    --c: var(--text-muted);        /* Cor padrão — sobrescrita abaixo */
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+    padding: 5px 12px; 
+    border-radius: 50px; 
+    font-size: 0.72rem; 
+    font-weight: 700; 
+    letter-spacing: 0.06em; 
+    text-transform: uppercase; 
+    white-space: nowrap;
+    color: var(--c); 
+    background: color-mix(in srgb, var(--c) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
 }
-.badge--admin { --c: var(--c-admin); }
-.badge--empresa { --c: var(--c-empresa); }
-.badge--individual { --c: var(--c-individual); }
+.badge--admin       { --c: var(--c-admin); }
+.badge--empresa     { --c: var(--c-empresa); }
+.badge--individual  { --c: var(--c-individual); }
 
-/* Botões de ação */
-.col-acoes { white-space: nowrap; }
+/* ---------- BOTÕES DE AÇÃO ---------- */
+.col-acoes { 
+    white-space: nowrap;           /* Mantém botões na mesma linha */
+}
 .btn-acao {
-    display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; cursor: pointer;
-    font-size: 0.8rem; font-weight: 600; color: var(--text); background: var(--surface-2);
-    border: 1px solid var(--border); border-radius: 50px; transition: var(--ease);
+    display: inline-flex; 
+    align-items: center; 
+    gap: 7px; 
+    height: 34px; 
+    padding: 0 13px; 
+    cursor: pointer;
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    color: var(--text); 
+    background: var(--surface-2);
+    border: 1px solid var(--border); 
+    border-radius: 50px; 
+    transition: var(--ease);
 }
-.btn-acao + .btn-acao { margin-left: 6px; }
-.btn-acao:active { transform: scale(0.97); }
-.btn-mudar:hover { border-color: var(--c-individual); color: var(--c-individual); background: rgba(90, 169, 255, 0.1); }
-.btn-excluir:hover { border-color: var(--primary); color: #fff; background: var(--primary); }
-.btn-acao:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-.btn-acao:disabled:hover { border-color: var(--border); color: var(--text); background: var(--surface-2); }
+.btn-acao + .btn-acao { 
+    margin-left: 6px;              /* Espaço entre botões vizinhos */
+}
+.btn-acao:active { 
+    transform: scale(0.97);        /* Leve redução ao clicar = feedback tátil visual */
+}
+/* Botão Mudar Tipo — hover azul */
+.btn-mudar:hover { 
+    border-color: var(--c-individual); 
+    color: var(--c-individual); 
+    background: rgba(90, 169, 255, 0.1); 
+}
+/* Botão Excluir — hover vermelho */
+.btn-excluir:hover { 
+    border-color: var(--primary); 
+    color: #fff; 
+    background: var(--primary); 
+}
+/* Estado desabilitado */
+.btn-acao:disabled { 
+    opacity: 0.35; 
+    cursor: not-allowed; 
+    transform: none; 
+}
+.btn-acao:disabled:hover { 
+    border-color: var(--border); 
+    color: var(--text); 
+    background: var(--surface-2); 
+}
 
-/* Estados (vazio / erro / carregando) */
-.estado td { padding: 56px 18px; text-align: center; color: var(--text-muted); }
-.vazio i { display: block; margin-bottom: 12px; font-size: 2rem; color: #4a4a58; }
-.vazio .btn-acao { margin-top: 14px; }
+/* ---------- ESTADOS: CARREGANDO, VAZIO, ERRO ---------- */
+.estado td { 
+    padding: 56px 18px; 
+    text-align: center; 
+    color: var(--text-muted); 
+}
+.vazio i { 
+    display: block; 
+    margin-bottom: 12px; 
+    font-size: 2rem; 
+    color: #4a4a58; 
+}
+.vazio .btn-acao { 
+    margin-top: 14px; 
+}
 
-.skeleton { display: block; height: 14px; border-radius: 6px; background: linear-gradient(90deg, #1a1a20 25%, #26262e 50%, #1a1a20 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear; }
-.skeleton--avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; }
-@keyframes shimmer { to { background-position: -200% 0; } }
+/* Esqueleto de carregamento — efeito listra brilhante */
+.skeleton { 
+    display: block; 
+    height: 14px; 
+    border-radius: 6px; 
+    background: linear-gradient(90deg, #1a1a20 25%, #26262e 50%, #1a1a20 75%); 
+    background-size: 200% 100%; 
+    animation: shimmer 1.3s infinite linear; 
+}
+.skeleton--avatar { 
+    width: 38px; 
+    height: 38px; 
+    border-radius: 50%; 
+    flex-shrink: 0; 
+}
+/* Animação do brilho deslizando */
+@keyframes shimmer { 
+    to { background-position: -200% 0; } 
+}
 
-/* ---------- Modal ---------- */
-.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); animation: fade 0.2s ease; }
-.modal { width: 100%; max-width: 420px; padding: 30px; text-align: center; background: #141414; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); animation: pop 0.25s cubic-bezier(0.16, 0.7, 0.2, 1); }
-.modal-icone { width: 54px; height: 54px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; color: var(--primary); background: rgba(229, 9, 20, 0.12); border: 1px solid rgba(229, 9, 20, 0.35); }
-.modal h3 { font-size: 1.25rem; margin-bottom: 8px; }
-.modal p { color: var(--text-muted); font-size: 0.93rem; margin-bottom: 22px; }
-.modal-botoes { display: flex; gap: 12px; }
-.btn-modal { flex: 1; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: var(--ease); border: 1px solid transparent; color: #fff; }
-.btn-cinza { background: #222; border-color: #333; }
-.btn-cinza:hover { background: #2c2c2c; }
-.btn-primario { background: #2b6fd6; }
-.btn-primario:hover { background: #2358ab; }
-.btn-perigo { background: var(--primary); box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3); }
-.btn-perigo:hover { background: var(--primary-hover); }
-@keyframes fade { from { opacity: 0; } }
-@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.97); } }
+/* ---------- JANELA MODAL (CONFIRMAÇÃO) ---------- */
+.modal-overlay { 
+    position: fixed; 
+    inset: 0;                      /* Preenche toda a tela */
+    z-index: 1000;                 /* Fica acima de tudo */
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 16px; 
+    background: rgba(0, 0, 0, 0.8); /* Fundo escuro semi-transparente */
+    backdrop-filter: blur(5px); 
+    animation: fade 0.2s ease;     /* Aparece suavemente */
+}
+.modal {
+    width: 100%; 
+    max-width: 420px; 
+    padding: 30px; 
+    text-align: center; 
+    background: #141414; 
+    border: 1px solid var(--border); 
+    border-radius: 20px; 
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); 
+    animation: pop 0.25s cubic-bezier(0.16, 0.7, 0.2, 1); /* Salta ao aparecer */
+}
+.modal-icone { 
+    width: 54px; 
+    height: 54px; 
+    margin: 0 auto 14px; 
+    border-radius: 50%; 
+    display: grid; 
+    place-items: center; 
+    font-size: 1.3rem; 
+    color: var(--primary); 
+    background: rgba(229, 9, 20, 0.12); 
+    border: 1px solid rgba(229, 9, 20, 0.35); 
+}
+.modal h3 { 
+    font-size: 1.25rem; 
+    margin-bottom: 8px; 
+}
+.modal p { 
+    color: var(--text-muted); 
+    font-size: 0.93rem; 
+    margin-bottom: 22px; 
+}
+.modal-botoes { 
+    display: flex; 
+    gap: 12px; 
+}
+.btn-modal { 
+    flex: 1;                       /* Dividem espaço igualmente */
+    padding: 12px 20px; 
+    border-radius: 10px; 
+    font-weight: 700; 
+    font-size: 0.9rem; 
+    cursor: pointer; 
+    transition: var(--ease); 
+    border: 1px solid transparent; 
+    color: #fff; 
+}
+.btn-cinza { 
+    background: #222; 
+    border-color: #333; 
+}
+.btn-cinza:hover { 
+    background: #2c2c2c; 
+}
+.btn-primario { 
+    background: #2b6fd6; 
+}
+.btn-primario:hover { 
+    background: #2358ab; 
+}
+.btn-perigo { 
+    background: var(--primary); 
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3); 
+}
+.btn-perigo:hover { 
+    background: var(--primary-hover); 
+}
+/* Animações de entrada */
+@keyframes fade { 
+    from { opacity: 0; } 
+}
+@keyframes pop { 
+    from { 
+        opacity: 0; 
+        transform: translateY(12px) scale(0.97); 
+    } 
+}
 
-/* ---------- Avisos ---------- */
-.toast-area { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+/* ---------- AVISOS / NOTIFICAÇÕES (TOAST) ---------- */
+.toast-area { 
+    position: fixed; 
+    bottom: 24px; 
+    right: 24px; 
+    z-index: 2000;                 /* Mais alto que a modal */
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
 .toast {
-    display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 12px; color: #fff; font-weight: 600; font-size: 0.9rem;
-    background: #1b873f; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateY(16px); transition: var(--ease);
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 14px 20px; 
+    border-radius: 12px; 
+    color: #fff; 
+    font-weight: 600; 
+    font-size: 0.9rem;
+    background: #1b873f;            /* Verde = sucesso */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
+    opacity: 0;                    /* Começa invisível */
+    transform: translateY(16px);    /* Começa abaixo */
+    transition: var(--ease);
 }
-.toast--erro { background: var(--primary); }
-.toast.visivel { opacity: 1; transform: translateY(0); }
+.toast--erro { 
+    background: var(--primary);    /* Vermelho = erro */
+}
+.toast.visivel { 
+    opacity: 1; 
+    transform: translateY(0);      /* Sobe e aparece */
+}
 
-/* ---------- Responsivo: a tabela vira lista de cartões no celular ---------- */
+/* ---------- RESPONSIVIDADE: ADAPTA PARA CELULAR ---------- */
 @media (max-width: 820px) {
     .topbar { padding: 0 16px; }
-    .logo small { display: none; }
-    .topnav a span { display: none; }
+    .logo small { display: none; } /* Esconde versão do logo em telas pequenas */
+    .topnav a span { display: none; } /* Mostra só ícones na navegação */
     .wrap { padding: 20px 16px 48px; }
     .hero h1 { font-size: 1.35rem; }
-
-    .users-table thead { display: none; }
-    .users-table, .users-table tbody, .users-table tr, .users-table td { display: block; width: 100%; }
-    .users-table tbody tr { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    
+    /* Transforma tabela em lista de cartões */
+    .users-table thead { display: none; } /* Esconde cabeçalho */
+    .users-table, .users-table tbody, .users-table tr, .users-table td { 
+        display: block; 
+        width: 100%; 
+    }
+    .users-table tbody tr { 
+        padding: 14px 16px; 
+        border-bottom: 1px solid var(--border); 
+    }
     .users-table tbody tr:last-child { border-bottom: none; }
-    .users-table td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border: none; text-align: right; }
-    .users-table td::before { content: attr(data-label); flex-shrink: 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+    .users-table td { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        gap: 12px; 
+        padding: 6px 0; 
+        border: none; 
+        text-align: right; 
+    }
+    /* Rótulo da coluna à esquerda usando atributo data-label do HTML */
+    .users-table td::before { 
+        content: attr(data-label); 
+        flex-shrink: 0; 
+        font-size: 0.7rem; 
+        font-weight: 700; 
+        letter-spacing: 0.08em; 
+        text-transform: uppercase; 
+        color: var(--text-muted); 
+    }
     .users-table td[data-label="Usuário"] { padding-bottom: 10px; }
-    .users-table td.col-acoes { justify-content: flex-end; padding-top: 12px; }
+    .users-table td.col-acoes { 
+        justify-content: flex-end; 
+        padding-top: 12px; 
+    }
     .users-table td.col-acoes::before { display: none; }
     .estado td { display: block; text-align: center; }
     .estado td::before { display: none; }
-    .toast-area { left: 16px; right: 16px; bottom: 16px; }
+    
+    /* Ajusta posição dos avisos */
+    .toast-area { 
+        left: 16px; 
+        right: 16px; 
+        bottom: 16px; 
+    }
 }
 
+/* ---------- ACESSIBILIDADE: RESPEITA REDUÇÃO DE MOVIMENTO ---------- */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    *, *::before, *::after { 
+        animation-duration: 0.01ms !important; 
+        transition-duration: 0.01ms !important; 
+    }
 }

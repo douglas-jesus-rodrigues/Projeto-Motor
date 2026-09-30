@@ -1,426 +1,463 @@
 /* ==========================================================================
    1. VARIÁVEIS E TEMA
+   Definição de cores, medidas e padrões reutilizáveis do sistema
    ========================================================================== */
    :root {
-    --primary: #ff0000;
-    --primary-hover: #d60000;
-    --led-glow: rgba(255, 0, 0, 0.45);
+    --primary: #ff0000;                  /* Cor principal: vermelho */
+    --primary-hover: #d60000;            /* Tom mais escuro para estado hover */
+    --led-glow: rgba(255, 0, 0, 0.45);   /* Efeito de brilho vermelho/LED */
     
-    --bg-black: #060608;
-    --card-bg: rgba(0, 0, 0, 0.35);  /* Caixa Transparente */
-    --input-bg: rgba(0, 0, 0, 0.55);
-    --border-color: rgba(255, 255, 255, 0.15);
+    --bg-black: #060608;                 /* Fundo base escuro */
+    --card-bg: rgba(0, 0, 0, 0.35);      /* Fundo dos cards: transparente */
+    --input-bg: rgba(0, 0, 0, 0.55);     /* Fundo dos campos de entrada */
+    --border-color: rgba(255, 255, 255, 0.15); /* Cor padrão das bordas */
     
-    --text-main: #ffffff;
-    --text-muted: #d0d0e0;
-    --text-dark: #a0a0b0;
+    --text-main: #ffffff;                /* Texto principal: branco */
+    --text-muted: #d0d0e0;               /* Texto suave/claro */
+    --text-dark: #a0a0b0;                /* Texto secundário/cinza */
     
-    --success: #00e676;
-    --error: #ff3333;
+    --success: #00e676;                  /* Cor de mensagem de sucesso: verde */
+    --error: #ff3333;                    /* Cor de mensagem de erro: vermelho */
     
-    --radius-sm: 6px;
-    --radius-md: 14px;
-    --transition: all 0.25s ease;
-}
-
-/* ==========================================================================
-   2. RESET E ESTRUTURA BASE
-   ========================================================================== */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Montserrat', -apple-system, sans-serif;
-    background-color: var(--bg-black);
-    color: var(--text-main);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-}
-
-/* ==========================================================================
-   3. IMAGEM DO DODGE AO FUNDO
-   ========================================================================== */
-.bg-image-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: 
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)),
-        url('../imagens/dodge.jpg') center/cover no-repeat;
-    filter: contrast(1.1) brightness(1);
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* ==========================================================================
-   4. CAMADAS DE NUVEM EM MOVIMENTO REALISTA
-   ========================================================================== */
-.neblina-layer {
-    position: fixed;
-    top: -30%;
-    left: -30%;
-    width: 160vw;
-    height: 160vh;
-    background: url('../imagens/neblina.png') center/cover repeat;
-    pointer-events: none;
-}
-
-/* Nuvem de fundo (abaixo do card) */
-.neblina-fundo {
-    z-index: 1;
-    opacity: 0.3;
-    mix-blend-mode: screen;
-    animation: moverNuvemFundo 22s ease-in-out infinite alternate;
-}
-
-/* Nuvem frontal (passa por cima de tudo criando efeito 3D) */
-.neblina-frente {
-    z-index: 20; /* Fica acima da caixa de login */
-    opacity: 0.28;
-    mix-blend-mode: lighten;
-    filter: blur(6px);
-    animation: moverNuvemFrente 16s ease-in-out infinite alternate;
-}
-
-@keyframes moverNuvemFundo {
-    0% {
-        transform: scale(1) translate(0, 0) rotate(0deg);
-    }
-    50% {
-        transform: scale(1.08) translate(-35px, -20px) rotate(1.5deg);
-    }
-    100% {
-        transform: scale(1.15) translate(30px, 15px) rotate(-1deg);
-    }
-}
-
-@keyframes moverNuvemFrente {
-    0% {
-        transform: scale(1) translate(0, 0);
-        opacity: 0.18;
-    }
-    50% {
-        transform: scale(1.2) translate(45px, -30px);
-        opacity: 0.35;
-    }
-    100% {
-        transform: scale(1.35) translate(-30px, 20px);
-        opacity: 0.22;
-    }
-}
-
-/* ==========================================================================
-   5. BOTÃO VOLTAR
-   ========================================================================== */
-.btn-voltar {
-    position: fixed;
-    top: 24px;
-    left: 24px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    backdrop-filter: blur(12px);
-    transition: var(--transition);
-    z-index: 30;
-}
-
-.btn-voltar:hover {
-    color: var(--text-main);
-    border-color: var(--primary);
-    box-shadow: 0 0 12px var(--led-glow);
-    transform: translateX(-3px);
-}
-
-/* ==========================================================================
-   6. CARD DE LOGIN (TRANSPARENTE + CRESCER EM 1.6 SEG)
-   ========================================================================== */
-.login-wrapper {
-    width: 100%;
-    max-width: 420px;
-    padding: 20px;
-    position: relative;
-    z-index: 10;
-}
-
-.login-card {
-    background: var(--card-bg); /* Vidro Transparente */
-    border: 1px solid rgba(255, 0, 0, 0.5);
-    box-shadow: 
-        0 0 20px var(--led-glow),
-        0 20px 50px rgba(0, 0, 0, 0.7);
-    border-radius: var(--radius-md);
-    padding: 40px 32px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-
-    /* Animação para aparecer e crescer em exatos 1.6 segundos */
-    animation: aparecerCrescer 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes aparecerCrescer {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.card-header {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
-.card-header h1 {
-    font-size: 2.2rem;
-    font-weight: 900;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-}
-
-.card-header h1 span {
-    color: var(--primary);
-    text-shadow: 0 0 12px var(--led-glow);
-}
-
-.card-header p {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-/* ==========================================================================
-   7. INPUTS E CAMPOS
-   ========================================================================== */
-.input-group {
-    margin-bottom: 20px;
-}
-
-.label-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--text-main);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-    margin-bottom: 8px;
-}
-
-.link-esqueci {
-    font-size: 0.75rem;
-    color: var(--text-dark);
-    text-decoration: none;
-    font-weight: 600;
-    transition: var(--transition);
-}
-
-.link-esqueci:hover {
-    color: var(--primary);
-}
-
-.input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-input[type="email"],
-input[type="password"],
-input[type="text"] {
-    width: 100%;
-    padding: 15px 16px;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
-    font-size: 0.95rem;
-    font-family: inherit;
-    font-weight: 500;
-    backdrop-filter: blur(8px);
-    transition: var(--transition);
-}
-
-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: rgba(0, 0, 0, 0.75);
-    box-shadow: 0 0 12px var(--led-glow);
-}
-
-.input-group.erro input {
-    border-color: var(--error);
-    box-shadow: none;
-}
-
-.erro-texto {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--error);
-    margin-top: 6px;
-    font-weight: 700;
-    min-height: 16px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-}
-
-.senha-container input {
-    padding-right: 48px;
-}
-
-.btn-toggle-senha {
-    position: absolute;
-    right: 12px;
-    background: none;
-    border: none;
-    color: var(--text-dark);
-    cursor: pointer;
-    padding: 6px;
-    display: flex;
-    align-items: center;
-    transition: var(--transition);
-}
-
-.btn-toggle-senha:hover {
-    color: var(--text-main);
-}
-
-/* ==========================================================================
-   8. BOTÃO DE SUBMISSÃO
-   ========================================================================== */
-.btn-submit {
-    width: 100%;
-    padding: 16px;
-    background: var(--primary);
-    color: #ffffff;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 8px;
-    box-shadow: 0 0 15px var(--led-glow);
-}
-
-.btn-submit:hover {
-    background: var(--primary-hover);
-    box-shadow: 0 0 25px rgba(255, 0, 0, 0.7);
-    transform: translateY(-2px);
-}
-
-.btn-submit:active {
-    transform: translateY(0);
-}
-
-.btn-submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-.spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.btn-submit.loading .btn-label { display: none; }
-.btn-submit.loading .spinner { display: block; }
-
-/* ==========================================================================
-   9. RODAPÉ E TOAST
-   ========================================================================== */
-.card-footer {
-    text-align: center;
-    margin-top: 24px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.card-footer a {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 700;
-    margin-left: 4px;
-}
-
-.card-footer a:hover {
-    text-decoration: underline;
-}
-
-.toast {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    padding: 14px 20px;
-    background: rgba(0, 0, 0, 0.85);
-    border: 1px solid var(--border-color);
-    border-left: 4px solid var(--primary);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
-    font-size: 0.85rem;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: var(--transition);
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.toast.visivel {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.toast.sucesso { border-left-color: var(--success); }
-.toast.erro { border-left-color: var(--error); }
-
-@media (max-width: 480px) {
-    .btn-voltar { top: 16px; left: 16px; }
-    .toast { left: 16px; right: 16px; top: 16px; }
-    .login-card { padding: 32px 20px; }
-}
+    --radius-sm: 6px;                    /* Arredondamento pequeno */
+    --radius-md: 14px;                   /* Arredondamento médio */
+    --transition: all 0.25s ease;        /* Animação padrão: transição suave */
+  }
+  
+  /* ==========================================================================
+     2. RESET E ESTRUTURA BASE
+     Remove estilos padrão do navegador e define estrutura geral da página
+     ========================================================================== */
+  *, *::before, *::after {
+      box-sizing: border-box; /* Largura/altura incluem borda e preenchimento */
+      margin: 0;              /* Remove margem padrão */
+      padding: 0;             /* Remove preenchimento padrão */
+  }
+  
+  body {
+      font-family: 'Montserrat', -apple-system, sans-serif; /* Fonte principal */
+      background-color: var(--bg-black); /* Cor de fundo escura */
+      color: var(--text-main);           /* Cor do texto branca */
+      min-height: 100vh;                 /* Ocupa altura total da tela */
+      display: flex;                     /* Usa flexbox para centralizar */
+      align-items: center;               /* Centraliza verticalmente */
+      justify-content: center;           /* Centraliza horizontalmente */
+      overflow: hidden;                  /* Oculta barras de rolagem */
+      position: relative;                /* Contexto de posicionamento para elementos filhos */
+  }
+  
+  /* ==========================================================================
+     3. IMAGEM DO DODGE AO FUNDO
+     Camada de fundo com imagem + sobreposição escura para legibilidade
+     ========================================================================== */
+  .bg-image-overlay {
+      position: fixed;       /* Fixa na tela, não rola */
+      top: 0;                /* Alinha no topo */
+      left: 0;               /* Alinha na esquerda */
+      width: 100vw;          /* Largura total da viewport */
+      height: 100vh;         /* Altura total da viewport */
+      background:            /* Duas camadas de fundo: gradiente + imagem */
+          linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)), /* Escurece mais embaixo */
+          url('../imagens/dodge.jpg') center/cover no-repeat; /* Imagem centralizada e cobrindo tudo */
+      filter: contrast(1.1) brightness(1); /* Aumenta levemente o contraste */
+      pointer-events: none;  /* Não bloqueia cliques nos elementos acima */
+      z-index: 0;            /* Camada mais ao fundo */
+  }
+  
+  /* ==========================================================================
+     4. CAMADAS DE NUVEM EM MOVIMENTO REALISTA
+     Duas camadas de névoa/nuvem com animações independentes para profundidade
+     ========================================================================== */
+  .neblina-layer {
+      position: fixed;       /* Fixa na tela */
+      top: -30%;             /* Desloca para cima para ter área de movimento */
+      left: -30%;            /* Desloca para a esquerda */
+      width: 160vw;          /* Largura maior que a tela para movimento contínuo */
+      height: 160vh;         /* Altura maior que a tela */
+      background: url('../imagens/neblina.png') center/cover repeat; /* Imagem de névoa repetida */
+      pointer-events: none;  /* Não interfere em cliques */
+  }
+  
+  /* Nuvem de fundo (abaixo do card) */
+  .neblina-fundo {
+      z-index: 1;            /* Fica acima da imagem de fundo, abaixo do card */
+      opacity: 0.3;          /* Transparência suave */
+      mix-blend-mode: screen; /* Modo de mesclagem: clareia áreas claras */
+      animation: moverNuvemFundo 22s ease-in-out infinite alternate; /* Animação lenta e suave */
+  }
+  
+  /* Nuvem frontal (passa por cima de tudo criando efeito 3D) */
+  .neblina-frente {
+      z-index: 20;           /* Fica acima do card de login */
+      opacity: 0.28;         /* Transparência */
+      mix-blend-mode: lighten; /* Mesclagem: clareia a imagem abaixo */
+      filter: blur(6px);     /* Desfoca para suavizar */
+      animation: moverNuvemFrente 16s ease-in-out infinite alternate; /* Animação mais rápida */
+  }
+  
+  /* Animação da névoa de fundo: escala e desloca suavemente */
+  @keyframes moverNuvemFundo {
+      0% {
+          transform: scale(1) translate(0, 0) rotate(0deg); /* Posição inicial */
+      }
+      50% {
+          transform: scale(1.08) translate(-35px, -20px) rotate(1.5deg); /* Cresce e move para cima/esquerda */
+      }
+      100% {
+          transform: scale(1.15) translate(30px, 15px) rotate(-1deg); /* Cresce mais e move para baixo/direita */
+      }
+  }
+  
+  /* Animação da névoa frontal: escala, desloca e varia opacidade */
+  @keyframes moverNuvemFrente {
+      0% {
+          transform: scale(1) translate(0, 0); /* Posição inicial */
+          opacity: 0.18;
+      }
+      50% {
+          transform: scale(1.2) translate(45px, -30px); /* Cresce e move para cima/direita */
+          opacity: 0.35; /* Fica mais visível */
+      }
+      100% {
+          transform: scale(1.35) translate(-30px, 20px); /* Cresce mais e move para baixo/esquerda */
+          opacity: 0.22; /* Reduz um pouco a visibilidade */
+      }
+  }
+  
+  /* ==========================================================================
+     5. BOTÃO VOLTAR
+     Botão fixo no canto superior esquerdo para retornar à página anterior
+     ========================================================================== */
+  .btn-voltar {
+      position: fixed;       /* Fixa na tela */
+      top: 24px;             /* Distância do topo */
+      left: 24px;            /* Distância da esquerda */
+      display: inline-flex;  /* Alinha ícone + texto em linha */
+      align-items: center;   /* Centraliza verticalmente */
+      gap: 8px;              /* Espaço entre ícone e texto */
+      padding: 10px 18px;    /* Espaçamento interno */
+      background: rgba(0, 0, 0, 0.4); /* Fundo semi-transparente */
+      border: 1px solid var(--border-color); /* Borda sutil */
+      border-radius: var(--radius-sm); /* Cantos arredondados */
+      color: var(--text-main); /* Cor do texto branca */
+      text-decoration: none; /* Remove sublinhado de link */
+      font-size: 0.75rem;    /* Tamanho da fonte */
+      font-weight: 700;      /* Negrito */
+      letter-spacing: 1px;   /* Espaçamento entre letras */
+      backdrop-filter: blur(12px); /* Desfoque no fundo atrás */
+      transition: var(--transition); /* Animação suave ao interagir */
+      z-index: 30;           /* Fica acima de quase tudo */
+  }
+  
+  /* Efeito ao passar o mouse sobre o botão Voltar */
+  .btn-voltar:hover {
+      color: var(--text-main); /* Mantém cor do texto */
+      border-color: var(--primary); /* Borda fica vermelha */
+      box-shadow: 0 0 12px var(--led-glow); /* Brilho ao redor */
+      transform: translateX(-3px); /* Desloca levemente para a esquerda */
+  }
+  
+  /* ==========================================================================
+     6. CARD DE LOGIN
+     Caixa transparente com efeito vidro que aparece crescendo
+     Animação: duração exata de 1.6 segundos
+     ========================================================================== */
+  .login-wrapper {
+      width: 100%;           /* Largura total disponível */
+      max-width: 420px;      /* Limite máximo para não alargar demais */
+      padding: 20px;         /* Espaçamento externo */
+      position: relative;    /* Contexto de posicionamento */
+      z-index: 10;           /* Fica acima da névoa de fundo, abaixo da frontal */
+  }
+  
+  .login-card {
+      background: var(--card-bg); /* Fundo transparente estilo vidro */
+      border: 1px solid rgba(255, 0, 0, 0.5); /* Borda vermelha semi-transparente */
+      box-shadow:            /* Dupla sombra: brilho interno + sombra externa */
+          0 0 20px var(--led-glow), /* Brilho vermelho ao redor */
+          0 20px 50px rgba(0, 0, 0, 0.7); /* Sombra profunda abaixo */
+      border-radius: var(--radius-md); /* Cantos arredondados médios */
+      padding: 40px 32px;    /* Espaçamento interno (vertical | horizontal) */
+      backdrop-filter: blur(14px); /* Desfoque no fundo */
+      -webkit-backdrop-filter: blur(14px); /* Suporte para Safari */
+      /* Animação para aparecer e crescer em exatos 1.6 segundos */
+      animation: aparecerCrescer 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  /* Animação de entrada: dobra de tamanho e ganha opacidade */
+  @keyframes aparecerCrescer {
+      0% {
+          opacity: 0;        /* Começa invisível */
+          transform: scale(0.5); /* Começa com metade do tamanho */
+      }
+      100% {
+          opacity: 1;        /* Fica totalmente visível */
+          transform: scale(1); /* Tamanho final normal */
+      }
+  }
+  
+  /* Cabeçalho do card: título e subtítulo */
+  .card-header {
+      text-align: center;    /* Centraliza todo o conteúdo */
+      margin-bottom: 32px;   /* Espaço abaixo do cabeçalho */
+  }
+  
+  .card-header h1 {
+      font-size: 2.2rem;     /* Tamanho grande do título */
+      font-weight: 900;      /* Máximo negrito */
+      letter-spacing: 1px;   /* Espaçamento entre letras */
+      margin-bottom: 6px;    /* Espaço abaixo do título */
+      text-transform: uppercase; /* Letras maiúsculas */
+  }
+  
+  /* Parte destacada do título em vermelho com brilho */
+  .card-header h1 span {
+      color: var(--primary); /* Cor vermelha */
+      text-shadow: 0 0 12px var(--led-glow); /* Efeito de brilho no texto */
+  }
+  
+  .card-header p {
+      color: var(--text-muted); /* Cor do texto secundário */
+      font-size: 0.875rem;     /* Tamanho menor */
+      font-weight: 500;        /* Peso médio */
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* Sombra para legibilidade */
+  }
+  
+  /* ==========================================================================
+     7. INPUTS E CAMPOS
+     Estilização dos campos de formulário, rótulos e mensagens de erro
+     ========================================================================== */
+  .input-group {
+      margin-bottom: 20px;   /* Espaço entre cada grupo de campo */
+  }
+  
+  .label-container {
+      display: flex;                     /* Alinha rótulo e link na mesma linha */
+      justify-content: space-between;    /* Distribui nas extremidades */
+      align-items: center;               /* Centraliza verticalmente */
+  }
+  
+  label {
+      display: block;        /* Ocupa linha própria */
+      font-size: 0.75rem;    /* Tamanho pequeno */
+      font-weight: 700;      /* Negrito */
+      text-transform: uppercase; /* Maiúsculas */
+      letter-spacing: 0.8px; /* Espaçamento entre letras */
+      color: var(--text-main); /* Cor branca */
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* Sombra para legibilidade */
+      margin-bottom: 8px;    /* Espaço abaixo do rótulo */
+  }
+  
+  /* Link "Esqueci minha senha" */
+  .link-esqueci {
+      font-size: 0.75rem;    /* Mesmo tamanho do rótulo */
+      color: var(--text-dark); /* Cor cinza */
+      text-decoration: none; /* Sem sublinhado */
+      font-weight: 600;      /* Seminegrito */
+      transition: var(--transition); /* Transição suave */
+  }
+  
+  .link-esqueci:hover {
+      color: var(--primary); /* Fica vermelho ao passar o mouse */
+  }
+  
+  .input-container {
+      position: relative;    /* Contexto para posicionar ícone dentro do campo */
+      display: flex;         /* Alinha conteúdo interno */
+      align-items: center;   /* Centraliza verticalmente */
+  }
+  
+  /* Campos de entrada: e-mail, senha, texto */
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+      width: 100%;           /* Largura total do container */
+      padding: 15px 16px;    /* Espaçamento interno */
+      background: var(--input-bg); /* Fundo escuro semi-transparente */
+      border: 1px solid var(--border-color); /* Borda sutil */
+      border-radius: var(--radius-sm); /* Cantos arredondados */
+      color: var(--text-main); /* Texto branco */
+      font-size: 0.95rem;    /* Tamanho da fonte */
+      font-family: inherit;  /* Herda fonte do elemento pai */
+      font-weight: 500;      /* Peso médio */
+      backdrop-filter: blur(8px); /* Desfoque no fundo */
+      transition: var(--transition); /* Animação suave */
+  }
+  
+  /* Campo focado (clicado) */
+  input:focus {
+      outline: none;         /* Remove contorno padrão do navegador */
+      border-color: var(--primary); /* Borda vermelha */
+      background: rgba(0, 0, 0, 0.75); /* Fundo mais escuro */
+      box-shadow: 0 0 12px var(--led-glow); /* Brilho vermelho ao redor */
+  }
+  
+  /* Grupo com erro: campo com borda vermelha */
+  .input-group.erro input {
+      border-color: var(--error); /* Borda vermelha de erro */
+      box-shadow: none;      /* Remove brilho padrão */
+  }
+  
+  /* Texto de mensagem de erro abaixo do campo */
+  .erro-texto {
+      display: block;        /* Ocupa linha completa */
+      font-size: 0.75rem;    /* Tamanho pequeno */
+      color: var(--error);   /* Cor vermelha */
+      margin-top: 6px;       /* Espaço acima */
+      font-weight: 700;      /* Negrito */
+      min-height: 16px;      /* Altura fixa para não mover o layout */
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); /* Sombra para legibilidade */
+  }
+  
+  /* Campo de senha: espaço extra à direita para o botão de visualizar */
+  .senha-container input {
+      padding-right: 48px;   /* Espaço interno direito aumentado */
+  }
+  
+  /* Botão para mostrar/ocultar senha */
+  .btn-toggle-senha {
+      position: absolute;    /* Fica dentro do campo, à direita */
+      right: 12px;           /* Distância da borda direita */
+      background: none;      /* Sem fundo */
+      border: none;          /* Sem borda */
+      color: var(--text-dark); /* Cor cinza */
+      cursor: pointer;       /* Cursor de clique */
+      padding: 6px;          /* Área de clique ampliada */
+      display: flex;         /* Alinha ícone */
+      align-items: center;   /* Centraliza */
+      transition: var(--transition); /* Transição suave */
+  }
+  
+  .btn-toggle-senha:hover {
+      color: var(--text-main); /* Fica branco ao passar o mouse */
+  }
+  
+  /* ==========================================================================
+     8. BOTÃO DE SUBMISSÃO
+     Botão principal de envio com estados normal, hover, ativo e carregando
+     ========================================================================== */
+  .btn-submit {
+      width: 100%;           /* Largura total */
+      padding: 16px;         /* Espaçamento interno vertical */
+      background: var(--primary); /* Fundo vermelho */
+      color: #ffffff;        /* Texto branco */
+      border: none;          /* Sem borda */
+      border-radius: var(--radius-sm); /* Cantos arredondados */
+      font-size: 0.9rem;     /* Tamanho da fonte */
+      font-weight: 800;      /* Negrito forte */
+      letter-spacing: 1.5px; /* Espaçamento entre letras */
+      cursor: pointer;       /* Cursor de clique */
+      transition: var(--transition); /* Animação suave */
+      display: flex;         /* Alinha conteúdo interno */
+      align-items: center;   /* Centraliza verticalmente */
+      justify-content: center; /* Centraliza horizontalmente */
+      margin-top: 8px;       /* Espaço acima */
+      box-shadow: 0 0 15px var(--led-glow); /* Brilho vermelho */
+  }
+  
+  /* Estado ao passar o mouse */
+  .btn-submit:hover {
+      background: var(--primary-hover); /* Vermelho mais escuro */
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.7); /* Brilho mais intenso */
+      transform: translateY(-2px); /* Leve deslocamento para cima */
+  }
+  
+  /* Estado ao clicar/pressionar */
+  .btn-submit:active {
+      transform: translateY(0); /* Volta à posição original */
+  }
+  
+  /* Estado desabilitado */
+  .btn-submit:disabled {
+      opacity: 0.6;          /* Mais transparente */
+      cursor: not-allowed;   /* Cursor de proibido */
+      box-shadow: none;      /* Remove brilho */
+      transform: none;       /* Sem movimento */
+  }
+  
+  /* Indicador de carregamento (girando) */
+  .spinner {
+      display: none;         /* Escondido por padrão */
+      width: 20px;           /* Largura */
+      height: 20px;          /* Altura */
+      border: 3px solid rgba(255, 255, 255, 0.3); /* Borda clara semi-transparente */
+      border-top-color: #ffffff; /* Apenas a borda superior é branca */
+      border-radius: 50%;    /* Forma circular */
+      animation: spin 0.8s linear infinite; /* Roda continuamente */
+  }
+  
+  /* Animação de rotação do spinner */
+  @keyframes spin {
+      to { transform: rotate(360deg); } /* Gira uma volta completa */
+  }
+  
+  /* Quando botão está carregando: esconde texto, mostra ícone girando */
+  .btn-submit.loading .btn-label { display: none; }
+  .btn-submit.loading .spinner { display: block; }
+  
+  /* ==========================================================================
+     9. RODAPÉ E TOAST
+     Links inferiores e notificações flutuantes (mensagens temporárias)
+     ========================================================================== */
+  .card-footer {
+      text-align: center;    /* Centraliza texto */
+      margin-top: 24px;      /* Espaço acima */
+      font-size: 0.85rem;    /* Tamanho pequeno */
+      color: var(--text-muted); /* Cor suave */
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra para legibilidade */
+  }
+  
+  .card-footer a {
+      color: var(--primary); /* Link em vermelho */
+      text-decoration: none; /* Sem sublinhado */
+      font-weight: 700;      /* Negrito */
+      margin-left: 4px;      /* Espaço à esquerda */
+  }
+  
+  .card-footer a:hover {
+      text-decoration: underline; /* Sublinha ao passar o mouse */
+  }
+  
+  /* Caixa de notificação (aparece no canto superior direito) */
+  .toast {
+      position: fixed;       /* Fixa na tela */
+      top: 24px;             /* Distância do topo */
+      right: 24px;           /* Distância da direita */
+      padding: 14px 20px;    /* Espaçamento interno */
+      background: rgba(0, 0, 0, 0.85); /* Fundo escuro semi-transparente */
+      border: 1px solid var(--border-color); /* Borda sutil */
+      border-left: 4px solid var(--primary); /* Destaque: faixa vermelha à esquerda */
+      border-radius: var(--radius-sm); /* Cantos arredondados */
+      color: var(--text-main); /* Texto branco */
+      font-size: 0.85rem;    /* Tamanho da fonte */
+      font-weight: 600;      /* Seminegrito */
+      backdrop-filter: blur(10px); /* Desfoque no fundo */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); /* Sombra profunda */
+      opacity: 0;            /* Começa invisível */
+      transform: translateY(-10px); /* Começa deslocado para cima */
+      transition: var(--transition); /* Animação suave */
+      pointer-events: none;   /* Não bloqueia cliques */
+      z-index: 1000;         /* Fica acima de tudo */
+  }
+  
+  /* Estado visível: mostra a notificação */
+  .toast.visivel {
+      opacity: 1;            /* Totalmente visível */
+      transform: translateY(0); /* Posição final */
+  }
+  
+  /* Variação: mensagem de sucesso (faixa verde) */
+  .toast.sucesso { border-left-color: var(--success); }
+  
+  /* Variação: mensagem de erro (faixa vermelha) */
+  .toast.erro { border-left-color: var(--error); }
+  
+  /* ==========================================================================
+     10. RESPONSIVIDADE
+     Ajustes para telas pequenas (celulares)
+     ========================================================================== */
+  @media (max-width: 480px) {
+      .btn-voltar { top: 16px; left: 16px; } /* Botão mais próximo das bordas */
+      .toast { left: 16px; right: 16px; top: 16px; } /* Notificação ocupa largura quase total */
+      .login-card { padding: 32px 20px; } /* Reduz espaçamento interno do card */
+  }

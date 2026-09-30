@@ -1,13 +1,16 @@
+/* Seletor universal: aplica o estilo a TODOS os elementos da página */
 *{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0;           /* Remove a margem externa padrão do navegador */
+    padding: 0;          /* Remove o espaçamento interno padrão do navegador */
+    box-sizing: border-box; /* Faz com que a largura e altura incluam borda e preenchimento, sem alterar o tamanho total */
 }
 
+/* Estilização do corpo da página */
 body{
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif; /* Define a fonte padrão: Arial → Helvetica → fonte genérica sem serifa */
 }
 
+/* Estilização de todos os links */
 a{
-    text-decoration: none;
+    text-decoration: none; /* Remove o sublinhado padrão dos links */
 }
