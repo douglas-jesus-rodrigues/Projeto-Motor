@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const usuarioController = require("../controllers/usuarioController");
 const authAdmin = require("../middlewares/authAdmin");
@@ -33,10 +34,82 @@ const upload = multer({
 });
 
 // ==========================================
+// LOGIN: GUARDA A SESSÃO E GARANTE O TOKEN (corrige o 401 do painel admin)
+// ==========================================
+// Envolve o loginUsuario existente. Quando o login dá certo:
+//  - grava o usuário em req.session (o authAdmin lê dali);
+//  - se o controller não enviou token, gera um JWT;
+//  - só responde depois de a sessão estar salva.
+function extrairUsuario(corpo) {
+    const u = corpo.usuario || corpo.user || corpo.dados || corpo.data;
+    if (!u || typeof u !== "object") return null;
+    return {
+        id: u.id ?? u.id_usuario ?? u.usuario_id ?? null,
+        email: u.email || null,
+        tipo: u.tipo,
+        cargo: u.cargo
+    };
+}
+
+async function prepararSessao(req, res, corpo) {
+    if (res.statusCode >= 400 || !corpo || typeof corpo !== "object" || corpo.sucesso === false) return;
+
+    const u = extrairUsuario(corpo);
+    if (!u) {
+        console.warn("[login] Resposta sem objeto de usuário; sessão NÃO criada. Chaves:", Object.keys(corpo));
+        return;
+    }
+
+    // Se o controller não devolveu o id, descobre pelo e-mail
+    if (!u.id && u.email) {
+        const [rows] = await db.query(
+            "SELECT id, tipo, cargo FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1",
+            [u.email]
+        );
+        if (rows.length) Object.assign(u, rows[0]);
+    }
+
+    if (!u.id) {
+        console.warn("[login] Não foi possível identificar o id do usuário; sessão NÃO criada.");
+        return;
+    }
+
+    if (req.session) {
+        req.session.usuario = { id: u.id, tipo: u.tipo, cargo: u.cargo };
+        await new Promise((resolve) => req.session.save(() => resolve()));
+    }
+
+    if (!corpo.token) {
+        if (process.env.JWT_SECRET) {
+            corpo.token = jwt.sign({ id: u.id, tipo: u.tipo }, process.env.JWT_SECRET, { expiresIn: "1d" });
+        } else {
+            console.warn("[login] JWT_SECRET não definido no .env; token NÃO gerado.");
+        }
+    }
+
+    console.log(`[login] Sessão criada para usuário id=${u.id} tipo=${u.tipo}`);
+}
+
+function comSessao(handler) {
+    return (req, res, next) => {
+        const jsonOriginal = res.json.bind(res);
+
+        res.json = (corpo) => {
+            Promise.resolve(prepararSessao(req, res, corpo))
+                .catch((e) => console.error("[login] Erro ao gravar sessão:", e.sqlMessage || e.message || e))
+                .then(() => jsonOriginal(corpo));
+            return res;
+        };
+
+        return handler(req, res, next);
+    };
+}
+
+// ==========================================
 // CADASTRO, LOGIN E PERFIL
 // ==========================================
 router.post("/cadastro", usuarioController.cadastrarUsuario);
-router.post("/login", usuarioController.loginUsuario);
+router.post("/login", comSessao(usuarioController.loginUsuario));
 router.get("/verificar-email/:token", usuarioController.verificarEmail);
 
 // Solicitar recuperação de senha

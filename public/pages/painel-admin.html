@@ -3,136 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#08080a">
     <title>Painel Administrativo | MotorFlex</title>
 
+    <!-- aplica o tema salvo antes de pintar (sem "piscar") -->
+    <script>try{document.documentElement.dataset.tema=localStorage.getItem("mf_admin_tema")||"escuro"}catch(e){}</script>
+
     <link rel="icon" href="/imagens/favicon.ico">
-    <!-- Importação do Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/painel-admin.css">
 </head>
 <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-    <header class="header">
-        <div class="logo">
-            <h1><a href="/pages/index.html" style="text-decoration: none; color: inherit;">Motor<span>Flex</span></a> <small style="color: #888; font-size: 0.9rem;">| Admin</small></h1>
-        </div>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+        <symbol id="i-car" viewBox="0 0 24 24"><path d="M5 17h14M3 13l2-6h14l2 6v4H3z"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+        <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></symbol>
+        <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></symbol>
+        <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+    </svg>
 
-        <nav class="nav-menu">
-            <!-- Botões de Navegação -->
-            <a href="/pages/index.html"><i class="fa-solid fa-house"></i> Início</a>
-            <a href="/pages/catalogo.html"><i class="fa-solid fa-car-side"></i> Catálogo</a>
-            <a href="/pages/usuarios.html"><i class="fa-solid fa-users"></i> Usuários</a>
-            <a href="/pages/moderacao.html"><i class="fa-solid fa-check-double"></i> Moderação</a>
-            
-            <!-- Parte de Configurações -->
-            <div class="nav-item-dropdown">
-                <button class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true">
-                    <i class="fa-solid fa-gear"></i> Configurações
+    <header class="topbar">
+        <a class="brand" href="/pages/index.html" aria-label="MotorFlex - Início">Motor<span>Flex</span><em>Admin</em></a>
+
+        <nav class="nav" aria-label="Principal">
+            <a href="/pages/painel-admin.html" class="nav-link ativo" aria-current="page"><svg class="i"><use href="#i-shield"/></svg><span>Painel</span></a>
+            <a href="/pages/usuarios.html" class="nav-link"><svg class="i"><use href="#i-users"/></svg><span>Usuários</span></a>
+            <a href="/pages/moderacao.html" class="nav-link"><svg class="i"><use href="#i-check"/></svg><span>Moderação</span></a>
+            <a href="/pages/catalogo.html" class="nav-link"><svg class="i"><use href="#i-car"/></svg><span>Catálogo</span></a>
+        </nav>
+
+        <div class="topbar-acoes">
+            <button type="button" class="btn-busca" id="btnPaleta" aria-label="Busca rápida (Ctrl+K)">
+                <svg class="i"><use href="#i-search"/></svg><span>Busca rápida</span><kbd>Ctrl K</kbd>
+            </button>
+            <button type="button" class="icone-btn" id="btnTema" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+                <svg class="i tema-lua"><use href="#i-moon"/></svg><svg class="i tema-sol"><use href="#i-sun"/></svg>
+            </button>
+
+            <div class="usuario-menu">
+                <button class="usuario-btn" id="btnConfig" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="menuConfig">
+                    <span class="av-mini" id="avatarMini">A</span>
+                    <span id="miniNome">Admin</span>
+                    <svg class="i seta"><use href="#i-chevron"/></svg>
                 </button>
-                <div class="dropdown-menu" id="menuConfig">
-                    <a href="/pages/perfil.html"><i class="fa-solid fa-user-gear"></i> Ver Informações</a>
-                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                <div class="dropdown-menu" id="menuConfig" role="menu">
+                    <div class="dropdown-cab"><strong id="ddNome">Administrador</strong><small id="ddEmail"></small></div>
+                    <a href="/pages/perfil.html" role="menuitem"><svg class="i"><use href="#i-user"/></svg> Ver informações</a>
+                    <a href="/pages/index.html" role="menuitem" id="linkSite"><svg class="i"><use href="#i-home"/></svg> Ver o site</a>
+                    <a href="#" id="gatilhoSair" class="sair-item" role="menuitem"><svg class="i"><use href="#i-logout"/></svg> Sair</a>
                 </div>
             </div>
-        </nav>
+        </div>
     </header>
 
-    <main class="container">
-        <section class="boas-vindas">
-            <h2 id="nomeAdmin"><i class="fa-solid fa-shield-halved"></i> Painel Administrativo</h2>
-            <p>Gerenciamento estratégico da plataforma, controle de usuários e moderação de anúncios.</p>
+    <main class="container" id="conteudo" tabindex="-1">
+        <noscript><div class="aviso-erro" style="display:flex"><span>Ative o JavaScript do navegador para usar o painel administrativo.</span></div></noscript>
+
+        <section class="hero">
+            <div>
+                <p class="saudacao" id="saudacao">Bem-vindo</p>
+                <h1 id="nomeAdmin">Painel Administrativo</h1>
+                <p class="hero-sub">Visão geral da plataforma: usuários, anúncios, pendências e crescimento.</p>
+            </div>
+            <div class="hero-controles">
+                <span class="atualizado" id="atualizadoEm" aria-live="polite">Carregando...</span>
+                <label class="switch" title="Atualizar automaticamente a cada 60 segundos">
+                    <input type="checkbox" id="autoAtualizar"><span class="trilho"></span><span class="switch-txt">Auto</span>
+                </label>
+                <button type="button" class="btn-atualizar" id="btnAtualizar"><svg class="i"><use href="#i-refresh"/></svg><span>Atualizar</span></button>
+            </div>
         </section>
 
-        <section class="cards">
-            <div class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-users"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Usuários Cadastrados</h3>
-                    <p id="totalUsuarios">Carregando...</p>
-                    <a href="/pages/usuarios.html" class="btn-card">Gerenciar usuários <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-            </div>
+        <div class="aviso-erro" id="avisoErro" role="alert" hidden>
+            <svg class="i"><use href="#i-alert"/></svg><span id="avisoErroTexto"></span>
+            <button type="button" class="btn-tentar" id="btnTentar">Tentar de novo</button>
+        </div>
 
-            <div class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-car"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Moderação de Anúncios</h3>
-                    <p id="totalAnuncios">Carregando...</p>
-                    <a href="/pages/moderacao.html" class="btn-card">Ver anúncios <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
+        <!-- INDICADORES -->
+        <section class="kpis" aria-label="Indicadores">
+            <a class="kpi kpi-usuarios" href="/pages/usuarios.html">
+                <span class="kpi-icone"><svg class="i"><use href="#i-users"/></svg></span>
+                <span class="kpi-corpo"><small>Usuários</small><strong data-kpi="usuarios" id="totalUsuarios">—</strong><em id="kpiUsuariosSub"></em></span>
+            </a>
+            <a class="kpi kpi-anuncios" href="/pages/moderacao.html">
+                <span class="kpi-icone"><svg class="i"><use href="#i-car"/></svg></span>
+                <span class="kpi-corpo"><small>Anúncios</small><strong data-kpi="anuncios" id="totalAnuncios">—</strong><em id="kpiAnunciosSub"></em></span>
+            </a>
+            <div class="kpi kpi-views">
+                <span class="kpi-icone"><svg class="i"><use href="#i-eye"/></svg></span>
+                <span class="kpi-corpo"><small>Visualizações</small><strong data-kpi="views">—</strong><em>em todos os anúncios</em></span>
             </div>
+            <div class="kpi kpi-conversas">
+                <span class="kpi-icone"><svg class="i"><use href="#i-chat"/></svg></span>
+                <span class="kpi-corpo"><small>Conversas</small><strong data-kpi="conversas">—</strong><em>negociações abertas</em></span>
+            </div>
+        </section>
+
+        <div class="grade">
+            <!-- CRESCIMENTO -->
+            <section class="painel">
+                <header class="painel-topo">
+                    <h2>Crescimento · últimos 6 meses</h2>
+                    <div class="legenda"><span class="l-usu">Usuários</span><span class="l-anu">Anúncios</span></div>
+                </header>
+                <div class="grafico" id="grafico"><div class="skeleton" style="height:230px"></div></div>
+            </section>
+
+            <!-- PENDÊNCIAS -->
+            <section class="painel">
+                <header class="painel-topo"><h2>Pendências</h2><span class="contador-pend" id="contadorPend" hidden>0</span></header>
+                <div class="pendencias" id="pendencias"><div class="skeleton" style="height:210px"></div></div>
+            </section>
+        </div>
+
+        <div class="grade grade-3">
+            <!-- DISTRIBUIÇÃO -->
+            <section class="painel">
+                <header class="painel-topo"><h2>Tipos de conta</h2></header>
+                <div class="donut-wrap" id="donut"><div class="skeleton" style="height:170px"></div></div>
+            </section>
+
+            <!-- USUÁRIOS RECENTES -->
+            <section class="painel">
+                <header class="painel-topo"><h2>Novos usuários</h2><a href="/pages/usuarios.html" class="ver-tudo">Ver todos <svg class="i"><use href="#i-arrow"/></svg></a></header>
+                <div class="lista" id="listaUsuarios"><div class="skeleton" style="height:210px"></div></div>
+            </section>
+
+            <!-- ANÚNCIOS RECENTES -->
+            <section class="painel">
+                <header class="painel-topo"><h2>Últimos anúncios</h2><a href="/pages/moderacao.html" class="ver-tudo">Moderar <svg class="i"><use href="#i-arrow"/></svg></a></header>
+                <div class="lista" id="listaAnuncios"><div class="skeleton" style="height:210px"></div></div>
+            </section>
+        </div>
+
+        <!-- ATALHOS -->
+        <section class="atalhos" aria-label="Atalhos">
+            <a href="/pages/usuarios.html" class="atalho"><svg class="i"><use href="#i-users"/></svg><div><strong>Gerenciar usuários</strong><small>Contas, tipos e bloqueios</small></div><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+            <a href="/pages/moderacao.html" class="atalho"><svg class="i"><use href="#i-check"/></svg><div><strong>Moderar anúncios</strong><small>Revisar e remover conteúdo</small></div><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+            <a href="/pages/catalogo.html" class="atalho"><svg class="i"><use href="#i-car"/></svg><div><strong>Ver catálogo</strong><small>Como o público enxerga</small></div><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+            <a href="/pages/perfil.html" class="atalho"><svg class="i"><use href="#i-user"/></svg><div><strong>Minha conta</strong><small>Dados do administrador</small></div><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
         </section>
     </main>
 
-    <!-- Estrutura do Modal de Confirmação Oculto -->
-    <div class="modal-overlay" id="modalSairContainer">
+    <!-- BUSCA RÁPIDA (Ctrl+K) -->
+    <div class="modal-overlay paleta-overlay" id="paleta" role="dialog" aria-modal="true" aria-label="Busca rápida">
+        <div class="paleta">
+            <label class="paleta-campo"><svg class="i"><use href="#i-search"/></svg>
+                <input type="text" id="paletaInput" placeholder="Digite um comando ou página..." autocomplete="off" spellcheck="false" aria-controls="paletaLista"></label>
+            <ul class="paleta-lista" id="paletaLista" role="listbox"></ul>
+            <footer class="paleta-rodape"><span><kbd>↑</kbd><kbd>↓</kbd> navegar</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> fechar</span></footer>
+        </div>
+    </div>
+
+    <!-- CONFIRMAR SAÍDA -->
+    <div class="modal-overlay" id="modalSairContainer" role="dialog" aria-modal="true" aria-labelledby="tituloSair">
         <div class="modal-container">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <h3>Confirmar Saída</h3>
+            <span class="modal-icone"><svg class="i"><use href="#i-logout"/></svg></span>
+            <h3 id="tituloSair">Confirmar saída</h3>
             <p>Tem certeza que deseja encerrar sua sessão no painel administrativo?</p>
             <div class="modal-botoes">
-                <button class="btn-modal btn-cancelar" id="btnCancelarSair">Cancelar</button>
-                <button class="btn-modal btn-confirmar-sair" id="btnSair">Sim, Sair</button>
+                <button class="btn-modal btn-cancelar" id="btnCancelarSair" type="button">Cancelar</button>
+                <button class="btn-modal btn-confirmar-sair" id="btnSair" type="button">Sim, sair</button>
             </div>
         </div>
     </div>
 
-    <!-- Script do Painel Admin -->
+    <div class="toast-area" id="toastArea" aria-live="polite"></div>
+
     <script src="/js/painel-admin.js"></script>
-
-    <!-- Lógica do Dropdown e do Modal Integrada -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnConfig = document.getElementById('btnConfig');
-            const menuConfig = document.getElementById('menuConfig');
-            
-            const gatilhoSair = document.getElementById('gatilhoSair');
-            const modalSairContainer = document.getElementById('modalSairContainer');
-            const btnCancelarSair = document.getElementById('btnCancelarSair');
-            const btnSairConfirmado = document.getElementById('btnSair');
-
-            // 1. Controle de Abertura/Fechamento do Dropdown
-            if (btnConfig && menuConfig) {
-                btnConfig.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const estáAtivo = menuConfig.classList.toggle('mostrar');
-                    btnConfig.setAttribute('aria-expanded', estáAtivo);
-                });
-
-                document.addEventListener('click', () => {
-                    menuConfig.classList.remove('mostrar');
-                    btnConfig.setAttribute('aria-expanded', 'false');
-                });
-            }
-
-            // 2. Controle do Modal de Confirmação de Saída
-            if (gatilhoSair && modalSairContainer && btnCancelarSair) {
-                gatilhoSair.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    modalSairContainer.classList.add('mostrar-modal');
-                });
-
-                btnCancelarSair.addEventListener('click', () => {
-                    modalSairContainer.classList.remove('mostrar-modal');
-                });
-
-                modalSairContainer.addEventListener('click', (e) => {
-                    if (e.target === modalSairContainer) {
-                        modalSairContainer.classList.remove('mostrar-modal');
-                    }
-                });
-
-                if (btnSairConfirmado) {
-                    btnSairConfirmado.addEventListener('click', () => {
-                        modalSairContainer.classList.remove('mostrar-modal');
-                    });
-                }
-            }
-        });
-    </script>
 </body>
 </html>
