@@ -1,429 +1,367 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // =========================================================================
-    // 1. RECUPERAÇÃO E VALIDAÇÃO SEGURA DA SESSÃO
-    // =========================================================================
-    const chaveSessao = localStorage.getItem("usuario") ? "usuario" : "usuario_logado";
-    const usuarioSalvo = localStorage.getItem(chaveSessao) || sessionStorage.getItem("usuario") || sessionStorage.getItem("usuario_logado");
-    
-    if (!usuarioSalvo) {
-        window.location.href = "/pages/login.html";
-        return;
-    }
+"use strict";
+/* ==========================================================================
+   MOTORFLEX — PAINEL DO CLIENTE
+   Mantém: sessão, foto de perfil (recorte + remover), menu, logout.
+   Novo: resumo real (anúncios, visualizações, mensagens, favoritos), listas recentes,
+         completar perfil, sincronização entre abas.
+   ========================================================================== */
+(() => {
+    const LOGIN = "/pages/login.html";
+    const PAINEIS = { admin: "/pages/painel-admin.html", empresa: "/pages/painel-empresa.html" };
+    // Se sua API de favoritos existir, informe a rota (ex.: "/api/favoritos/usuario/"); ela deve devolver
+    // uma lista (ou { favoritos: [...] }). Com null o card mostra "—".
+    const API_FAVORITOS = null;
 
-    let usuario;
-    try {
-        usuario = JSON.parse(usuarioSalvo);
-    } catch (e) {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = "/pages/login.html";
-        return;
-    }
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>'"]/g, (t) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[t]));
 
-    // =========================================================================
-    // 2. ELEMENTOS DA DOM E DADOS DO UTILIZADOR
-    // =========================================================================
-    const elNome = document.getElementById("nomeUsuario");
-    if (elNome && usuario.nome) {
-        elNome.textContent = usuario.nome;
-    }
-
-    const imgPerfil = document.getElementById("imgPerfil");
-    const btnRemoverFoto = document.getElementById("btnRemoverFoto");
-
-    function atualizarVisibilidadeBotaoRemover(temFotoPersonalizada) {
-        if (btnRemoverFoto) {
-            btnRemoverFoto.style.display = temFotoPersonalizada ? "flex" : "none";
+    // ------------------------------------------------------------------ SESSÃO
+    function lerSessao() {
+        for (const storage of [localStorage, sessionStorage]) {
+            for (const chave of ["usuario", "usuario_logado"]) {
+                const bruto = storage.getItem(chave);
+                if (!bruto) continue;
+                try {
+                    const dados = JSON.parse(bruto);
+                    if (dados && typeof dados === "object") return { dados, storage, chave };
+                } catch { /* tenta a próxima */ }
+            }
         }
+        return null;
+    }
+    const sessao = lerSessao();
+    if (!sessao) { location.replace(LOGIN); return; }
+    const usuario = sessao.dados;
+    const uid = usuario.id ?? usuario._id;
+
+    // Cada tipo de conta tem o seu painel
+    const tipo = String(usuario.tipo || "individual").toLowerCase();
+    if (PAINEIS[tipo]) { location.replace(PAINEIS[tipo]); return; }
+
+    const token = () => localStorage.getItem("token") || sessionStorage.getItem("token");
+    const authHeaders = () => (token() ? { Authorization: `Bearer ${token()}` } : {});
+    const salvarSessao = () => { try { sessao.storage.setItem(sessao.chave, JSON.stringify(usuario)); } catch { /* cheio */ } };
+    async function get(url) {
+        const r = await fetch(url, { headers: { "Content-Type": "application/json", ...authHeaders() } });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.sucesso === false) throw new Error(d.mensagem || `HTTP ${r.status}`);
+        return d;
     }
 
-    function aplicarAvatarPadrao(nomeUsuario) {
-        if (!imgPerfil) return;
-        imgPerfil.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeUsuario || "Cliente")}&background=181824&color=ff1e27&size=150`;
-        atualizarVisibilidadeBotaoRemover(false);
+    // ------------------------------------------------------------------- TOAST
+    function toast(msg, tipoMsg = "ok") {
+        const t = document.createElement("div");
+        t.className = `toast ${tipoMsg === "erro" ? "erro" : ""}`;
+        t.textContent = msg;
+        $("toastArea").appendChild(t);
+        requestAnimationFrame(() => t.classList.add("on"));
+        setTimeout(() => { t.classList.remove("on"); setTimeout(() => t.remove(), 300); }, 3500);
     }
 
-    // Carregamento inicial da foto com fallback seguro caso a imagem falhe
-    if (imgPerfil) {
-        const fotoAtual = usuario.fotoUrl || usuario.foto_perfil;
-        if (fotoAtual) {
-            imgPerfil.src = fotoAtual;
-            atualizarVisibilidadeBotaoRemover(true);
-            
-            // Fallback automático se a imagem externa falhar ao carregar
-            imgPerfil.onerror = () => {
-                aplicarAvatarPadrao(usuario.nome);
-            };
-        } else {
-            aplicarAvatarPadrao(usuario.nome);
-        }
+    // ------------------------------------------------------------------ MODAIS
+    const modais = ["modalSairContainer", "modalRemoverFoto", "modalRecorte"];
+    function abrirModal(id) { $(id).classList.add("mostrar-modal"); document.body.classList.add("travado"); }
+    function fecharModal(id) {
+        $(id).classList.remove("mostrar-modal");
+        if (!modais.some((m) => $(m).classList.contains("mostrar-modal"))) document.body.classList.remove("travado");
+    }
+    modais.forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id && id !== "modalRecorte") fecharModal(id); }));
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        modais.forEach((id) => { if ($(id).classList.contains("mostrar-modal")) id === "modalRecorte" ? cancelarRecorte() : fecharModal(id); });
+        fecharMenu();
+    });
+
+    // -------------------------------------------------------------- FOTO / AVATAR
+    const imgSrc = (s) => (typeof s === "string" && s ? (/^(\/|https?:|blob:|data:)/.test(s) ? s : `/uploads/${s}`) : "");
+    const avatarPadrao = (nome) => `https://ui-avatars.com/api/?name=${encodeURIComponent(nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
+
+    function definirFoto(url) {
+        const src = imgSrc(url) || avatarPadrao(usuario.nome);
+        $("imgPerfil").src = src;
+        $("miniAvatar").src = src;
+        $("btnRemoverFoto").style.display = url ? "grid" : "none";
+    }
+    ["imgPerfil", "miniAvatar"].forEach((id) => $(id).addEventListener("error", (e) => {
+        if (!e.target.src.includes("ui-avatars.com")) { e.target.src = avatarPadrao(usuario.nome); if (id === "imgPerfil") $("btnRemoverFoto").style.display = "none"; }
+    }));
+
+    // ------------------------------------------------------------- CABEÇALHO/HERO
+    function preencherPerfil() {
+        const primeiro = String(usuario.nome || "Cliente").trim();
+        $("nomeUsuario").textContent = `${primeiro} ${usuario.sobrenome || ""}`.trim();
+        $("miniNome").textContent = primeiro.split(/\s+/)[0];
+        const h = new Date().getHours();
+        $("saudacao").textContent = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+        const desde = new Date(usuario.criado_em);
+        if (usuario.criado_em && !isNaN(desde)) { $("tagDesde").textContent = `Membro desde ${desde.getFullYear()}`; $("tagDesde").hidden = false; }
+        definirFoto(usuario.fotoUrl || usuario.foto_perfil);
+        montarChecklist();
     }
 
-    // =========================================================================
-    // 3. SISTEMA DE NOTIFICAÇÕES (TOAST)
-    // =========================================================================
-    function mostrarNotificacao(mensagem, tipo = 'sucesso') {
-        const toastAntigo = document.querySelector('.toast-notificacao');
-        if (toastAntigo) toastAntigo.remove();
+    // ---------------------------------------------------------------- MENU / SAIR
+    const btnConfig = $("btnConfig"), menuConfig = $("menuConfig");
+    function fecharMenu() { menuConfig.classList.remove("mostrar"); btnConfig.setAttribute("aria-expanded", "false"); }
+    btnConfig.addEventListener("click", (e) => {
+        e.stopPropagation();
+        btnConfig.setAttribute("aria-expanded", String(menuConfig.classList.toggle("mostrar")));
+    });
+    document.addEventListener("click", (e) => { if (!menuConfig.contains(e.target) && !btnConfig.contains(e.target)) fecharMenu(); });
 
-        const toast = document.createElement('div');
-        toast.className = `toast-notificacao ${tipo}`;
-        toast.textContent = mensagem;
-        
-        toast.style.position = 'fixed';
-        toast.style.bottom = '30px';
-        toast.style.right = '30px';
-        toast.style.backgroundColor = tipo === 'sucesso' ? '#1b873f' : '#e50914';
-        toast.style.color = '#fff';
-        toast.style.padding = '14px 22px';
-        toast.style.borderRadius = '12px';
-        toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
-        toast.style.zIndex = '9999';
-        toast.style.fontSize = '0.95rem';
-        toast.style.fontWeight = '600';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        toast.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    $("gatilhoSair").addEventListener("click", (e) => { e.preventDefault(); fecharMenu(); abrirModal("modalSairContainer"); });
+    $("btnCancelarSair").addEventListener("click", () => fecharModal("modalSairContainer"));
+    $("btnSair").addEventListener("click", () => {
+        ["usuario", "usuario_logado", "token"].forEach((k) => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+        location.replace(LOGIN);
+    });
 
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0)';
-        }, 10);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
-    }
-
-    // =========================================================================
-    // 4. MODAL CUSTOMIZADO DE CONFIRMAÇÃO DE REMOÇÃO DE FOTO
-    // =========================================================================
-    function abrirModalConfirmacaoFoto(onConfirm) {
-        const modalAntigo = document.getElementById('modalCustomFoto');
-        if (modalAntigo) modalAntigo.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'modalCustomFoto';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
-        overlay.style.backdropFilter = 'blur(4px)';
-        overlay.style.zIndex = '9999';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.3s ease';
-
-        const caixa = document.createElement('div');
-        caixa.style.background = '#141414';
-        caixa.style.border = '1px solid rgba(255, 255, 255, 0.08)';
-        caixa.style.padding = '35px 30px';
-        caixa.style.borderRadius = '22px';
-        caixa.style.boxShadow = '0 15px 40px rgba(0, 0, 0, 0.6)';
-        caixa.style.maxWidth = '400px';
-        caixa.style.width = '90%';
-        caixa.style.textAlign = 'center';
-        caixa.style.transform = 'scale(0.8)';
-        caixa.style.transition = 'transform 0.3s ease';
-
-        caixa.innerHTML = `
-            <div style="font-size: 2.5rem; margin-bottom: 15px;">🗑️</div>
-            <h3 style="font-size: 1.3rem; color: #fff; margin-bottom: 10px;">Remover foto de perfil?</h3>
-            <p style="color: #b3b3b3; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5;">
-                Sua foto atual será apagada e substituída pelo seu avatar padrão com as iniciais.
-            </p>
-            <div style="display: flex; justify-content: center; gap: 15px;">
-                <button id="btnNaoRemover" style="padding: 12px 24px; border: 1px solid #333; background: #222; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1;">Cancelar</button>
-                <button id="btnSimRemover" style="padding: 12px 24px; border: none; background: #e50914; color: #fff; border-radius: 10px; font-weight: bold; cursor: pointer; flex: 1; box-shadow: 0 4px 12px rgba(229,9,20,0.3);">Sim, remover</button>
-            </div>
-        `;
-
-        overlay.appendChild(caixa);
-        document.body.appendChild(overlay);
-
-        setTimeout(() => {
-            overlay.style.opacity = '1';
-            caixa.style.transform = 'scale(1)';
-        }, 10);
-
-        const fecharModal = () => {
-            overlay.style.opacity = '0';
-            caixa.style.transform = 'scale(0.8)';
-            setTimeout(() => overlay.remove(), 300);
-        };
-
-        document.getElementById('btnNaoRemover').addEventListener('click', fecharModal);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) fecharModal();
-        });
-
-        document.getElementById('btnSimRemover').addEventListener('click', () => {
-            fecharModal();
-            onConfirm();
-        });
-    }
-
-    // =========================================================================
-    // 5. MENU DROPDOWN DE CONFIGURAÇÕES
-    // =========================================================================
-    const btnConfig = document.getElementById('btnConfig');
-    const menuConfig = document.getElementById('menuConfig');
-
-    if (btnConfig && menuConfig) {
-        btnConfig.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = menuConfig.classList.toggle('mostrar');
-            btnConfig.setAttribute('aria-expanded', isOpen);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!menuConfig.contains(e.target) && !btnConfig.contains(e.target)) {
-                menuConfig.classList.remove('mostrar');
-                btnConfig.setAttribute('aria-expanded', 'false');
-            }
-        });
-    }
-
-    // =========================================================================
-    // 6. GESTÃO DO MODAL DE LOGOUT
-    // =========================================================================
-    const gatilhoSair = document.getElementById('gatilhoSair');
-    const modalSairContainer = document.getElementById('modalSairContainer');
-    const btnCancelarSair = document.getElementById('btnCancelarSair');
-    const btnSair = document.getElementById('btnSair');
-
-    if (gatilhoSair && modalSairContainer) {
-        gatilhoSair.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (menuConfig) {
-                menuConfig.classList.remove('mostrar');
-                if (btnConfig) btnConfig.setAttribute('aria-expanded', 'false');
-            }
-            modalSairContainer.classList.add('mostrar-modal');
-        });
-    }
-
-    if (btnCancelarSair && modalSairContainer) {
-        btnCancelarSair.addEventListener('click', () => {
-            modalSairContainer.classList.remove('mostrar-modal');
-        });
-    }
-
-    if (modalSairContainer) {
-        modalSairContainer.addEventListener('click', (e) => {
-            if (e.target === modalSairContainer) {
-                modalSairContainer.classList.remove('mostrar-modal');
-            }
-        });
-    }
-
-    if (btnSair) {
-        btnSair.addEventListener('click', () => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = "/pages/login.html";
-        });
-    }
-
-    // =========================================================================
-    // 7. UPLOAD DE FOTO DE PERFIL COM CROPPER.JS (BLINDADO)
-    // =========================================================================
-    const inputFoto = document.getElementById("inputFotoPerfil");
-    const modalRecorte = document.getElementById("modalRecorte");
-    const imagemParaCortar = document.getElementById("imagemParaCortar");
-    const btnCancelarRecorte = document.getElementById("btnCancelarRecorte");
-    const btnConfirmarRecorte = document.getElementById("btnConfirmarRecorte");
-    
+    // ------------------------------------------------------- FOTO: RECORTE E ENVIO
+    const inputFoto = $("inputFotoPerfil");
     let cropper = null;
 
-    if (inputFoto && imgPerfil) {
-        inputFoto.addEventListener("change", (e) => {
-            const arquivo = e.target.files[0];
-            if (!arquivo) return;
-
-            // Validação rigorosa de MIME-type
-            const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
-            if (!tiposPermitidos.includes(arquivo.type)) {
-                mostrarNotificacao("Por favor, selecione uma imagem válida (JPEG, PNG ou WEBP).", "erro");
-                inputFoto.value = "";
-                return;
-            }
-
-            const tamanhoMaximo = 5 * 1024 * 1024; // 5MB
-            if (arquivo.size > tamanhoMaximo) {
-                mostrarNotificacao("A foto selecionada deve ter no máximo 5MB.", "erro");
-                inputFoto.value = "";
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (eventoLeitura) => {
-                imagemParaCortar.src = eventoLeitura.target.result;
-                modalRecorte.style.display = "flex";
-
-                if (cropper) {
-                    cropper.destroy();
-                }
-                
-                cropper = new Cropper(imagemParaCortar, {
-                    aspectRatio: 1,
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 0.8,
-                    restore: false,
-                    guides: true,
-                    center: true,
-                    highlight: false,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    minCropBoxWidth: 120, 
-                    minCropBoxHeight: 120, 
-                    maxCropBoxWidth: 500, 
-                    maxCropBoxHeight: 500, 
-                });
-            };
-            reader.readAsDataURL(arquivo);
-        });
-
-        if (btnCancelarRecorte) {
-            btnCancelarRecorte.addEventListener("click", () => {
-                modalRecorte.style.display = "none";
-                if (cropper) cropper.destroy();
-                inputFoto.value = "";
-            });
-        }
-
-        if (btnConfirmarRecorte) {
-            btnConfirmarRecorte.addEventListener("click", () => {
-                if (!cropper) return;
-
-                btnConfirmarRecorte.disabled = true;
-                const textoOriginalBotao = btnConfirmarRecorte.textContent;
-                btnConfirmarRecorte.textContent = "A salvar...";
-
-                cropper.getCroppedCanvas({
-                    width: 400,
-                    height: 400,
-                }).toBlob(async (blob) => {
-                    modalRecorte.style.display = "none";
-                    
-                    const arquivoCortado = new File([blob], "foto-perfil.png", { type: "image/png" });
-                    const previewUrl = URL.createObjectURL(arquivoCortado);
-                    const fotoAnterior = imgPerfil.src;
-                    imgPerfil.src = previewUrl;
-
-                    const formData = new FormData();
-                    formData.append("fotoPerfil", arquivoCortado);
-                    formData.append("usuarioId", usuario.id || usuario._id);
-
-                    try {
-                        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-                        const resposta = await fetch("/api/perfil/upload-foto", {
-                            method: "POST",
-                            headers: {
-                                ...(token && { "Authorization": `Bearer ${token}` })
-                            },
-                            body: formData
-                        });
-
-                        if (!resposta.ok) {
-                            const erroDados = await resposta.json().catch(() => ({}));
-                            throw new Error(erroDados.mensagem || "Erro no servidor ao tentar salvar a imagem.");
-                        }
-
-                        const dados = await resposta.json();
-                        const novaUrlFoto = dados.fotoUrl || dados.foto_perfil;
-
-                        if (novaUrlFoto) {
-                            imgPerfil.src = novaUrlFoto;
-                            usuario.fotoUrl = novaUrlFoto;
-                            usuario.foto_perfil = novaUrlFoto;
-                            localStorage.setItem(chaveSessao, JSON.stringify(usuario));
-                            
-                            atualizarVisibilidadeBotaoRemover(true);
-                        }
-
-                        mostrarNotificacao("✨ Foto de perfil atualizada com sucesso!");
-
-                    } catch (erro) {
-                        console.error("Falha no upload:", erro);
-                        mostrarNotificacao(erro.message || "Não foi possível salvar a nova foto de perfil.", "erro");
-                        imgPerfil.src = fotoAnterior;
-                    } finally {
-                        URL.revokeObjectURL(previewUrl);
-                        if (cropper) cropper.destroy();
-                        inputFoto.value = "";
-                        btnConfirmarRecorte.disabled = false;
-                        btnConfirmarRecorte.textContent = textoOriginalBotao;
-                    }
-                }, "image/png");
-            });
-        }
+    function cancelarRecorte() {
+        fecharModal("modalRecorte");
+        if (cropper) { cropper.destroy(); cropper = null; }
+        inputFoto.value = "";
     }
 
-    // =========================================================================
-    // 8. REMOÇÃO DA FOTO DE PERFIL
-    // =========================================================================
-    if (btnRemoverFoto) {
-        btnRemoverFoto.addEventListener("click", () => {
-            abrirModalConfirmacaoFoto(async () => {
-                try {
-                    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    inputFoto.addEventListener("change", (e) => {
+        const arquivo = e.target.files[0];
+        if (!arquivo) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(arquivo.type)) { toast("Selecione uma imagem JPEG, PNG ou WEBP.", "erro"); inputFoto.value = ""; return; }
+        if (arquivo.size > 5 * 1024 * 1024) { toast("A foto deve ter no máximo 5MB.", "erro"); inputFoto.value = ""; return; }
 
-                    const resposta = await fetch("/api/perfil/remover-foto", {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            ...(token && { "Authorization": `Bearer ${token}` })
-                        },
-                        body: JSON.stringify({ usuarioId: usuario.id || usuario._id })
-                    });
-
-                    const dados = await resposta.json();
-
-                    if (!resposta.ok) {
-                        throw new Error(dados.mensagem || "Não foi possível remover a foto no servidor.");
-                    }
-
-                    if (dados.sucesso !== false) {
-                        aplicarAvatarPadrao(usuario.nome);
-                        
-                        usuario.fotoUrl = null;
-                        usuario.foto_perfil = null;
-                        localStorage.setItem(chaveSessao, JSON.stringify(usuario));
-
-                        mostrarNotificacao("🗑️ Foto de perfil removida com sucesso!");
-                    } else {
-                        mostrarNotificacao(dados.mensagem || "Não foi possível remover a foto.", "erro");
-                    }
-
-                } catch (erro) {
-                    console.error("Erro ao remover foto:", erro);
-                    mostrarNotificacao(erro.message || "Erro de conexão ao tentar remover a foto.", "erro");
-                }
+        const leitor = new FileReader();
+        leitor.onload = (ev) => {
+            const img = $("imagemParaCortar");
+            img.src = ev.target.result;
+            abrirModal("modalRecorte");
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(img, {
+                aspectRatio: 1, viewMode: 1, dragMode: "move", autoCropArea: 0.8, restore: false, guides: true, center: true,
+                highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
+                minCropBoxWidth: 120, minCropBoxHeight: 120
             });
-        });
-    }
-
-    // =========================================================================
-    // 9. SINCRONIZAÇÃO EM TEMPO REAL ENTRE ABAS DO NAVEGADOR
-    // =========================================================================
-    window.addEventListener("storage", (event) => {
-        if (event.key === chaveSessao) {
-            if (!event.newValue) {
-                // Se a sessão foi limpa noutra aba, redireciona para o login
-                window.location.href = "/pages/login.html";
-            }
-        }
+        };
+        leitor.readAsDataURL(arquivo);
     });
-});
+    $("btnCancelarRecorte").addEventListener("click", cancelarRecorte);
+
+    $("btnConfirmarRecorte").addEventListener("click", () => {
+        if (!cropper) return;
+        const btn = $("btnConfirmarRecorte"), textoOriginal = btn.textContent;
+        btn.disabled = true; btn.textContent = "Salvando...";
+
+        cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
+            if (!blob) { toast("Não foi possível processar a imagem.", "erro"); btn.disabled = false; btn.textContent = textoOriginal; return; }
+            fecharModal("modalRecorte");
+            const arquivo = new File([blob], "foto-perfil.png", { type: "image/png" });
+            const previa = URL.createObjectURL(arquivo);
+            const anterior = usuario.fotoUrl || usuario.foto_perfil || "";
+            definirFoto(previa);
+
+            const fd = new FormData();
+            fd.append("fotoPerfil", arquivo);
+            fd.append("usuarioId", uid);
+            try {
+                const r = await fetch("/api/perfil/upload-foto", { method: "POST", headers: authHeaders(), body: fd });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(d.mensagem || d.erro || "Erro no servidor ao salvar a imagem.");
+                const nova = d.fotoUrl || d.foto_perfil;
+                if (nova) {
+                    usuario.fotoUrl = usuario.foto_perfil = nova;
+                    salvarSessao(); definirFoto(nova); montarChecklist();
+                }
+                toast("✨ Foto de perfil atualizada!");
+            } catch (erro) {
+                console.error("Falha no upload:", erro);
+                toast(erro.message || "Não foi possível salvar a nova foto.", "erro");
+                definirFoto(anterior);
+            } finally {
+                URL.revokeObjectURL(previa);
+                if (cropper) { cropper.destroy(); cropper = null; }
+                inputFoto.value = "";
+                btn.disabled = false; btn.textContent = textoOriginal;
+            }
+        }, "image/png");
+    });
+
+    // ------------------------------------------------------ FOTO: REMOVER
+    $("btnRemoverFoto").addEventListener("click", () => abrirModal("modalRemoverFoto"));
+    $("btnNaoRemover").addEventListener("click", () => fecharModal("modalRemoverFoto"));
+    $("btnSimRemover").addEventListener("click", async () => {
+        const btn = $("btnSimRemover");
+        btn.disabled = true;
+        try {
+            const r = await fetch("/api/perfil/remover-foto", {
+                method: "DELETE", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ usuarioId: uid })
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || d.sucesso === false) throw new Error(d.mensagem || "Não foi possível remover a foto.");
+            usuario.fotoUrl = usuario.foto_perfil = null;
+            salvarSessao(); definirFoto(null); montarChecklist();
+            toast("🗑️ Foto de perfil removida.");
+        } catch (erro) {
+            console.error("Erro ao remover foto:", erro);
+            toast(erro.message || "Erro de conexão ao remover a foto.", "erro");
+        } finally { btn.disabled = false; fecharModal("modalRemoverFoto"); }
+    });
+
+    // ----------------------------------------------------------------- RESUMO
+    const estado = { anuncios: null, conversas: null };
+    const LIDAS_KEY = `mf_lidas_${uid}`;
+    let lidas = {};
+    try { lidas = JSON.parse(localStorage.getItem(LIDAS_KEY)) || {}; } catch { lidas = {}; }
+
+    function animarNumero(el, alvo) {
+        if (!el) return;
+        if (typeof alvo !== "number") { el.textContent = "—"; return; }
+        const ini = performance.now(), dur = 700;
+        (function passo(t) {
+            const p = Math.min(1, (t - ini) / dur);
+            el.textContent = Math.round(alvo * (1 - Math.pow(1 - p, 3))).toLocaleString("pt-BR");
+            if (p < 1) requestAnimationFrame(passo);
+        })(ini);
+    }
+    const stat = (nome, valor) => animarNumero(document.querySelector(`[data-stat="${nome}"]`), valor);
+
+    const brl = (n) => "R$ " + Number(n || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    const vazio = (icone, texto, link) => `<div class="vazio"><svg class="i"><use href="#${icone}"/></svg>${texto}${link ? `<br><a href="${link[0]}">${link[1]}</a>` : ""}</div>`;
+
+    function renderAnuncios(lista) {
+        const el = $("listaAnuncios");
+        if (!lista.length) { el.innerHTML = vazio("i-car", "Você ainda não anunciou nenhum veículo.", ["/pages/catalogo.html?tab=cadastrar", "Anunciar meu primeiro carro"]); return; }
+        el.innerHTML = [...lista].sort((a, b) => b.id - a.id).slice(0, 3).map((v) => {
+            const foto = imgSrc(v.imagem);
+            const ano = v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : (v.ano_fabricacao || "");
+            return `<a class="item" href="/pages/editar-anuncio.html?id=${encodeURIComponent(v.id)}">
+                ${foto ? `<img class="item-foto" src="${esc(foto)}" alt="" loading="lazy">` : `<span class="item-foto vazia"><svg class="i"><use href="#i-car"/></svg></span>`}
+                <div class="item-info"><h4>${esc(v.marca)} ${esc(v.modelo)}</h4><p>${esc([v.versao, ano].filter(Boolean).join(" · "))}</p></div>
+                <div class="item-meta"><strong>${brl(v.preco)}</strong><span class="views"><svg class="i"><use href="#i-eye"/></svg>${Number(v.total_visualizacoes || 0)}</span></div>
+            </a>`;
+        }).join("");
+    }
+
+    function naoLidas(c) {
+        if (c.nao_lidas != null) return Number(c.nao_lidas) || 0;
+        if (c.ultimo_remetente_id != null && String(c.ultimo_remetente_id) === String(uid)) return 0;
+        const v = lidas[c.id];
+        if (v == null) return 0;
+        const tot = Number(c.total_mensagens);
+        if (!isNaN(tot) && !isNaN(Number(v))) return Math.max(0, tot - Number(v));
+        return String(v) !== String(c.total_mensagens ?? c.ultima_mensagem ?? "") ? 1 : 0;
+    }
+    function horaCurta(x) {
+        const d = new Date(x); if (isNaN(d)) return "";
+        const hoje = new Date();
+        if (d.toDateString() === hoje.toDateString()) return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        if (d.toDateString() === new Date(Date.now() - 864e5).toDateString()) return "Ontem";
+        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    }
+    function avatarConversa(nome, foto) {
+        const n = String(nome || "?").trim(), p = n.split(/\s+/);
+        let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360;
+        const src = imgSrc(foto);
+        return `<span class="av" style="background:linear-gradient(135deg,hsl(${h} 45% 28%),hsl(${(h + 40) % 360} 50% 20%))">${esc(((p[0]?.[0] || "?") + (p[1]?.[0] || "")).toUpperCase())}${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`;
+    }
+    function renderConversas(lista) {
+        const el = $("listaConversas");
+        if (!lista.length) { el.innerHTML = vazio("i-chat", "Nenhuma conversa por enquanto.<br>Fale com um vendedor pelo anúncio.", ["/pages/catalogo.html", "Explorar catálogo"]); return; }
+        const ord = [...lista].sort((a, b) => (new Date(b.ultimo_envio).getTime() || 0) - (new Date(a.ultimo_envio).getTime() || 0)).slice(0, 4);
+        el.innerHTML = ord.map((c) => {
+            const n = naoLidas(c);
+            return `<a class="item ${n ? "tem-nova" : ""}" href="/pages/mensagens.html?conversa=${encodeURIComponent(c.id)}">
+                ${avatarConversa(c.outro_usuario_nome, c.outro_usuario_foto)}
+                <div class="item-info"><h4>${esc(c.outro_usuario_nome || "Usuário")}</h4><p>${esc(c.ultima_mensagem || "Inicie a conversa...")}${c.veiculo_nome ? ` · ${esc(c.veiculo_nome)}` : ""}</p></div>
+                <div class="item-meta"><span>${esc(horaCurta(c.ultimo_envio))}</span>${n ? `<span class="nova-badge">${n > 99 ? "99+" : n}</span>` : ""}</div>
+            </a>`;
+        }).join("");
+    }
+
+    async function carregarResumo() {
+        const [v, c, f] = await Promise.allSettled([
+            get(`/api/veiculos/usuario/${encodeURIComponent(uid)}`),
+            get(`/api/mensagens/conversas?usuarioId=${encodeURIComponent(uid)}`),
+            API_FAVORITOS ? get(API_FAVORITOS + encodeURIComponent(uid)) : Promise.reject(new Error("sem-api"))
+        ]);
+
+        if (v.status === "fulfilled") {
+            const lista = Array.isArray(v.value.veiculos) ? v.value.veiculos : [];
+            estado.anuncios = lista;
+            stat("anuncios", lista.length);
+            stat("views", lista.reduce((s, x) => s + Number(x.total_visualizacoes || 0), 0));
+            renderAnuncios(lista);
+        } else {
+            stat("anuncios"); stat("views");
+            $("listaAnuncios").innerHTML = vazio("i-alert", "Não foi possível carregar seus anúncios.");
+        }
+
+        if (c.status === "fulfilled") {
+            const lista = Array.isArray(c.value.conversas) ? c.value.conversas : [];
+            estado.conversas = lista;
+            const total = lista.reduce((s, x) => s + naoLidas(x), 0);
+            stat("naolidas", total);
+            $("pontoMsg").hidden = !total; $("pontoMsg").textContent = total > 99 ? "99+" : total;
+            renderConversas(lista);
+        } else {
+            stat("naolidas");
+            $("listaConversas").innerHTML = vazio("i-alert", "Não foi possível carregar suas conversas.");
+        }
+
+        if (f.status === "fulfilled") {
+            const d = f.value, lista = Array.isArray(d) ? d : (d.favoritos || d.dados || []);
+            stat("favoritos", lista.length);
+        } else stat("favoritos");
+
+        montarChecklist();
+    }
+
+    // --------------------------------------------------------- COMPLETAR PERFIL
+    function montarChecklist() {
+        const itens = [
+            { ok: !!(usuario.fotoUrl || usuario.foto_perfil), txt: "Adicionar foto de perfil", acao: "foto" },
+            { ok: !!String(usuario.telefone || "").trim(), txt: "Cadastrar telefone de contato", href: "/pages/perfil.html" },
+            { ok: !!(estado.anuncios && estado.anuncios.length), txt: "Publicar o primeiro anúncio", href: "/pages/catalogo.html?tab=cadastrar" },
+            { ok: !!(estado.conversas && estado.conversas.length), txt: "Iniciar uma conversa", href: "/pages/catalogo.html" }
+        ];
+        const feitos = itens.filter((i) => i.ok).length, pct = Math.round((feitos / itens.length) * 100);
+        $("percentual").textContent = `${pct}%`;
+        $("barraProgresso").style.width = `${pct}%`;
+        $("checklist").innerHTML = itens.map((i) => {
+            const marca = `<span class="check"><svg class="i"><use href="#i-check"/></svg></span>`;
+            const corpo = i.ok ? `<span>${marca}${esc(i.txt)}</span>`
+                : `<a href="${i.href || "#"}" ${i.acao ? `data-acao="${i.acao}"` : ""}>${marca}${esc(i.txt)}</a>`;
+            return `<li class="${i.ok ? "feito" : ""}">${corpo}</li>`;
+        }).join("");
+    }
+    $("checklist").addEventListener("click", (e) => {
+        const a = e.target.closest('[data-acao="foto"]');
+        if (a) { e.preventDefault(); inputFoto.click(); }
+    });
+
+    // Atualiza os dados da conta com o servidor (foto, telefone, membro desde)
+    async function sincronizarConta() {
+        try {
+            const d = await get(`/api/perfil/meu-perfil?id=${encodeURIComponent(uid)}`);
+            if (!d.usuario) return;
+            const { senha, ...novo } = d.usuario;
+            Object.assign(usuario, novo); delete usuario.senha;
+            if (novo.foto_perfil) usuario.fotoUrl = novo.foto_perfil;
+            salvarSessao(); preencherPerfil();
+        } catch { /* usa o que já está salvo */ }
+    }
+
+    // ---------------------------------------------------- SINCRONIZAÇÃO ENTRE ABAS
+    addEventListener("storage", (e) => {
+        if (e.key !== "usuario" && e.key !== "usuario_logado" && e.key !== null) return;
+        const s = lerSessao();
+        if (!s) location.replace(LOGIN);
+        else if (String(s.dados.id ?? s.dados._id) !== String(uid)) location.reload();
+    });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) carregarResumo(); });
+
+    // -------------------------------------------------------------------- INIT
+    preencherPerfil();
+    carregarResumo();
+    sincronizarConta();
+})();
