@@ -19,7 +19,7 @@
     const TEMPO_REQUISICAO = 15000;
     const TEMPO_DESFAZER = 7000;
     const IMG_PADRAO = "/imagens/sem-foto.jpg";
-    const DETALHES = "/pages/detalhes.html";
+    const DETALHES = "/pages/detalhes-veiculo.html";
     const PAGINA_INICIO = "/pages/index.html";
 
     // AJUSTE AQUI: para onde o "Voltar" leva em cada tipo de conta
