@@ -14,6 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (secaoAlvo) secaoAlvo.classList.add("active");
 
         linksSpa.forEach(link => link.classList.toggle("active", link.dataset.target === targetId));
+
+        // Home = uma tela só, sem rolagem (e sem rodapé). Sobre e Contato rolam normalmente.
+        const ehHome = targetId === "home";
+        document.documentElement.classList.toggle("tela-home", ehHome);
+        document.body.classList.toggle("tela-home", ehHome);
+
         if (rolarAoTopo) window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -271,15 +277,67 @@ document.addEventListener("DOMContentLoaded", () => {
             km: v.quilometragem,
             carroceria: v.carroceria ? String(v.carroceria) : "",
             cor: v.cor ? String(v.cor) : "",
-            criado: v.criado_em ? (Date.parse(v.criado_em) || 0) : 0
+            criado: v.criado_em ? (Date.parse(v.criado_em) || 0) : 0,
+            combustivelId: v.tipo_combustivel_id ?? null,
+            combustivelNome: String(v.combustivel_nome || v.combustivel || "").trim()
         };
+    }
+
+    // ---------- Combustível (ícone na foto do carro) ----------
+    // Regra dos ícones na foto do carro:
+    //   folha = combustível líquido (gasolina, etanol, flex, diesel)
+    //   raio  = energia elétrica
+    //   híbrido = os dois ícones juntos
+    const ICONES = {
+        raio:  { classe: "fa-bolt" },
+        folha: { classe: "fa-leaf" }
+    };
+
+    const COMBUSTIVEIS = {
+        gasolina: { rotulo: "Gasolina", grupo: "liquido",  icones: ["folha"],         descricao: "Combustível derivado do petróleo, o mais comum em veículos leves." },
+        etanol:   { rotulo: "Etanol",   grupo: "liquido",  icones: ["folha"],         descricao: "Biocombustível renovável, produzido a partir da cana-de-açúcar." },
+        flex:     { rotulo: "Flex",     grupo: "liquido",  icones: ["folha"],         descricao: "Funciona com gasolina, etanol ou qualquer mistura dos dois." },
+        diesel:   { rotulo: "Diesel",   grupo: "liquido",  icones: ["folha"],         descricao: "Combustível mais denso, comum em veículos comerciais e de grande porte." },
+        eletrico: { rotulo: "Elétrico", grupo: "eletrico", icones: ["raio"],          descricao: "Funciona só com energia elétrica de baterias, sem emissões diretas." },
+        hibrido:  { rotulo: "Híbrido",  grupo: "hibrido",  icones: ["raio", "folha"], descricao: "Combina motor a combustão e motor elétrico para gastar menos." }
+    };
+
+    // Nomes por id (iguais aos do banco). /api/combustiveis atualiza esta lista se estiver disponível.
+    const nomesCombustivel = { 1: "Gasolina", 2: "Etanol", 3: "Flex", 4: "Diesel", 5: "Elétrico", 6: "Híbrido" };
+
+    async function carregarCombustiveis() {
+        try {
+            const r = await fetch("/api/combustiveis");
+            if (!r.ok) return;
+            const lista = await r.json();
+            if (Array.isArray(lista)) {
+                lista.forEach(c => { if (c && c.id != null && c.nome) nomesCombustivel[c.id] = String(c.nome); });
+            }
+        } catch (e) { /* usa os nomes padrão acima */ }
+    }
+
+    // Descobre o tipo pelo nome do combustível (ex.: "Elétrico", "Gasolina/Etanol", "Híbrido")
+    function infoCombustivel(v) {
+        const nome = normalizarTexto(v.combustivelNome || nomesCombustivel[v.combustivelId] || "");
+        let chave = null;
+
+        if (nome.includes("hibrid")) chave = "hibrido";            // híbrido antes dos demais (pode citar gasolina/elétrico)
+        else if (nome.includes("eletric")) chave = "eletrico";
+        else if (nome.includes("flex") || (nome.includes("gasolina") && (nome.includes("etanol") || nome.includes("alcool")))) chave = "flex";
+        else if (nome.includes("gasolina")) chave = "gasolina";
+        else if (nome.includes("etanol") || nome.includes("alcool")) chave = "etanol";
+        else if (nome.includes("diesel")) chave = "diesel";
+
+        if (!chave) return null;                                   // GNV e desconhecidos: sem selo
+        const c = COMBUSTIVEIS[chave];
+        return { grupo: c.grupo, icones: c.icones, titulo: `${c.rotulo}: ${c.descricao}` };
     }
 
     async function carregarVeiculos() {
         renderizarEsqueletoCarrossel();
 
         try {
-            const resposta = await fetch("/api/veiculos");
+            const [resposta] = await Promise.all([fetch("/api/veiculos"), carregarCombustiveis()]);
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
             const dados = await resposta.json();
 
@@ -353,11 +411,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function cardCarroHTML(v) {
         const km = formatarKm(v.km);
+        const comb = infoCombustivel(v);
 
         return `
             <a href="${urlDetalhes(v.id)}" class="car-card" title="Ver detalhes de ${escapeHTML(v.nome)}">
                 <div class="car-imagem">
                     ${v.ano ? `<span class="car-tag">${escapeHTML(v.ano)}</span>` : ""}
+                    ${comb ? `<span class="car-comb car-comb--${comb.grupo}" role="img" title="${escapeHTML(comb.titulo)}" aria-label="${escapeHTML(comb.titulo)}">${comb.icones.map(i => `<i class="fa-solid ${ICONES[i].classe} ic-${i}" aria-hidden="true"></i>`).join("")}</span>` : ""}
                     <img src="${escapeHTML(v.imagem)}" alt="${escapeHTML(v.nome)}" loading="lazy"
                          onerror="this.onerror=null;this.src='${IMAGEM_SEM_FOTO}'">
                 </div>
@@ -394,8 +454,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .slice(0, 10);
 
         // Garante largura suficiente para o loop ficar contínuo em telas grandes
+        const minimo = Math.max(6, Math.ceil(window.innerWidth / 200) + 1);
         let base = destaques;
-        while (base.length < 6) base = base.concat(destaques);
+        while (base.length < minimo) base = base.concat(destaques);
 
         const html = base.map(cardCarroHTML).join("");
 

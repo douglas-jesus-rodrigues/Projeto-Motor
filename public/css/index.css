@@ -778,3 +778,105 @@ body { opacity: 1; animation: pageFadeIn 0.3s ease-out; }
 /* Rodapé só com o copyright */
 .footer { padding: 18px 24px; }
 .footer-copy { margin: 0 auto; padding-top: 0; border-top: none; }
+
+
+/* ==========================================================================
+   HOME EM UMA TELA (sem rolagem) + SELO DE COMBUSTÍVEL
+   Tudo aqui vem por último de propósito: sobrescreve as regras anteriores.
+   A altura da tela (vh) define o tamanho do título, dos espaços e dos cards,
+   então hero + busca + carrossel sempre cabem em uma única tela.
+   ========================================================================== */
+
+/* Home trava a rolagem e esconde o rodapé; Sobre e Contato continuam rolando */
+html.tela-home,
+html.tela-home body { height: 100%; overflow: hidden; }
+html.tela-home .footer { display: none; }
+
+#sec-home {
+    --img-h: clamp(80px, 17vh, 170px);              /* altura da foto dos cards */
+    min-height: 0;
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
+}
+
+#sec-home .hero-banner {
+    height: 100%;
+    min-height: 0;
+    padding: clamp(12px, 3vh, 40px) 24px clamp(8px, 2vh, 22px);
+}
+
+/* Hero compacto: espaços e fontes acompanham a altura da tela */
+#sec-home .hero-content { margin-top: 0; }
+.hero-badge { margin-bottom: clamp(8px, 1.8vh, 20px); }
+.hero-title {
+    font-size: clamp(1.7rem, min(5vw, 6.2vh), 3.6rem);
+    margin-bottom: clamp(6px, 1.2vh, 12px);
+}
+.hero-description {
+    font-size: clamp(0.85rem, 1.8vh, 1rem);
+    margin-bottom: clamp(10px, 2.4vh, 24px);
+}
+.quick-search-bar { margin-bottom: clamp(8px, 1.6vh, 16px); }
+.sugestoes-busca { max-height: min(430px, 50vh); max-height: min(430px, 50dvh); }
+.hero-divider { margin: clamp(10px, 2vh, 22px) auto clamp(8px, 1.6vh, 16px); }
+.featured-header { margin-bottom: clamp(6px, 1.4vh, 14px); }
+.cars-track { padding: 4px 0; }
+
+/* Cards do carrossel proporcionais à altura da tela */
+.car-card { flex: 0 0 clamp(200px, calc(var(--img-h) * 1.75), 290px); }
+.car-imagem { height: var(--img-h); }
+.car-info { padding: clamp(8px, 1.4vh, 14px) 16px clamp(8px, 1.6vh, 16px); }
+.car-versao { margin: 2px 0 clamp(4px, 1vh, 10px); }
+.car-rodape { padding-top: clamp(6px, 1vh, 10px); }
+
+/* Selo do combustível no canto superior direito da foto (o ano fica no esquerdo) */
+.car-comb {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.car-comb--eletrico {
+    color: #ffd43b;
+    border-color: rgba(255, 212, 59, 0.55);
+    box-shadow: 0 0 12px rgba(255, 212, 59, 0.35);
+}
+.car-comb--gasolina {
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.55);
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+}
+
+/* Telas baixas (notebooks, janelas pequenas): tira o que é opcional para tudo caber */
+@media (max-height: 760px) { .hero-description { display: none; } }
+@media (max-height: 680px) { .btn-hero-cta { display: none; } }
+@media (max-height: 540px) {
+    .hero-badge,
+    .featured-subtitle { display: none; }
+    .hero-title { font-size: 1.5rem; }
+    .quick-search-bar { padding: 5px 5px 5px 18px; }
+    .btn-quick-search { padding: 9px 22px; }
+}
+
+/* Celular: busca em uma linha só e sem a descrição, para sobrar espaço ao carrossel */
+@media (max-width: 768px) {
+    .hero-description { display: none; }
+    .hero-title { font-size: clamp(1.5rem, min(7.4vw, 5.4vh), 1.9rem); }
+    .quick-search-bar {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 6px 6px 16px;
+        border-radius: var(--radius-pill);
+    }
+    .btn-quick-search { width: auto; padding: 10px 18px; border-radius: var(--radius-pill); }
+    .car-card { flex: 0 0 clamp(190px, calc(var(--img-h) * 1.7), 236px); margin-right: 12px; }
+}
