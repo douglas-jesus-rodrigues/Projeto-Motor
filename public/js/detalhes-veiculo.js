@@ -4,6 +4,16 @@
 const CHAVES_SESSAO = ["usuario", "usuario_logado"];
 const IMAGEM_PADRAO = "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
 
+// Mapeamento direto dos IDs da tabela tipo_combustivel da base de dados
+const MAPA_COMBUSTIVEL = {
+    1: "Gasolina",
+    2: "Etanol",
+    3: "Flex",
+    4: "Diesel",
+    5: "Elétrico",
+    6: "Híbrido"
+};
+
 let veiculoAtual = null;
 let veiculoIdAtual = null;
 
@@ -26,7 +36,6 @@ function usuarioEstaLogado() {
     return !!(u && u.id);
 }
 
-// Painel correto de acordo com o tipo de conta logada
 function obterRotaPainel(usuario) {
     if (!usuario) return "/pages/login.html";
     if (usuario.tipo === "empresa") return "/pages/painel-empresa.html";
@@ -83,7 +92,6 @@ function atualizarBloqueioScroll() {
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
 
-    // Correção de cache/estado ao voltar (BFCACHE)
     window.addEventListener("pageshow", (event) => {
         if (event.persisted) window.location.reload();
     });
@@ -138,12 +146,29 @@ async function carregarDetalhesDoCarro(id) {
         // Especificações
         const ano = `${v.ano_fabricacao || "--"} / ${v.ano_modelo || "--"}`;
         const km = v.quilometragem ? `${Number(v.quilometragem).toLocaleString("pt-BR")} km` : "0 km";
-        const combustivel = v.combustivel_nome || v.combustivel || "Gasolina";
+
+        // Obtém o nome do combustível através do JOIN da API ou através do ID mapeado
+        const idCombustivel = Number(v.tipo_combustivel_id || v.combustivel_id || 0);
+        const combustivel = v.combustivel_nome || 
+                            v.combustivel || 
+                            v.tipo_combustivel || 
+                            MAPA_COMBUSTIVEL[idCombustivel] || 
+                            "Não informado";
+
+        // Obtém a motorização (utiliza o campo versao como fallback, onde o motor está guardado na BD)
+        const motorizacao = v.motorizacao || 
+                            v.motorizacao_nome || 
+                            v.tipo_motorizacao || 
+                            v.motor || 
+                            v.versao || 
+                            combustivel;
+
         const cambio = v.cambio_nome || v.cambio || v.transmissao_nome || "Manual";
 
         definirTexto("specAno", ano);
         definirTexto("specQuilometragem", km);
         definirTexto("specCombustivel", combustivel);
+        definirTexto("specMotorizacao", motorizacao);
         definirTexto("specCambio", cambio);
         definirTexto("specCor", v.cor || "Não informada");
         definirTexto("specPortas", v.portas ? `${v.portas} portas` : "Não informado");
@@ -171,7 +196,7 @@ async function carregarDetalhesDoCarro(id) {
 }
 
 // ==========================================
-// GALERIA (foto principal + miniaturas opcionais)
+// GALERIA
 // ==========================================
 function montarGaleria(v) {
     const fotoEl = document.getElementById("fotoPrincipal");
@@ -179,7 +204,6 @@ function montarGaleria(v) {
 
     const principal = normalizarUrlImagem(v.imagem) || IMAGEM_PADRAO;
 
-    // Se a API devolver várias fotos (v.fotos), monta as miniaturas
     const listaBruta = Array.isArray(v.fotos) ? v.fotos : [];
     const fotos = listaBruta
         .map(f => typeof f === "string" ? f : (f?.url || f?.caminho || f?.caminho_arquivo || f?.imagem))
@@ -222,7 +246,7 @@ function montarGaleria(v) {
 }
 
 // ==========================================
-// CARD DE CONTATO: DONO x OUTRAS CONTAS
+// CARD DE CONTATO
 // ==========================================
 function renderizarCardContato(v) {
     const card = document.getElementById("contatoCard");
@@ -234,7 +258,6 @@ function renderizarCardContato(v) {
     const ehDono = !!(idAtual && idDono > 0 && idAtual === idDono);
 
     if (ehDono) {
-        // Leva ao painel correto conforme o tipo de login (cliente / empresa / admin)
         const destino = `${obterRotaPainel(usuario)}?editar=${encodeURIComponent(v.id || veiculoIdAtual)}`;
 
         card.innerHTML = `
@@ -259,12 +282,12 @@ function renderizarCardContato(v) {
 }
 
 // ==========================================
-// REGISTRAR VISUALIZAÇÃO ÚNICA (EXCLUINDO DONO E ADMINS NO BACK-END)
+// REGISTRAR VISUALIZAÇÃO ÚNICA
 // ==========================================
 async function registrarVisualizacaoUnica(veiculoId) {
     try {
         const usuario = lerUsuario();
-        if (!usuario?.id) return; // sem login, não conta
+        if (!usuario?.id) return;
 
         await fetch(`/api/veiculos/${encodeURIComponent(veiculoId)}/visualizar`, {
             method: "POST",
@@ -301,7 +324,7 @@ function configurarBotaoFavorito(veiculoId) {
     );
 
     btnFav.addEventListener("click", (e) => {
-        e.stopPropagation(); // não abre o lightbox
+        e.stopPropagation();
 
         if (!usuarioEstaLogado()) {
             abrirModalLoginNecessario();
@@ -339,7 +362,6 @@ function atualizarVisualBotaoFavorito(ehFavorito, btn, icone) {
     }
 }
 
-// Sincronização com outras abas
 window.addEventListener("storage", (event) => {
     if (event.key === "favoritos_veiculos") {
         const btnFav = document.getElementById("btnFavoritarDetalhe");
@@ -352,10 +374,9 @@ window.addEventListener("storage", (event) => {
 });
 
 // ==========================================
-// MODAIS (LOGIN, LIGHTBOX E PROPOSTA)
+// MODAIS
 // ==========================================
 function configurarModais() {
-    // Lightbox
     document.getElementById("fotoWrapper")?.addEventListener("click", () => {
         abrirModalImagem(document.getElementById("fotoPrincipal").src);
     });
@@ -363,13 +384,11 @@ function configurarModais() {
     document.querySelector(".modal-imagem-conteudo")?.addEventListener("click", (e) => e.stopPropagation());
     document.getElementById("btnFecharImagem")?.addEventListener("click", fecharModalImagem);
 
-    // Login necessário
     document.getElementById("btnCancelarLogin")?.addEventListener("click", fecharModalLoginNecessario);
     document.getElementById("modalLoginNecessario")?.addEventListener("click", (e) => {
         if (e.target.id === "modalLoginNecessario") fecharModalLoginNecessario();
     });
 
-    // Proposta
     document.getElementById("btnFecharProposta")?.addEventListener("click", fecharModalProposta);
     document.getElementById("btnCancelarProposta")?.addEventListener("click", fecharModalProposta);
     document.getElementById("btnEnviarProposta")?.addEventListener("click", enviarProposta);
@@ -377,7 +396,6 @@ function configurarModais() {
         if (e.target.id === "modalProposta") fecharModalProposta();
     });
 
-    // Frases rápidas: acrescentam ao texto sem duplicar
     document.getElementById("propostaChips")?.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-frase]");
         if (!btn) return;
@@ -389,7 +407,6 @@ function configurarModais() {
         area.focus();
     });
 
-    // Ctrl/Cmd + Enter envia
     document.getElementById("propostaTexto")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
@@ -441,7 +458,7 @@ function fecharModalProposta() {
 }
 
 // ==========================================
-// PROPOSTA: MENSAGEM AUTOMÁTICA PARA O DONO DO ANÚNCIO
+// PROPOSTA: MENSAGEM AUTOMÁTICA
 // ==========================================
 function montarMensagemAutomatica() {
     const titulo = document.getElementById("tituloVeiculo")?.textContent || "este veículo";
@@ -457,7 +474,6 @@ function montarMensagemAutomatica() {
     return `Olá! Tenho interesse no ${titulo}${versao} anunciado por ${preco}. Ele ainda está disponível? Gostaria de negociar.${assinatura}`;
 }
 
-// Chamado pelo botão "Enviar Proposta"
 function abrirFluxoProposta() {
     if (!usuarioEstaLogado()) {
         abrirModalLoginNecessario();
@@ -467,7 +483,6 @@ function abrirFluxoProposta() {
     const modal = document.getElementById("modalProposta");
     if (!modal) return;
 
-    // Mini-resumo do veículo
     const foto = document.getElementById("propostaFoto");
     if (foto) {
         foto.src = document.getElementById("fotoPrincipal")?.src || IMAGEM_PADRAO;
@@ -475,19 +490,11 @@ function abrirFluxoProposta() {
     definirTexto("propostaTitulo", document.getElementById("tituloVeiculo")?.textContent || "Veículo");
     definirTexto("propostaPreco", document.getElementById("precoVeiculo")?.textContent || "");
 
-    // Mensagem já pronta
     document.getElementById("propostaTexto").value = montarMensagemAutomatica();
 
     modal.hidden = false;
     atualizarBloqueioScroll();
-
-    // Foco no botão de enviar: basta apertar Enter/clicar
     document.getElementById("btnEnviarProposta")?.focus();
-}
-
-// Mantido por compatibilidade com o nome antigo
-function enviarPropostaModal() {
-    abrirFluxoProposta();
 }
 
 let enviandoProposta = false;
