@@ -6,18 +6,18 @@
     <title>MotorFlex - Detalhes do Veículo</title>
     <link rel="icon" href="/imagens/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/detalhes-veiculo.css">
+    <link rel="stylesheet" href="../css/detalhes-veiculo.css">
 </head>
 <body>
 
     <!-- HEADER DO SITE -->
     <header class="header">
-        <a href="/pages/index.html" class="logo" aria-label="MotorFlex - início">
+        <a href="../pages/" class="logo" aria-label="MotorFlex - início">
             <h1>Motor<span>Flex</span></h1>
         </a>
         <nav class="nav-menu">
-            <a href="javascript:history.back()"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
-            <a href="/pages/catalogo.html"><i class="fa-solid fa-car"></i> Catálogo</a>
+            <a href="catalogo.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Catálogo</a>
+            <a href="../index.html"><i class="fa-solid fa-house"></i> Home</a>
         </nav>
     </header>
 
@@ -34,7 +34,9 @@
 
             <!-- MIGALHAS DE PÃO -->
             <nav class="breadcrumb" aria-label="Você está em">
-                <a href="/pages/catalogo.html">Catálogo</a>
+                <a href="../index.html">Home</a>
+                <i class="fa-solid fa-chevron-right"></i>
+                <a href="catalogo.html">Catálogo</a>
                 <i class="fa-solid fa-chevron-right"></i>
                 <span id="breadcrumbAtual">Veículo</span>
             </nav>
@@ -54,7 +56,7 @@
                             <div class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Clique para ampliar</div>
                         </div>
 
-                        <!-- Miniaturas (só aparecem se o veículo tiver mais de uma foto) -->
+                        <!-- Miniaturas (aparecem se houver mais de uma foto) -->
                         <div id="miniaturas" class="miniaturas" hidden></div>
                     </div>
 
@@ -82,7 +84,7 @@
                         <div id="precoVeiculo" class="preco-destaque">R$ 0,00</div>
                     </div>
 
-                    <!-- CARD DE CONTATO / PROPOSTA / GESTÃO (preenchido pelo JS) -->
+                    <!-- CARD DE CONTATO / PROPOSTA / GESTÃO -->
                     <div class="info-card contato-card" id="contatoCard"></div>
 
                     <div class="info-card specs-card">
@@ -107,6 +109,13 @@
                                 <div>
                                     <span class="spec-label">Combustível</span>
                                     <span id="specCombustivel" class="spec-value">-</span>
+                                </div>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fa-solid fa-bolt"></i>
+                                <div>
+                                    <span class="spec-label">Tipo de motorização</span>
+                                    <span id="specMotorizacao" class="spec-value">-</span>
                                 </div>
                             </div>
                             <div class="spec-item">
@@ -159,7 +168,7 @@
             <p>Para enviar uma proposta e conversar com o vendedor, é necessário entrar na sua conta MotorFlex.</p>
             <div class="modal-aviso-acoes">
                 <button type="button" class="btn-modal-cancelar" id="btnCancelarLogin">Cancelar</button>
-                <a href="/pages/login.html" class="btn-modal-entrar">Fazer Login Agora</a>
+                <a href="login.html" class="btn-modal-entrar">Fazer Login Agora</a>
             </div>
         </div>
     </div>
@@ -202,6 +211,6 @@
     <!-- AVISO RÁPIDO (TOAST) -->
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-    <script src="/js/detalhes-veiculo.js"></script>
+    <script src="../js/detalhes-veiculo.js"></script>
 </body>
 </html>
