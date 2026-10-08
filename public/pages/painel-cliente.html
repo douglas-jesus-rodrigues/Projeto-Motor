@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="/css/painel-cliente.css">
 </head>
@@ -37,7 +38,7 @@
         <a class="brand" href="/pages/index.html" aria-label="MotorFlex - Início">Motor<span>Flex</span></a>
 
         <nav class="nav" aria-label="Principal">
-            <a href="/pages/index.html" class="nav-link"><svg class="i"><use href="#i-home"/></svg><span>Home</span></a>
+            <a href="/pages/index.html" class="nav-link"><svg class="i"><use href="#i-home"/></svg><span>Inicio</span></a>
             <a href="/pages/catalogo.html" class="nav-link"><svg class="i"><use href="#i-car"/></svg><span>Catálogo</span></a>
         </nav>
 
@@ -56,10 +57,10 @@
                     <svg class="i seta"><use href="#i-chevron"/></svg>
                 </button>
                 <div class="dropdown-menu" id="menuConfig" role="menu">
-                    <a href="/pages/perfil.html" role="menuitem"><svg class="i"><use href="#i-user"/></svg> Meus dados</a>
-                    <a href="/pages/meus-anuncios.html" role="menuitem"><svg class="i"><use href="#i-car"/></svg> Meus anúncios</a>
-                    <a href="/pages/favoritos.html" role="menuitem"><svg class="i"><use href="#i-heart"/></svg> Favoritos</a>
-                    <a href="#" id="gatilhoSair" class="sair-item" role="menuitem"><svg class="i"><use href="#i-logout"/></svg> Sair</a>
+                    <a href="/pages/perfil.html" role="menuitem"><i class="fa-solid fa-id-card"></i> Meus dados</a>
+                    <a href="/pages/meus-anuncios.html" role="menuitem"><i class="fa-solid fa-car"></i> Meus anúncios</a>
+                    <a href="/pages/favoritos.html" role="menuitem"><i class="fa-solid fa-heart"></i> Favoritos</a>
+                    <a href="#" id="gatilhoSair" class="sair-item" role="menuitem"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
                 </div>
             </div>
         </div>
@@ -150,10 +151,10 @@
 
                 <section class="painel atalhos" aria-label="Atalhos">
                     <header class="painel-topo"><h2>Atalhos</h2></header>
-                    <a class="atalho" href="/pages/favoritos.html"><svg class="i"><use href="#i-heart"/></svg><span>Meus favoritos</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
-                    <a class="atalho" href="/pages/meus-anuncios.html"><svg class="i"><use href="#i-car"/></svg><span>Gerenciar anúncios</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
-                    <a class="atalho" href="/pages/mensagens.html"><svg class="i"><use href="#i-chat"/></svg><span>Mensagens</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
-                    <a class="atalho" href="/pages/perfil.html"><svg class="i"><use href="#i-user"/></svg><span>Meus dados</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+                    <a class="atalho" href="/pages/favoritos.html"><i class="fa-solid fa-heart"></i><span>Meus favoritos</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+                    <a class="atalho" href="/pages/meus-anuncios.html"><i class="fa-solid fa-car"></i><span>Gerenciar anúncios</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+                    <a class="atalho" href="/pages/mensagens.html"><i class="fa-solid fa-comments"></i><span>Mensagens</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
+                    <a class="atalho" href="/pages/perfil.html"><i class="fa-solid fa-id-card"></i><span>Meus dados</span><svg class="i seta-a"><use href="#i-arrow"/></svg></a>
                 </section>
             </aside>
         </div>
@@ -162,7 +163,7 @@
     <!-- Confirmar saída -->
     <div class="modal-overlay" id="modalSairContainer" role="dialog" aria-modal="true" aria-labelledby="tituloSair">
         <div class="modal-container">
-            <span class="modal-icone"><svg class="i"><use href="#i-logout"/></svg></span>
+            <span class="modal-icone"><i class="fa-solid fa-right-from-bracket"></i></span>
             <h3 id="tituloSair">Confirmar saída</h3>
             <p>Tem certeza que deseja encerrar sua sessão na MotorFlex?</p>
             <div class="modal-botoes">
@@ -175,7 +176,7 @@
     <!-- Confirmar remoção da foto -->
     <div class="modal-overlay" id="modalRemoverFoto" role="dialog" aria-modal="true" aria-labelledby="tituloRemover">
         <div class="modal-container">
-            <span class="modal-icone"><svg class="i"><use href="#i-trash"/></svg></span>
+            <span class="modal-icone"><i class="fa-solid fa-trash"></i></span>
             <h3 id="tituloRemover">Remover foto de perfil?</h3>
             <p>Sua foto atual será apagada e substituída pelo avatar padrão com as suas iniciais.</p>
             <div class="modal-botoes">
