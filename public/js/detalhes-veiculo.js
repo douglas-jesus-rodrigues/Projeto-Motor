@@ -4,18 +4,119 @@
 const CHAVES_SESSAO = ["usuario", "usuario_logado"];
 const IMAGEM_PADRAO = "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
 
-// Mapeamento direto dos IDs da tabela tipo_combustivel da base de dados
-const MAPA_COMBUSTIVEL = {
-    1: "Gasolina",
-    2: "Etanol",
-    3: "Flex",
-    4: "Diesel",
-    5: "Elétrico",
-    6: "Híbrido"
-};
-
 let veiculoAtual = null;
 let veiculoIdAtual = null;
+
+// ==========================================
+// COMBUSTÍVEL E CÂMBIO: sempre o que está no banco (nunca um valor "chutado")
+// ==========================================
+const ICONES = {
+    raio:  { classe: "fa-bolt" },
+    folha: { classe: "fa-leaf" }
+};
+
+// Regra dos ícones: folha = combustível líquido · raio = elétrico · híbrido = os dois
+const COMBUSTIVEIS = {
+    gasolina: { rotulo: "Gasolina", grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
+        descricao: "O combustível fóssil mais comum para veículos leves, derivado do petróleo, que oferece uma boa resposta de desempenho e autonomia." },
+    etanol:   { rotulo: "Etanol",   grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
+        descricao: "Um biocombustível renovável (produzido a partir da cana-de-açúcar), que emite menos poluentes, embora o veículo costume apresentar um consumo ligeiramente superior por quilômetro." },
+    flex:     { rotulo: "Flex",     grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
+        descricao: "Veículos equipados com motores capazes de funcionar com gasolina, etanol ou qualquer proporção de mistura entre ambos no mesmo depósito." },
+    diesel:   { rotulo: "Diesel",   grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
+        descricao: "Um combustível fóssil mais denso e pesado, utilizado em motores próprios que oferecem maior torque e eficiência em longas distâncias, sendo comum em veículos comerciais e de grande porte." },
+    eletrico: { rotulo: "Elétrico", grupo: "eletrico", tipo: "Energia elétrica",     icones: ["raio"],
+        descricao: "Veículos que funcionam exclusivamente com energia elétrica armazenada em baterias recarregáveis, sem emissões diretas de gases de escape." },
+    hibrido:  { rotulo: "Híbrido",  grupo: "hibrido",  tipo: "Combustível + elétrico", icones: ["raio", "folha"],
+        descricao: "Veículos que combinam um motor tradicional (combustível) com um motor elétrico, alternando ou unindo as duas fontes para maximizar a eficiência energética e reduzir o consumo." }
+};
+
+// Nomes por id (iguais aos do banco). As rotas /api/combustiveis e /api/cambios atualizam estas listas.
+const nomesCombustivel = { 1: "Gasolina", 2: "Etanol", 3: "Flex", 4: "Diesel", 5: "Elétrico", 6: "Híbrido" };
+const nomesCambio = { 1: "Manual", 2: "Automático", 3: "Semi-automático" };
+
+async function carregarListaAuxiliar(url, destino) {
+    try {
+        const r = await fetch(url);
+        if (!r.ok) return;
+        const lista = await r.json();
+        if (Array.isArray(lista)) {
+            lista.forEach(i => { if (i && i.id != null && i.nome) destino[i.id] = String(i.nome); });
+        }
+    } catch {
+        // usa os nomes padrão acima
+    }
+}
+
+function carregarListasAuxiliares() {
+    return Promise.all([
+        carregarListaAuxiliar("/api/combustiveis", nomesCombustivel),
+        carregarListaAuxiliar("/api/cambios", nomesCambio)
+    ]);
+}
+
+// Só aceita texto de verdade (ignora vazio e números soltos, que seriam ids)
+function nomeValido(valor) {
+    if (typeof valor !== "string") return null;
+    const t = valor.trim();
+    return t && !/^\d+$/.test(t) ? t : null;
+}
+
+function normalizarTexto(str) {
+    return String(str ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// Descobre o tipo pelo nome que está no banco (ex.: "Elétrico", "Híbrido", "Gasolina/Etanol")
+function infoCombustivel(nomeBanco) {
+    const nome = normalizarTexto(nomeBanco);
+    let chave = null;
+
+    if (nome.includes("hibrid")) chave = "hibrido";            // híbrido primeiro (pode citar gasolina/elétrico)
+    else if (nome.includes("eletric")) chave = "eletrico";
+    else if (nome.includes("flex") || (nome.includes("gasolina") && (nome.includes("etanol") || nome.includes("alcool")))) chave = "flex";
+    else if (nome.includes("gasolina")) chave = "gasolina";
+    else if (nome.includes("etanol") || nome.includes("alcool")) chave = "etanol";
+    else if (nome.includes("diesel")) chave = "diesel";
+
+    return chave ? COMBUSTIVEIS[chave] : null;                 // GNV e outros: sem ícone/descrição
+}
+
+// Troca o conteúdo de um contêiner pelos ícones do tipo (ou pela bomba de combustível, se não houver tipo)
+function aplicarIcones(id, icones) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const lista = icones && icones.length ? icones : null;
+    el.replaceChildren(...(lista || ["bomba"]).map(nome => {
+        const i = document.createElement("i");
+        i.setAttribute("aria-hidden", "true");
+        i.className = nome === "bomba"
+            ? "fa-solid fa-gas-pump"
+            : `fa-solid ${ICONES[nome].classe} ic-${nome}`;
+        return i;
+    }));
+}
+
+function mostrarTipoCombustivel(nomeBanco) {
+    const info = infoCombustivel(nomeBanco);
+    const icones = info ? info.icones : null;
+
+    aplicarIcones("chipCombIcones", icones);
+    aplicarIcones("specCombIcones", icones);
+
+    const caixa = document.getElementById("combustivelInfo");
+    if (!caixa) return;
+    if (!info) { caixa.hidden = true; return; }
+
+    aplicarIcones("combustivelInfoIcones", icones);
+    definirTexto("combustivelInfoNome", nomeBanco);          // o nome exatamente como está no banco
+    definirTexto("combustivelInfoTipo", info.tipo);
+    definirTexto("combustivelInfoTexto", info.descricao);
+    caixa.className = `combustivel-info combustivel-info--${info.grupo}`;
+    caixa.hidden = false;
+
+    const chip = document.getElementById("chipCombustivel");
+    if (chip) chip.title = `${info.rotulo}: ${info.tipo}`;
+}
 
 function lerUsuario() {
     for (const chave of CHAVES_SESSAO) {
@@ -36,6 +137,7 @@ function usuarioEstaLogado() {
     return !!(u && u.id);
 }
 
+// Painel correto de acordo com o tipo de conta logada
 function obterRotaPainel(usuario) {
     if (!usuario) return "/pages/login.html";
     if (usuario.tipo === "empresa") return "/pages/painel-empresa.html";
@@ -92,6 +194,7 @@ function atualizarBloqueioScroll() {
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
 
+    // Correção de cache/estado ao voltar (BFCACHE)
     window.addEventListener("pageshow", (event) => {
         if (event.persisted) window.location.reload();
     });
@@ -120,7 +223,10 @@ async function carregarDetalhesDoCarro(id) {
     const conteudoEl = document.getElementById("conteudoVeiculo");
 
     try {
-        const resposta = await fetch(`/api/veiculos/${encodeURIComponent(id)}`);
+        const [resposta] = await Promise.all([
+            fetch(`/api/veiculos/${encodeURIComponent(id)}`),
+            carregarListasAuxiliares()
+        ]);
         const data = await resposta.json();
 
         if (!data.sucesso || !data.veiculo) {
@@ -146,29 +252,15 @@ async function carregarDetalhesDoCarro(id) {
         // Especificações
         const ano = `${v.ano_fabricacao || "--"} / ${v.ano_modelo || "--"}`;
         const km = v.quilometragem ? `${Number(v.quilometragem).toLocaleString("pt-BR")} km` : "0 km";
-
-        // Obtém o nome do combustível através do JOIN da API ou através do ID mapeado
-        const idCombustivel = Number(v.tipo_combustivel_id || v.combustivel_id || 0);
-        const combustivel = v.combustivel_nome || 
-                            v.combustivel || 
-                            v.tipo_combustivel || 
-                            MAPA_COMBUSTIVEL[idCombustivel] || 
-                            "Não informado";
-
-        // Obtém a motorização (utiliza o campo versao como fallback, onde o motor está guardado na BD)
-        const motorizacao = v.motorizacao || 
-                            v.motorizacao_nome || 
-                            v.tipo_motorizacao || 
-                            v.motor || 
-                            v.versao || 
-                            combustivel;
-
-        const cambio = v.cambio_nome || v.cambio || v.transmissao_nome || "Manual";
+        // Valores vindos do banco (pelo nome ou pelo id). Sem dado, mostra "Não informado": nada de valor inventado.
+        const combustivel = nomeValido(v.combustivel_nome) || nomeValido(v.combustivel)
+            || nomesCombustivel[v.tipo_combustivel_id] || "Não informado";
+        const cambio = nomeValido(v.cambio_nome) || nomeValido(v.cambio) || nomeValido(v.transmissao_nome)
+            || nomesCambio[v.tipo_transmissao_id] || "Não informado";
 
         definirTexto("specAno", ano);
         definirTexto("specQuilometragem", km);
         definirTexto("specCombustivel", combustivel);
-        definirTexto("specMotorizacao", motorizacao);
         definirTexto("specCambio", cambio);
         definirTexto("specCor", v.cor || "Não informada");
         definirTexto("specPortas", v.portas ? `${v.portas} portas` : "Não informado");
@@ -177,6 +269,7 @@ async function carregarDetalhesDoCarro(id) {
         definirTexto("chipAno", v.ano_modelo || v.ano_fabricacao || "--");
         definirTexto("chipKm", km);
         definirTexto("chipComb", combustivel);
+        mostrarTipoCombustivel(combustivel);
 
         // Descrição
         if (v.descricao && String(v.descricao).trim() !== "") {
@@ -196,7 +289,7 @@ async function carregarDetalhesDoCarro(id) {
 }
 
 // ==========================================
-// GALERIA
+// GALERIA (foto principal + miniaturas opcionais)
 // ==========================================
 function montarGaleria(v) {
     const fotoEl = document.getElementById("fotoPrincipal");
@@ -204,6 +297,7 @@ function montarGaleria(v) {
 
     const principal = normalizarUrlImagem(v.imagem) || IMAGEM_PADRAO;
 
+    // Se a API devolver várias fotos (v.fotos), monta as miniaturas
     const listaBruta = Array.isArray(v.fotos) ? v.fotos : [];
     const fotos = listaBruta
         .map(f => typeof f === "string" ? f : (f?.url || f?.caminho || f?.caminho_arquivo || f?.imagem))
@@ -246,7 +340,7 @@ function montarGaleria(v) {
 }
 
 // ==========================================
-// CARD DE CONTATO
+// CARD DE CONTATO: DONO x OUTRAS CONTAS
 // ==========================================
 function renderizarCardContato(v) {
     const card = document.getElementById("contatoCard");
@@ -258,6 +352,7 @@ function renderizarCardContato(v) {
     const ehDono = !!(idAtual && idDono > 0 && idAtual === idDono);
 
     if (ehDono) {
+        // Leva ao painel correto conforme o tipo de login (cliente / empresa / admin)
         const destino = `${obterRotaPainel(usuario)}?editar=${encodeURIComponent(v.id || veiculoIdAtual)}`;
 
         card.innerHTML = `
@@ -282,12 +377,12 @@ function renderizarCardContato(v) {
 }
 
 // ==========================================
-// REGISTRAR VISUALIZAÇÃO ÚNICA
+// REGISTRAR VISUALIZAÇÃO ÚNICA (EXCLUINDO DONO E ADMINS NO BACK-END)
 // ==========================================
 async function registrarVisualizacaoUnica(veiculoId) {
     try {
         const usuario = lerUsuario();
-        if (!usuario?.id) return;
+        if (!usuario?.id) return; // sem login, não conta
 
         await fetch(`/api/veiculos/${encodeURIComponent(veiculoId)}/visualizar`, {
             method: "POST",
@@ -324,7 +419,7 @@ function configurarBotaoFavorito(veiculoId) {
     );
 
     btnFav.addEventListener("click", (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // não abre o lightbox
 
         if (!usuarioEstaLogado()) {
             abrirModalLoginNecessario();
@@ -362,6 +457,7 @@ function atualizarVisualBotaoFavorito(ehFavorito, btn, icone) {
     }
 }
 
+// Sincronização com outras abas
 window.addEventListener("storage", (event) => {
     if (event.key === "favoritos_veiculos") {
         const btnFav = document.getElementById("btnFavoritarDetalhe");
@@ -374,9 +470,10 @@ window.addEventListener("storage", (event) => {
 });
 
 // ==========================================
-// MODAIS
+// MODAIS (LOGIN, LIGHTBOX E PROPOSTA)
 // ==========================================
 function configurarModais() {
+    // Lightbox
     document.getElementById("fotoWrapper")?.addEventListener("click", () => {
         abrirModalImagem(document.getElementById("fotoPrincipal").src);
     });
@@ -384,11 +481,13 @@ function configurarModais() {
     document.querySelector(".modal-imagem-conteudo")?.addEventListener("click", (e) => e.stopPropagation());
     document.getElementById("btnFecharImagem")?.addEventListener("click", fecharModalImagem);
 
+    // Login necessário
     document.getElementById("btnCancelarLogin")?.addEventListener("click", fecharModalLoginNecessario);
     document.getElementById("modalLoginNecessario")?.addEventListener("click", (e) => {
         if (e.target.id === "modalLoginNecessario") fecharModalLoginNecessario();
     });
 
+    // Proposta
     document.getElementById("btnFecharProposta")?.addEventListener("click", fecharModalProposta);
     document.getElementById("btnCancelarProposta")?.addEventListener("click", fecharModalProposta);
     document.getElementById("btnEnviarProposta")?.addEventListener("click", enviarProposta);
@@ -396,6 +495,7 @@ function configurarModais() {
         if (e.target.id === "modalProposta") fecharModalProposta();
     });
 
+    // Frases rápidas: acrescentam ao texto sem duplicar
     document.getElementById("propostaChips")?.addEventListener("click", (e) => {
         const btn = e.target.closest("button[data-frase]");
         if (!btn) return;
@@ -407,6 +507,7 @@ function configurarModais() {
         area.focus();
     });
 
+    // Ctrl/Cmd + Enter envia
     document.getElementById("propostaTexto")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
@@ -458,7 +559,7 @@ function fecharModalProposta() {
 }
 
 // ==========================================
-// PROPOSTA: MENSAGEM AUTOMÁTICA
+// PROPOSTA: MENSAGEM AUTOMÁTICA PARA O DONO DO ANÚNCIO
 // ==========================================
 function montarMensagemAutomatica() {
     const titulo = document.getElementById("tituloVeiculo")?.textContent || "este veículo";
@@ -474,6 +575,7 @@ function montarMensagemAutomatica() {
     return `Olá! Tenho interesse no ${titulo}${versao} anunciado por ${preco}. Ele ainda está disponível? Gostaria de negociar.${assinatura}`;
 }
 
+// Chamado pelo botão "Enviar Proposta"
 function abrirFluxoProposta() {
     if (!usuarioEstaLogado()) {
         abrirModalLoginNecessario();
@@ -483,6 +585,7 @@ function abrirFluxoProposta() {
     const modal = document.getElementById("modalProposta");
     if (!modal) return;
 
+    // Mini-resumo do veículo
     const foto = document.getElementById("propostaFoto");
     if (foto) {
         foto.src = document.getElementById("fotoPrincipal")?.src || IMAGEM_PADRAO;
@@ -490,11 +593,19 @@ function abrirFluxoProposta() {
     definirTexto("propostaTitulo", document.getElementById("tituloVeiculo")?.textContent || "Veículo");
     definirTexto("propostaPreco", document.getElementById("precoVeiculo")?.textContent || "");
 
+    // Mensagem já pronta
     document.getElementById("propostaTexto").value = montarMensagemAutomatica();
 
     modal.hidden = false;
     atualizarBloqueioScroll();
+
+    // Foco no botão de enviar: basta apertar Enter/clicar
     document.getElementById("btnEnviarProposta")?.focus();
+}
+
+// Mantido por compatibilidade com o nome antigo
+function enviarPropostaModal() {
+    abrirFluxoProposta();
 }
 
 let enviandoProposta = false;

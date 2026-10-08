@@ -224,6 +224,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    // Nomes por id (iguais aos do banco): o combustível e o câmbio do filtro vêm do cadastro, nunca de um valor fixo
+    const NOMES_COMBUSTIVEL = { 1: "Gasolina", 2: "Etanol", 3: "Flex", 4: "Diesel", 5: "Elétrico", 6: "Híbrido" };
+    const NOMES_CAMBIO = { 1: "Manual", 2: "Automático", 3: "Semi-automático" };
+    const textoOuNulo = (x) => (typeof x === "string" && x.trim() && !/^\d+$/.test(x.trim()) ? x.trim() : null);
+
     async function carregarVeiculosDoBanco() {
         try {
             const resposta = await fetch("/api/veiculos");
@@ -238,8 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     marca_nome: String(v.marca_nome || v.marca || ""),
                     versao: String(v.versao || ""),
                     categoria: String(v.carroceria || "Outro"),
-                    transmissao: (v.tipo_transmissao_id === 2 || v.cambio === "Automático") ? "Automático" : (v.cambio || "Manual"),
-                    combustivel: String(v.combustivel || "Gasolina"),
+                    transmissao: textoOuNulo(v.cambio_nome) || textoOuNulo(v.cambio) || NOMES_CAMBIO[v.tipo_transmissao_id] || "Não informado",
+                    combustivel: textoOuNulo(v.combustivel_nome) || textoOuNulo(v.combustivel) || NOMES_COMBUSTIVEL[v.tipo_combustivel_id] || "Não informado",
                     ano: Number(v.ano_modelo) || 2020,
                     ano_fabricacao: Number(v.ano_fabricacao) || 2020,
                     condicao: "Seminovo",
