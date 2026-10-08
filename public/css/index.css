@@ -829,30 +829,45 @@ html.tela-home .footer { display: none; }
 .car-versao { margin: 2px 0 clamp(4px, 1vh, 10px); }
 .car-rodape { padding-top: clamp(6px, 1vh, 10px); }
 
-/* Selo do combustível no canto superior direito da foto (o ano fica no esquerdo) */
+/* Selo do combustível no canto superior direito da foto (o ano fica no esquerdo).
+   Folha = combustível líquido · raio = elétrico · híbrido = os dois ícones juntos */
 .car-comb {
     position: absolute;
     top: 10px;
     right: 10px;
     z-index: 2;
-    width: 30px;
+    min-width: 30px;
     height: 30px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
+    padding: 0 8px;
+    display: inline-flex;
+    flex-direction: row;          /* ícones lado a lado (no híbrido: raio e folha na mesma linha) */
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    white-space: nowrap;
+    border-radius: var(--radius-pill);
     font-size: 0.8rem;
+    line-height: 1;
     background: rgba(0, 0, 0, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
+.car-comb i { display: block; flex: 0 0 auto; }
+.car-card .car-comb .ic-raio  { color: #ffd43b; }
+.car-card .car-comb .ic-folha { color: #4ade80; }   /* folha sempre verde */
+
 .car-comb--eletrico {
-    color: #ffd43b;
     border-color: rgba(255, 212, 59, 0.55);
     box-shadow: 0 0 12px rgba(255, 212, 59, 0.35);
 }
-.car-comb--gasolina {
-    color: #4ade80;
+.car-comb--liquido {
     border-color: rgba(74, 222, 128, 0.55);
     box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+}
+.car-comb--hibrido {
+    border-color: rgba(255, 255, 255, 0.32);
+    box-shadow: -4px 0 12px rgba(255, 212, 59, 0.3), 4px 0 12px rgba(74, 222, 128, 0.3);
 }
 
 /* Telas baixas (notebooks, janelas pequenas): tira o que é opcional para tudo caber */
