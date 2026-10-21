@@ -6,7 +6,7 @@
 const API_URL = "/api/admin";
 const LOGIN_URL = "/pages/login.html";
 
-// Para onde cada tipo de login "volta". Qualquer outro tipo (cliente, individual...) cai no painel do cliente.
+// Para onde cada tipo de login "volta"
 const PAINEL_POR_TIPO = {
     admin: "/pages/painel-admin.html",
     empresa: "/pages/painel-empresa.html"
@@ -26,7 +26,7 @@ let termoBusca = "";
 let meuId = null;
 
 // ==========================================================
-// SESSÃO / NAVEGAÇÃO (o "voltar" depende do tipo de login)
+// SESSÃO / NAVEGAÇÃO
 // ==========================================================
 function lerSessao() {
     const bruto =
@@ -45,7 +45,6 @@ function configurarNavegacao(sessao) {
         const el = $(id);
         if (el) el.setAttribute("href", destino);
     });
-    // Moderação é só para admin
     if (normalizarTipo(sessao.tipo) !== "admin") $("linkModeracao")?.remove();
     return destino;
 }
@@ -83,14 +82,17 @@ async function api(caminho, opcoes = {}) {
 }
 
 // ==========================================================
-// AVISOS E CONFIRMAÇÃO
+// AVISOS E CONFIRMAÇÃO COM SENHA
 // ==========================================================
 function toast(msg, tipo = "ok") {
+    const area = $("toastArea");
+    if (!area) return;
+
     const t = document.createElement("div");
     t.className = `toast toast--${tipo}`;
     t.innerHTML = `<i class="fa-solid ${tipo === "erro" ? "fa-circle-exclamation" : "fa-circle-check"}"></i><span></span>`;
     t.querySelector("span").textContent = msg;
-    $("toastArea").appendChild(t);
+    area.appendChild(t);
     requestAnimationFrame(() => t.classList.add("visivel"));
     setTimeout(() => { t.classList.remove("visivel"); setTimeout(() => t.remove(), 300); }, 3500);
 }
@@ -98,33 +100,56 @@ function toast(msg, tipo = "ok") {
 function confirmar({ titulo, texto, botao = "Confirmar", perigo = false }) {
     return new Promise((resolve) => {
         const modal = $("modalConfirma"), ok = $("confirmaOk"), cancelar = $("confirmaCancelar");
+        const inputSenha = $("inputSenhaAdmin");
+        
+        if (!modal) { 
+            const resp = confirm(texto);
+            resolve({ ok: resp, senha: resp ? prompt("Insira a sua senha de Admin:") || "" : "" }); 
+            return; 
+        }
+
         const anterior = document.activeElement;
 
         $("confirmaTitulo").textContent = titulo;
         $("confirmaTexto").textContent = texto;
+        if (inputSenha) inputSenha.value = "";
+        
         ok.textContent = botao;
         ok.className = `btn-modal ${perigo ? "btn-perigo" : "btn-primario"}`;
 
-        const fechar = (resposta) => {
+        const fechar = (confirmado) => {
+            const senhaVal = inputSenha ? inputSenha.value : "";
             modal.hidden = true;
             document.removeEventListener("keydown", aoTeclar);
             modal.removeEventListener("click", aoClicarFora);
             ok.removeEventListener("click", aoOk);
             cancelar.removeEventListener("click", aoCancelar);
             if (anterior && anterior.focus) anterior.focus();
-            resolve(resposta);
+            resolve({ ok: confirmado, senha: senhaVal });
         };
-        const aoOk = () => fechar(true);
+
+        const aoOk = () => {
+            if (inputSenha && !inputSenha.value.trim()) {
+                toast("Insira a sua senha para continuar.", "erro");
+                inputSenha.focus();
+                return;
+            }
+            fechar(true);
+        };
         const aoCancelar = () => fechar(false);
         const aoClicarFora = (e) => { if (e.target === modal) fechar(false); };
-        const aoTeclar = (e) => { if (e.key === "Escape") fechar(false); };
+        const aoTeclar = (e) => { 
+            if (e.key === "Escape") fechar(false); 
+            if (e.key === "Enter") aoOk(); 
+        };
 
         ok.addEventListener("click", aoOk);
         cancelar.addEventListener("click", aoCancelar);
         modal.addEventListener("click", aoClicarFora);
         document.addEventListener("keydown", aoTeclar);
+        
         modal.hidden = false;
-        (perigo ? cancelar : ok).focus();
+        if (inputSenha) inputSenha.focus();
     });
 }
 
@@ -132,14 +157,16 @@ function confirmar({ titulo, texto, botao = "Confirmar", perigo = false }) {
 // CARREGAR DADOS
 // ==========================================================
 function mostrarSkeleton() {
+    const tbody = $("tabelaUsuarios");
+    if (!tbody) return;
     const linha = `<tr class="estado-skel">
-        <td data-label="ID"><span class="skeleton" style="width:36px"></span></td>
-        <td data-label="Usuário"><div class="user"><span class="skeleton skeleton--avatar"></span><span class="skeleton" style="width:130px"></span></div></td>
-        <td data-label="E-mail"><span class="skeleton" style="width:180px"></span></td>
-        <td data-label="Tipo de acesso"><span class="skeleton" style="width:80px"></span></td>
-        <td class="col-acoes"><span class="skeleton" style="width:150px;margin-left:auto"></span></td>
+        <td data-label="ID"><span class="skeleton" style="width:36px; display:inline-block; height:16px;"></span></td>
+        <td data-label="Usuário"><div class="user"><span class="skeleton skeleton--avatar" style="width:42px; height:42px; border-radius:50%; display:inline-block;"></span><span class="skeleton" style="width:130px; display:inline-block; height:16px;"></span></div></td>
+        <td data-label="E-mail"><span class="skeleton" style="width:180px; display:inline-block; height:16px;"></span></td>
+        <td data-label="Tipo de acesso"><span class="skeleton" style="width:80px; display:inline-block; height:16px;"></span></td>
+        <td class="col-acoes"><span class="skeleton" style="width:150px; margin-left:auto; display:block; height:16px;"></span></td>
     </tr>`;
-    $("tabelaUsuarios").innerHTML = linha.repeat(5);
+    tbody.innerHTML = linha.repeat(5);
 }
 
 async function carregarUsuarios({ silencioso = false } = {}) {
@@ -151,13 +178,16 @@ async function carregarUsuarios({ silencioso = false } = {}) {
         aplicarFiltros();
     } catch (erro) {
         console.error("Erro ao carregar usuários:", erro);
-        $("tabelaUsuarios").innerHTML = `
-            <tr class="estado"><td colspan="5"><div class="vazio">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <p>${esc(erro.message || "Erro ao carregar os usuários do servidor.")}</p>
-                <button type="button" class="btn-acao" data-acao="recarregar"><i class="fa-solid fa-rotate-right"></i> Tentar de novo</button>
-            </div></td></tr>`;
-        $("contador").textContent = "";
+        const tbody = $("tabelaUsuarios");
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr class="estado"><td colspan="5"><div class="vazio" style="text-align:center; padding:30px;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; color:var(--primary); margin-bottom:10px;"></i>
+                    <p>${esc(erro.message || "Erro ao carregar os usuários do servidor.")}</p>
+                    <button type="button" class="btn-acao" data-acao="recarregar" style="margin-top:15px; padding:8px 16px; cursor:pointer;"><i class="fa-solid fa-rotate-right"></i> Tentar de novo</button>
+                </div></td></tr>`;
+        }
+        if ($("contador")) $("contador").textContent = "";
     }
 }
 
@@ -166,10 +196,10 @@ async function carregarUsuarios({ silencioso = false } = {}) {
 // ==========================================================
 function atualizarResumo() {
     const conta = (tipo) => listaUsuariosGlobal.filter((u) => normalizarTipo(u.tipo) === tipo).length;
-    $("statTotal").textContent = listaUsuariosGlobal.length;
-    $("statAdmin").textContent = conta("admin");
-    $("statEmpresa").textContent = conta("empresa");
-    $("statIndividual").textContent = conta("individual");
+    if ($("statTotal")) $("statTotal").textContent = listaUsuariosGlobal.length;
+    if ($("statAdmin")) $("statAdmin").textContent = conta("admin");
+    if ($("statEmpresa")) $("statEmpresa").textContent = conta("empresa");
+    if ($("statIndividual")) $("statIndividual").textContent = conta("individual");
 }
 
 function aplicarFiltros() {
@@ -189,15 +219,18 @@ function aplicarFiltros() {
     });
 
     renderizarTabela(filtrados);
-    $("contador").textContent = `Exibindo ${filtrados.length} de ${listaUsuariosGlobal.length} usuário${listaUsuariosGlobal.length === 1 ? "" : "s"}`;
+    if ($("contador")) {
+        $("contador").textContent = `Exibindo ${filtrados.length} de ${listaUsuariosGlobal.length} usuário${listaUsuariosGlobal.length === 1 ? "" : "s"}`;
+    }
 }
 
 function renderizarTabela(usuarios) {
     const tbody = $("tabelaUsuarios");
+    if (!tbody) return;
 
     if (!usuarios.length) {
-        tbody.innerHTML = `<tr class="estado"><td colspan="5"><div class="vazio">
-            <i class="fa-regular fa-user"></i><p>Nenhum usuário encontrado.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr class="estado"><td colspan="5"><div class="vazio" style="text-align:center; padding:30px;">
+            <i class="fa-regular fa-user" style="font-size:2rem; margin-bottom:10px; color:var(--text-muted);"></i><p>Nenhum usuário encontrado.</p></div></td></tr>`;
         return;
     }
 
@@ -232,11 +265,10 @@ function renderizarTabela(usuarios) {
 }
 
 // ==========================================================
-// AÇÕES
+// AÇÕES COM SENHA
 // ==========================================================
 const acharUsuario = (id) => listaUsuariosGlobal.find((u) => String(u.id) === String(id));
 
-// Alterna entre 'admin' e 'individual'
 async function alterarTipo(id, botao) {
     const usuario = acharUsuario(id);
     if (!usuario) return;
@@ -244,16 +276,20 @@ async function alterarTipo(id, botao) {
     const atual = normalizarTipo(usuario.tipo);
     const novoTipo = atual === "admin" ? "individual" : "admin";
 
-    const ok = await confirmar({
+    const resultado = await confirmar({
         titulo: novoTipo === "admin" ? "Tornar administrador?" : "Remover permissão de admin?",
-        texto: `Alterar a permissão de ${nomeDe(usuario)} de "${(ROTULOS[atual] || atual).toUpperCase()}" para "${ROTULOS[novoTipo].toUpperCase()}".`,
+        texto: `Insira a sua senha de Admin para confirmar a alteração de ${nomeDe(usuario)} para "${ROTULOS[novoTipo].toUpperCase()}".`,
         botao: "Sim, alterar"
     });
-    if (!ok) return;
+
+    if (!resultado.ok) return;
 
     botao.disabled = true;
     try {
-        const r = await api(`/usuarios/${encodeURIComponent(id)}/tipo`, { method: "PUT", body: JSON.stringify({ tipo: novoTipo }) });
+        const r = await api(`/usuarios/${encodeURIComponent(id)}/tipo`, { 
+            method: "PUT", 
+            body: JSON.stringify({ tipo: novoTipo, senhaAdmin: resultado.senha }) 
+        });
         toast(r.mensagem || "Tipo de acesso alterado com sucesso!");
         await carregarUsuarios({ silencioso: true });
     } catch (erro) {
@@ -267,17 +303,21 @@ async function excluirUsuario(id, botao) {
     const usuario = acharUsuario(id);
     if (!usuario) return;
 
-    const ok = await confirmar({
+    const resultado = await confirmar({
         titulo: "Excluir usuário?",
-        texto: `${nomeDe(usuario)} (${usuario.email || "sem e-mail"}) será removido do sistema. Essa ação não pode ser desfeita.`,
+        texto: `Insira a sua senha de Admin para confirmar a exclusão definitiva de ${nomeDe(usuario)}.`,
         botao: "Sim, excluir",
         perigo: true
     });
-    if (!ok) return;
+
+    if (!resultado.ok) return;
 
     botao.disabled = true;
     try {
-        const r = await api(`/usuarios/${encodeURIComponent(id)}`, { method: "DELETE" });
+        const r = await api(`/usuarios/${encodeURIComponent(id)}`, { 
+            method: "DELETE",
+            body: JSON.stringify({ senhaAdmin: resultado.senha })
+        });
         toast(r.mensagem || "Usuário excluído com sucesso!");
         await carregarUsuarios({ silencioso: true });
     } catch (erro) {
@@ -297,31 +337,39 @@ document.addEventListener("DOMContentLoaded", () => {
     meuId = sessao.id ?? sessao._id ?? null;
     const destino = configurarNavegacao(sessao);
 
-    // Página exclusiva de admin: quem não é admin volta para o próprio painel
     if (normalizarTipo(sessao.tipo) !== "admin") { window.location.replace(destino); return; }
 
-    $("inputBusca").addEventListener("input", (e) => { termoBusca = e.target.value; aplicarFiltros(); });
+    const inputBusca = $("inputBusca");
+    if (inputBusca) {
+        inputBusca.addEventListener("input", (e) => { termoBusca = e.target.value; aplicarFiltros(); });
+    }
 
-    document.querySelector(".filtros").addEventListener("click", (e) => {
-        const chip = e.target.closest(".chip");
-        if (!chip) return;
-        filtroTipo = chip.dataset.filtro;
-        document.querySelectorAll(".chip").forEach((c) => {
-            const ativo = c === chip;
-            c.classList.toggle("ativo", ativo);
-            c.setAttribute("aria-pressed", String(ativo));
+    const filtrosContainer = document.querySelector(".filtros");
+    if (filtrosContainer) {
+        filtrosContainer.addEventListener("click", (e) => {
+            const chip = e.target.closest(".chip");
+            if (!chip) return;
+            filtroTipo = chip.dataset.filtro;
+            document.querySelectorAll(".chip").forEach((c) => {
+                const ativo = c === chip;
+                c.classList.toggle("ativo", ativo);
+                c.setAttribute("aria-pressed", String(ativo));
+            });
+            aplicarFiltros();
         });
-        aplicarFiltros();
-    });
+    }
 
-    $("tabelaUsuarios").addEventListener("click", (e) => {
-        const botao = e.target.closest("button[data-acao]");
-        if (!botao || botao.disabled) return;
-        const { acao, id } = botao.dataset;
-        if (acao === "tipo") alterarTipo(id, botao);
-        else if (acao === "excluir") excluirUsuario(id, botao);
-        else if (acao === "recarregar") carregarUsuarios();
-    });
+    const tabelaUsuarios = $("tabelaUsuarios");
+    if (tabelaUsuarios) {
+        tabelaUsuarios.addEventListener("click", (e) => {
+            const botao = e.target.closest("button[data-acao]");
+            if (!botao || botao.disabled) return;
+            const { acao, id } = botao.dataset;
+            if (acao === "tipo") alterarTipo(id, botao);
+            else if (acao === "excluir") excluirUsuario(id, botao);
+            else if (acao === "recarregar") carregarUsuarios();
+        });
+    }
 
     carregarUsuarios();
 });

@@ -141,19 +141,37 @@ router.post("/", upload.single("imagem"), async (req, res) => {
 });
 
 // ==========================================
-// GET /api/veiculos — LISTAR TODOS
+// GET /api/veiculos — LISTAR TODOS (AGORA COM PAGINAÇÃO)
 // ==========================================
 router.get("/", async (req, res) => {
     try {
+        // 1. Recebe a página e o limite enviados pelo Frontend (com valores padrão)
+        const pagina = parseInt(req.query.pagina) || 1;
+        const limite = parseInt(req.query.limite) || 15;
+        const offset = (pagina - 1) * limite;
+
+        // 2. Conta o total de anúncios no banco para calcular o número de páginas
+        const [[{ total }]] = await db.query("SELECT COUNT(*) AS total FROM veiculos");
+        const totalPaginas = Math.ceil(total / limite);
+
+        // 3. Busca apenas os veículos da página atual (usando LIMIT e OFFSET)
         const [veiculos] = await db.query(
             `SELECT v.*, m.nome AS marca_nome, mo.nome AS modelo_nome, f.imagem AS imagem
              FROM veiculos v
              LEFT JOIN marca m ON m.id = v.marca_id
              LEFT JOIN modelo mo ON mo.id = v.modelo_id
              LEFT JOIN fotos_veiculos f ON f.veiculo_id = v.id AND f.principal = 1
-             ORDER BY v.id DESC`
+             ORDER BY v.id DESC
+             LIMIT ? OFFSET ?`,
+            [limite, offset]
         );
-        return res.status(200).json({ sucesso: true, veiculos });
+
+        return res.status(200).json({ 
+            sucesso: true, 
+            veiculos,
+            total_paginas: totalPaginas,
+            pagina_atual: pagina
+        });
     } catch (erro) {
         console.error("❌ Erro ao listar veículos:", erro.sqlMessage || erro);
         return res.status(500).json({ sucesso: false, mensagem: "Erro ao buscar veículos." });
