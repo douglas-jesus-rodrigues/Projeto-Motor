@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#08080a">
     <title>Gerenciar Usuários | MotorFlex Admin</title>
+
+    <!-- Previne o efeito de tela a piscar ao carregar o tema salvo -->
+    <script>try{document.documentElement.dataset.tema=localStorage.getItem("mf_admin_tema")||"escuro"}catch(e){}</script>
 
     <link rel="icon" href="/imagens/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- CSS independente: não depende mais do painel-admin.css -->
+    
+    <!-- CSS independente do ecossistema MotorFlex Admin -->
     <link rel="stylesheet" href="/css/usuarios.css">
 </head>
 <body>
 
     <header class="topbar">
-        <!-- Os href abaixo são ajustados pelo JS conforme o tipo de login (admin / empresa / cliente) -->
+        <!-- Os href abaixo são ajustados pelo JS conforme o tipo de login -->
         <a href="/pages/painel-admin.html" class="logo" id="logoLink">
             Motor<span>Flex</span><small>Admin · Usuários</small>
         </a>
@@ -38,7 +43,7 @@
             <p>Gerencie os perfis e os tipos de acesso (Admin, Empresa ou Individual) de quem usa o sistema.</p>
         </section>
 
-        <!-- Resumo -->
+        <!-- Resumo de Estatísticas -->
         <section class="stats" aria-label="Resumo de usuários">
             <div class="stat">
                 <span class="stat-icone"><i class="fa-solid fa-users"></i></span>
@@ -58,7 +63,7 @@
             </div>
         </section>
 
-        <!-- Busca + filtros (id="inputBusca" mantido) -->
+        <!-- Barra de Ferramentas: Busca + Filtros -->
         <section class="toolbar">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -75,6 +80,7 @@
 
         <p class="contador" id="contador" aria-live="polite"></p>
 
+        <!-- Tabela de Utilizadores -->
         <div class="card">
             <div class="table-responsive">
                 <table class="users-table">
@@ -95,10 +101,10 @@
         </div>
     </main>
 
-    <!-- Avisos -->
+    <!-- Área de Toasts para Alertas Flutuantes -->
     <div class="toast-area" id="toastArea" aria-live="polite"></div>
 
-    <!-- Confirmação (substitui o confirm() do navegador) -->
+    <!-- Modal de Confirmação Personalizada -->
     <div class="modal-overlay" id="modalConfirma" hidden>
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmaTitulo">
             <div class="modal-icone"><i class="fa-solid fa-triangle-exclamation"></i></div>

@@ -17,11 +17,9 @@ const INICIO_SERIE = "DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-
 
 // ==========================================
 // GET /api/admin/resumo — tudo o que o painel administrativo precisa em UMA chamada
-// Registre no app.js:  app.use("/api/admin", require("./routes/adminRoutes"));
 // ==========================================
 router.get("/resumo", authAdmin, async (req, res) => {
     try {
-        // As consultas são independentes: rodam em paralelo (painel abre mais rápido)
         const [u, a, empresasPend, denunciasPend, conversasAbertas, su, sa, recUsuarios, recAnuncios] = await Promise.all([
             // ---- usuários
             um(`SELECT COUNT(*) AS total,
@@ -42,12 +40,12 @@ router.get("/resumo", authAdmin, async (req, res) => {
                        SUM(NOT EXISTS (SELECT 1 FROM fotos_veiculos f WHERE f.veiculo_id = veiculos.id)) AS sem_foto
                 FROM veiculos`),
 
-            // ---- opcionais (não derrubam o painel se a tabela não existir)
+            // ---- opcionais
             tentar(async () => num((await um("SELECT COUNT(*) AS n FROM empresas WHERE status_verificacao = 'pendente'")).n), 0),
             tentar(async () => num((await um("SELECT COUNT(*) AS n FROM denuncias WHERE status = 'pendente'")).n), 0),
             tentar(async () => num((await um("SELECT COUNT(*) AS n FROM conversa WHERE status = 'aberta'")).n), 0),
 
-            // ---- série dos últimos 6 meses (usuários e anúncios criados por mês)
+            // ---- série dos últimos 6 meses
             linhas(`SELECT DATE_FORMAT(criado_em, '%Y-%m') AS mes, COUNT(*) AS n FROM usuarios
                     WHERE deleted_at IS NULL AND criado_em >= ${INICIO_SERIE} GROUP BY mes`),
             linhas(`SELECT DATE_FORMAT(criado_em, '%Y-%m') AS mes, COUNT(*) AS n FROM veiculos
@@ -67,7 +65,6 @@ router.get("/resumo", authAdmin, async (req, res) => {
                     ORDER BY v.id DESC LIMIT 5`)
         ]);
 
-        // Monta os 6 meses (mesmo os sem registros ficam com 0)
         const mapU = Object.fromEntries(su.map((r) => [r.mes, num(r.n)]));
         const mapA = Object.fromEntries(sa.map((r) => [r.mes, num(r.n)]));
         const serie = [];
@@ -77,7 +74,6 @@ router.get("/resumo", authAdmin, async (req, res) => {
             serie.push({ mes, usuarios: mapU[mes] || 0, anuncios: mapA[mes] || 0 });
         }
 
-        // Dados do painel mudam o tempo todo: nunca usar cache
         res.set("Cache-Control", "no-store");
 
         return res.status(200).json({
@@ -92,7 +88,7 @@ router.get("/resumo", authAdmin, async (req, res) => {
                 novos_30d: num(a.novos_30d), sem_foto: num(a.sem_foto)
             },
             pendencias: { empresas_pendentes: empresasPend, denuncias_pendentes: denunciasPend },
-            conversas: { total: conversasAbertas },   // somente conversas com status "aberta"
+            conversas: { total: conversasAbertas },
             serie,
             recentes: { usuarios: recUsuarios, anuncios: recAnuncios }
         });
@@ -103,4 +99,72 @@ router.get("/resumo", authAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+// ==========================================
+// GET /api/admin/usuarios — LISTAR TODOS OS UTILIZADORES (Para o Painel de Gestão)
+// ==========================================
+router.get("/usuarios", authAdmin, async (req, res) => {
+    try {
+        console.log("🟢 A rota /api/admin/usuarios foi acionada com sucesso!");
+        const [usuarios] = await db.query(
+            `SELECT id, nome, sobrenome, email, cpf, tipo, status FROM usuarios WHERE deleted_at IS NULL ORDER BY id DESC`
+        );
+        return res.status(200).json({ sucesso: true, usuarios });
+    } catch (erro) {
+        console.error("❌ Erro ao listar utilizadores:", erro.sqlMessage || erro);
+        return res.status(500).json({ sucesso: false, erro: "Erro ao buscar utilizadores." });
+    }
+});
+
+// ==========================================
+// PUT /api/admin/usuarios/:id/tipo — ALTERAR TIPO DE ACESSO
+// ==========================================
+router.put("/usuarios/:id/tipo", authAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { tipo } = req.body;
+
+    const tiposValidos = ["admin", "empresa", "individual"];
+    if (!tipo || !tiposValidos.includes(tipo.toLowerCase().trim())) {
+        return res.status(400).json({ sucesso: false, erro: "Tipo de acesso inválido." });
+    }
+
+    try {
+        const [resultado] = await db.query(
+            `UPDATE usuarios SET tipo = ? WHERE id = ?`,
+            [tipo.toLowerCase().trim(), id]
+        );
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Utilizador não encontrado." });
+        }
+
+        return res.status(200).json({ sucesso: true, mensagem: "Tipo de acesso alterado com sucesso!" });
+    } catch (erro) {
+        console.error("❌ Erro ao alterar tipo de utilizador:", erro.sqlMessage || erro);
+        return res.status(500).json({ sucesso: false, erro: "Erro interno ao atualizar o tipo de utilizador." });
+    }
+});
+
+// ==========================================
+// DELETE /api/admin/usuarios/:id — EXCLUIR UTILIZADOR
+// ==========================================
+router.delete("/usuarios/:id", authAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [resultado] = await db.query(
+            `DELETE FROM usuarios WHERE id = ?`,
+            [id]
+        );
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Utilizador não encontrado para exclusão." });
+        }
+
+        return res.status(200).json({ sucesso: true, mensagem: "Utilizador excluído com sucesso!" });
+    } catch (erro) {
+        console.error("❌ Erro ao excluir utilizador:", erro.sqlMessage || erro);
+        return res.status(500).json({ sucesso: false, erro: "Erro interno ao excluir o utilizador." });
+    }
+});
+
+module.exports = router
