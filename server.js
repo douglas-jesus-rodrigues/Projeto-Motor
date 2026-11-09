@@ -80,6 +80,10 @@ app.use("/api/moderacao", moderacaoRoutes);
 const perfilRoutes = require("./src/routes/perfilRoutes");
 app.use("/api/perfil", perfilRoutes);
 
+// ROTA DE MENSAGENS E NEGOCIAÇÕES (CONVERSAS)
+const mensagensRoutes = require("./src/routes/mensagensRoutes");
+app.use("/api/conversas", mensagensRoutes);
+
 // Rotas auxiliares (Combustíveis e Câmbios do Banco de Dados)
 const auxiliaresRoutes = require("./src/routes/auxiliaresRoutes");
 app.use("/api", auxiliaresRoutes);
