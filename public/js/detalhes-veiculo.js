@@ -78,7 +78,7 @@ function infoCombustivel(nomeBanco) {
     else if (nome.includes("etanol") || nome.includes("alcool")) chave = "etanol";
     else if (nome.includes("diesel")) chave = "diesel";
 
-    return chave ? COMBUSTIVEIS[chave] : null;                 // GNV e outros: sem ícone/descrição
+    return chave ? COMBUSTIVEIS[chave] : null;                // GNV e outros: sem ícone/descrição
 }
 
 // Troca o conteúdo de um contêiner pelos ícones do tipo (ou pela bomba de combustível, se não houver tipo)
@@ -130,6 +130,10 @@ function lerUsuario() {
         }
     }
     return null;
+}
+
+function obterToken() {
+    return localStorage.getItem("token") || sessionStorage.getItem("token");
 }
 
 function usuarioEstaLogado() {
@@ -279,12 +283,12 @@ async function carregarDetalhesDoCarro(id) {
         montarGaleria(v);
         renderizarCardContato(v);
 
-        loadingEl.style.display = "none";
-        conteudoEl.style.display = "block";
+        if (loadingEl) loadingEl.style.display = "none";
+        if (conteudoEl) conteudoEl.style.display = "block";
 
     } catch (erro) {
         console.error("Erro ao carregar detalhes:", erro);
-        loadingEl.innerHTML = `<p style="color: #e50914;">Erro ao carregar os dados do veículo.</p>`;
+        if (loadingEl) loadingEl.innerHTML = `<p style="color: #e50914;">Erro ao carregar os dados do veículo.</p>`;
     }
 }
 
@@ -294,6 +298,8 @@ async function carregarDetalhesDoCarro(id) {
 function montarGaleria(v) {
     const fotoEl = document.getElementById("fotoPrincipal");
     const miniaturasEl = document.getElementById("miniaturas");
+
+    if (!fotoEl) return;
 
     const principal = normalizarUrlImagem(v.imagem) || IMAGEM_PADRAO;
 
@@ -373,7 +379,7 @@ function renderizarCardContato(v) {
             <i class="fa-solid fa-paper-plane"></i> Enviar Proposta
         </button>
     `;
-    document.getElementById("btnAbrirProposta").addEventListener("click", abrirFluxoProposta);
+    document.getElementById("btnAbrirProposta")?.addEventListener("click", abrirFluxoProposta);
 }
 
 // ==========================================
@@ -475,7 +481,8 @@ window.addEventListener("storage", (event) => {
 function configurarModais() {
     // Lightbox
     document.getElementById("fotoWrapper")?.addEventListener("click", () => {
-        abrirModalImagem(document.getElementById("fotoPrincipal").src);
+        const foto = document.getElementById("fotoPrincipal");
+        if (foto) abrirModalImagem(foto.src);
     });
     document.getElementById("modalImagem")?.addEventListener("click", fecharModalImagem);
     document.querySelector(".modal-imagem-conteudo")?.addEventListener("click", (e) => e.stopPropagation());
@@ -501,10 +508,10 @@ function configurarModais() {
         if (!btn) return;
         const area = document.getElementById("propostaTexto");
         const frase = btn.dataset.frase;
-        if (!area.value.includes(frase)) {
+        if (area && !area.value.includes(frase)) {
             area.value = `${area.value.trim()} ${frase}`.trim();
         }
-        area.focus();
+        area?.focus();
     });
 
     // Ctrl/Cmd + Enter envia
@@ -594,7 +601,8 @@ function abrirFluxoProposta() {
     definirTexto("propostaPreco", document.getElementById("precoVeiculo")?.textContent || "");
 
     // Mensagem já pronta
-    document.getElementById("propostaTexto").value = montarMensagemAutomatica();
+    const areaTexto = document.getElementById("propostaTexto");
+    if (areaTexto) areaTexto.value = montarMensagemAutomatica();
 
     modal.hidden = false;
     atualizarBloqueioScroll();
@@ -614,23 +622,29 @@ async function enviarProposta() {
     if (enviandoProposta) return;
 
     const usuario = lerUsuario();
-    if (!usuario?.id) {
+    const token = obterToken();
+
+    if (!usuario?.id || !token) {
         fecharModalProposta();
         abrirModalLoginNecessario();
         return;
     }
 
-    const texto = document.getElementById("propostaTexto").value.trim();
+    const texto = document.getElementById("propostaTexto")?.value.trim();
     if (!texto) {
         mostrarToast("Escreva uma mensagem antes de enviar.");
         return;
     }
 
+    const donoId = veiculoAtual?.usuario_id || veiculoAtual?.proprietario_id;
+
     const botao = document.getElementById("btnEnviarProposta");
-    const textoOriginal = botao.innerHTML;
+    const textoOriginal = botao ? botao.innerHTML : "";
     enviandoProposta = true;
-    botao.disabled = true;
-    botao.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>&nbsp; Enviando...`;
+    if (botao) {
+        botao.disabled = true;
+        botao.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>&nbsp; Enviando...`;
+    }
 
     const veiculoId = veiculoIdAtual;
     const irParaMensagensComRascunho = () => {
@@ -638,23 +652,34 @@ async function enviarProposta() {
     };
 
     try {
-        const resposta = await fetch("/api/mensagens/iniciar", {
+        const respConversa = await fetch("/api/conversas/iniciar", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify({
-                remetente_id: usuario.id,
-                veiculo_id: veiculoId,
-                texto_inicial: texto
+                outro_usuario_id: donoId,
+                veiculo_id: veiculoId
             })
         });
 
-        if (resposta.ok) {
-            const dados = await resposta.json();
-            const conversaId = dados.conversa_id || dados.id;
+        const dadosConversa = await respConversa.json();
+
+        if (respConversa.ok && dadosConversa.sucesso && dadosConversa.conversa_id) {
+            const idConversa = dadosConversa.conversa_id;
+
+            await fetch(`/api/conversas/${idConversa}/mensagem`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ texto })
+            });
+
             mostrarToast("Proposta enviada!");
-            window.location.href = conversaId
-                ? `/pages/mensagens.html?conversa=${encodeURIComponent(conversaId)}`
-                : "/pages/mensagens.html";
+            window.location.href = `/pages/mensagens.html?conversa=${encodeURIComponent(idConversa)}`;
         } else {
             irParaMensagensComRascunho();
         }
@@ -663,7 +688,9 @@ async function enviarProposta() {
         irParaMensagensComRascunho();
     } finally {
         enviandoProposta = false;
-        botao.disabled = false;
-        botao.innerHTML = textoOriginal;
+        if (botao) {
+            botao.disabled = false;
+            botao.innerHTML = textoOriginal;
+        }
     }
 }
