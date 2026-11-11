@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const authAdmin = require("../middlewares/authAdmin");
+const bcrypt = require("bcrypt"); // Necessário para verificar a senha de confirmação
 
 // Executa uma consulta opcional: se a tabela/coluna não existir, devolve o valor padrão
 async function tentar(fn, padrao) {
@@ -100,7 +101,7 @@ router.get("/resumo", authAdmin, async (req, res) => {
 });
 
 // ==========================================
-// GET /api/admin/usuarios — LISTAR TODOS OS UTILIZADORES (Para o Painel de Gestão)
+// GET /api/admin/usuarios — LISTAR TODOS OS UTILIZADORES
 // ==========================================
 router.get("/usuarios", authAdmin, async (req, res) => {
     try {
@@ -116,11 +117,15 @@ router.get("/usuarios", authAdmin, async (req, res) => {
 });
 
 // ==========================================
-// PUT /api/admin/usuarios/:id/tipo — ALTERAR TIPO DE ACESSO
+// PUT /api/admin/usuarios/:id/tipo — ALTERAR TIPO COM CONFIRMAÇÃO DE SENHA
 // ==========================================
 router.put("/usuarios/:id/tipo", authAdmin, async (req, res) => {
     const { id } = req.params;
-    const { tipo } = req.body;
+    const { tipo, senhaAdmin } = req.body;
+
+    if (!senhaAdmin) {
+        return res.status(400).json({ sucesso: false, erro: "Por favor, insira a sua senha de administrador para confirmar." });
+    }
 
     const tiposValidos = ["admin", "empresa", "individual"];
     if (!tipo || !tiposValidos.includes(tipo.toLowerCase().trim())) {
@@ -128,6 +133,17 @@ router.put("/usuarios/:id/tipo", authAdmin, async (req, res) => {
     }
 
     try {
+        // Valida a senha do admin autenticado (req.usuario vem do middleware authAdmin)
+        const [adminRows] = await db.query(`SELECT senha FROM usuarios WHERE id = ?`, [req.usuario.id]);
+        if (adminRows.length === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Administrador não encontrado." });
+        }
+
+        const senhaCorreta = await bcrypt.compare(senhaAdmin, adminRows[0].senha);
+        if (!senhaCorreta) {
+            return res.status(401).json({ sucesso: false, erro: "Senha de administrador incorreta." });
+        }
+
         const [resultado] = await db.query(
             `UPDATE usuarios SET tipo = ? WHERE id = ?`,
             [tipo.toLowerCase().trim(), id]
@@ -145,16 +161,29 @@ router.put("/usuarios/:id/tipo", authAdmin, async (req, res) => {
 });
 
 // ==========================================
-// DELETE /api/admin/usuarios/:id — EXCLUIR UTILIZADOR
+// DELETE /api/admin/usuarios/:id — EXCLUIR UTILIZADOR COM CONFIRMAÇÃO DE SENHA
 // ==========================================
 router.delete("/usuarios/:id", authAdmin, async (req, res) => {
     const { id } = req.params;
+    const { senhaAdmin } = req.body;
+
+    if (!senhaAdmin) {
+        return res.status(400).json({ sucesso: false, erro: "Por favor, insira a sua senha de administrador para confirmar." });
+    }
 
     try {
-        const [resultado] = await db.query(
-            `DELETE FROM usuarios WHERE id = ?`,
-            [id]
-        );
+        // Valida a senha do admin autenticado
+        const [adminRows] = await db.query(`SELECT senha FROM usuarios WHERE id = ?`, [req.usuario.id]);
+        if (adminRows.length === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Administrador não encontrado." });
+        }
+
+        const senhaCorreta = await bcrypt.compare(senhaAdmin, adminRows[0].senha);
+        if (!senhaCorreta) {
+            return res.status(401).json({ sucesso: false, erro: "Senha de administrador incorreta." });
+        }
+
+        const [resultado] = await db.query(`DELETE FROM usuarios WHERE id = ?`, [id]);
 
         if (resultado.affectedRows === 0) {
             return res.status(404).json({ sucesso: false, erro: "Utilizador não encontrado para exclusão." });
@@ -167,4 +196,4 @@ router.delete("/usuarios/:id", authAdmin, async (req, res) => {
     }
 });
 
-module.exports = router
+module.exports = router;
