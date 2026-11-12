@@ -1,366 +1,1602 @@
 "use strict";
+
 /* ==========================================================================
    MOTORFLEX — PAINEL DO CLIENTE
-   Mantém: sessão, foto de perfil (recorte + remover), menu, logout.
-   Novo: resumo real (anúncios, visualizações, mensagens, favoritos), listas recentes,
-         completar perfil, sincronização entre abas.
    ========================================================================== */
+
 (() => {
     const LOGIN = "/pages/login.html";
-    const PAINEIS = { admin: "/pages/painel-admin.html", empresa: "/pages/painel-empresa.html" };
-    // Se sua API de favoritos existir, informe a rota (ex.: "/api/favoritos/usuario/"); ela deve devolver
-    // uma lista (ou { favoritos: [...] }). Com null o card mostra "—".
+
+    const PAINEIS = {
+        admin: "/pages/painel-admin.html",
+        empresa: "/pages/painel-empresa.html"
+    };
+
     const API_FAVORITOS = null;
 
     const $ = (id) => document.getElementById(id);
-    const esc = (s) => String(s ?? "").replace(/[&<>'"]/g, (t) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[t]));
 
-    // ------------------------------------------------------------------ SESSÃO
+    const esc = (valor) => String(valor ?? "").replace(
+        /[&<>'"]/g,
+        (caractere) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            "'": "&#39;",
+            '"': "&quot;"
+        })[caractere]
+    );
+
+    // ==========================================================
+    // SESSÃO
+    // ==========================================================
+
     function lerSessao() {
         for (const storage of [localStorage, sessionStorage]) {
             for (const chave of ["usuario", "usuario_logado"]) {
                 const bruto = storage.getItem(chave);
+
                 if (!bruto) continue;
+
                 try {
                     const dados = JSON.parse(bruto);
-                    if (dados && typeof dados === "object") return { dados, storage, chave };
-                } catch { /* tenta a próxima */ }
+
+                    if (dados && typeof dados === "object") {
+                        return { dados, storage, chave };
+                    }
+                } catch {
+                    // Tenta a próxima chave.
+                }
             }
         }
+
         return null;
     }
+
     const sessao = lerSessao();
-    if (!sessao) { location.replace(LOGIN); return; }
+
+    if (!sessao) {
+        window.location.replace(LOGIN);
+        return;
+    }
+
     const usuario = sessao.dados;
     const uid = usuario.id ?? usuario._id;
+    const tipo = String(
+        usuario.tipo || "individual"
+    ).toLowerCase();
 
-    // Cada tipo de conta tem o seu painel
-    const tipo = String(usuario.tipo || "individual").toLowerCase();
-    if (PAINEIS[tipo]) { location.replace(PAINEIS[tipo]); return; }
+    if (PAINEIS[tipo]) {
+        window.location.replace(PAINEIS[tipo]);
+        return;
+    }
 
-    const token = () => localStorage.getItem("token") || sessionStorage.getItem("token");
-    const authHeaders = () => (token() ? { Authorization: `Bearer ${token()}` } : {});
-    const salvarSessao = () => { try { sessao.storage.setItem(sessao.chave, JSON.stringify(usuario)); } catch { /* cheio */ } };
+    function obterToken() {
+        return localStorage.getItem("token")
+            || sessionStorage.getItem("token");
+    }
+
+    function authHeaders() {
+        const token = obterToken();
+
+        return token
+            ? { Authorization: `Bearer ${token}` }
+            : {};
+    }
+
+    function salvarSessao() {
+        try {
+            sessao.storage.setItem(
+                sessao.chave,
+                JSON.stringify(usuario)
+            );
+        } catch {
+            // Armazenamento cheio ou indisponível.
+        }
+    }
+
+    function encerrarSessao() {
+        ["usuario", "usuario_logado", "token"].forEach((chave) => {
+            localStorage.removeItem(chave);
+            sessionStorage.removeItem(chave);
+        });
+
+        window.location.replace(LOGIN);
+    }
+
+    if (!obterToken()) {
+        encerrarSessao();
+        return;
+    }
+
     async function get(url) {
-        const r = await fetch(url, { headers: { "Content-Type": "application/json", ...authHeaders() } });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok || d.sucesso === false) throw new Error(d.mensagem || `HTTP ${r.status}`);
-        return d;
+        const resposta = await fetch(url, {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+                ...authHeaders()
+            }
+        });
+
+        const dados = await resposta
+            .json()
+            .catch(() => ({}));
+
+        /*
+         * Somente 401 representa sessão inválida.
+         * Um erro 403 será exibido sem desconectar a conta.
+         */
+        if (resposta.status === 401) {
+            encerrarSessao();
+
+            throw new Error(
+                "Sua sessão expirou. Entre novamente."
+            );
+        }
+
+        if (!resposta.ok || dados.sucesso === false) {
+            throw new Error(
+                dados.mensagem
+                || `Erro HTTP ${resposta.status}`
+            );
+        }
+
+        return dados;
     }
 
-    // ------------------------------------------------------------------- TOAST
-    function toast(msg, tipoMsg = "ok") {
-        const t = document.createElement("div");
-        t.className = `toast ${tipoMsg === "erro" ? "erro" : ""}`;
-        t.textContent = msg;
-        $("toastArea").appendChild(t);
-        requestAnimationFrame(() => t.classList.add("on"));
-        setTimeout(() => { t.classList.remove("on"); setTimeout(() => t.remove(), 300); }, 3500);
+    // ==========================================================
+    // AVISOS
+    // ==========================================================
+
+    function toast(mensagem, tipoMensagem = "ok") {
+        const area = $("toastArea");
+
+        if (!area) {
+            console.log(mensagem);
+            return;
+        }
+
+        const elemento = document.createElement("div");
+
+        elemento.className = `toast ${
+            tipoMensagem === "erro" ? "erro" : ""
+        }`;
+
+        elemento.textContent = mensagem;
+        area.appendChild(elemento);
+
+        requestAnimationFrame(() => {
+            elemento.classList.add("on");
+        });
+
+        setTimeout(() => {
+            elemento.classList.remove("on");
+
+            setTimeout(() => {
+                elemento.remove();
+            }, 300);
+        }, 3500);
     }
 
-    // ------------------------------------------------------------------ MODAIS
-    const modais = ["modalSairContainer", "modalRemoverFoto", "modalRecorte"];
-    function abrirModal(id) { $(id).classList.add("mostrar-modal"); document.body.classList.add("travado"); }
+    // ==========================================================
+    // MODAIS
+    // ==========================================================
+
+    const modais = [
+        "modalSairContainer",
+        "modalRemoverFoto",
+        "modalRecorte"
+    ];
+
+    function abrirModal(id) {
+        const modal = $(id);
+
+        if (!modal) return;
+
+        modal.classList.add("mostrar-modal");
+        document.body.classList.add("travado");
+    }
+
     function fecharModal(id) {
-        $(id).classList.remove("mostrar-modal");
-        if (!modais.some((m) => $(m).classList.contains("mostrar-modal"))) document.body.classList.remove("travado");
+        const modal = $(id);
+
+        if (!modal) return;
+
+        modal.classList.remove("mostrar-modal");
+
+        const existeModalAberto = modais.some((modalId) => {
+            return $(modalId)?.classList.contains(
+                "mostrar-modal"
+            );
+        });
+
+        if (!existeModalAberto) {
+            document.body.classList.remove("travado");
+        }
     }
-    modais.forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id && id !== "modalRecorte") fecharModal(id); }));
-    document.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape") return;
-        modais.forEach((id) => { if ($(id).classList.contains("mostrar-modal")) id === "modalRecorte" ? cancelarRecorte() : fecharModal(id); });
+
+    modais.forEach((id) => {
+        const modal = $(id);
+
+        modal?.addEventListener("click", (evento) => {
+            if (
+                evento.target.id === id
+                && id !== "modalRecorte"
+            ) {
+                fecharModal(id);
+            }
+        });
+    });
+
+    document.addEventListener("keydown", (evento) => {
+        if (evento.key !== "Escape") return;
+
+        modais.forEach((id) => {
+            if (
+                !$(id)?.classList.contains(
+                    "mostrar-modal"
+                )
+            ) {
+                return;
+            }
+
+            if (id === "modalRecorte") {
+                cancelarRecorte();
+            } else {
+                fecharModal(id);
+            }
+        });
+
         fecharMenu();
     });
 
-    // -------------------------------------------------------------- FOTO / AVATAR
-    const imgSrc = (s) => (typeof s === "string" && s ? (/^(\/|https?:|blob:|data:)/.test(s) ? s : `/uploads/${s}`) : "");
-    const avatarPadrao = (nome) => `https://ui-avatars.com/api/?name=${encodeURIComponent(nome || "Cliente")}&background=181824&color=ff1e27&size=150`;
+    // ==========================================================
+    // FOTO E AVATAR
+    // ==========================================================
+
+    function imgSrc(caminho) {
+        if (
+            typeof caminho !== "string"
+            || !caminho
+        ) {
+            return "";
+        }
+
+        if (/^(\/|https?:|blob:|data:)/.test(caminho)) {
+            return caminho;
+        }
+
+        return `/uploads/${caminho}`;
+    }
+
+    function avatarPadrao(nome) {
+        return `https://ui-avatars.com/api/?name=${
+            encodeURIComponent(nome || "Cliente")
+        }&background=181824&color=ff1e27&size=150`;
+    }
 
     function definirFoto(url) {
-        const src = imgSrc(url) || avatarPadrao(usuario.nome);
-        $("imgPerfil").src = src;
-        $("miniAvatar").src = src;
-        $("btnRemoverFoto").style.display = url ? "grid" : "none";
-    }
-    ["imgPerfil", "miniAvatar"].forEach((id) => $(id).addEventListener("error", (e) => {
-        if (!e.target.src.includes("ui-avatars.com")) { e.target.src = avatarPadrao(usuario.nome); if (id === "imgPerfil") $("btnRemoverFoto").style.display = "none"; }
-    }));
+        const src =
+            imgSrc(url)
+            || avatarPadrao(usuario.nome);
 
-    // ------------------------------------------------------------- CABEÇALHO/HERO
+        if ($("imgPerfil")) {
+            $("imgPerfil").src = src;
+        }
+
+        if ($("miniAvatar")) {
+            $("miniAvatar").src = src;
+        }
+
+        if ($("btnRemoverFoto")) {
+            $("btnRemoverFoto").style.display =
+                url ? "grid" : "none";
+        }
+    }
+
+    ["imgPerfil", "miniAvatar"].forEach((id) => {
+        $(id)?.addEventListener("error", (evento) => {
+            if (
+                !evento.target.src.includes(
+                    "ui-avatars.com"
+                )
+            ) {
+                evento.target.src =
+                    avatarPadrao(usuario.nome);
+
+                if (
+                    id === "imgPerfil"
+                    && $("btnRemoverFoto")
+                ) {
+                    $("btnRemoverFoto").style.display =
+                        "none";
+                }
+            }
+        });
+    });
+
+    // ==========================================================
+    // CABEÇALHO E PERFIL
+    // ==========================================================
+
     function preencherPerfil() {
-        const primeiro = String(usuario.nome || "Cliente").trim();
-        $("nomeUsuario").textContent = `${primeiro} ${usuario.sobrenome || ""}`.trim();
-        $("miniNome").textContent = primeiro.split(/\s+/)[0];
-        const h = new Date().getHours();
-        $("saudacao").textContent = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-        const desde = new Date(usuario.criado_em);
-        if (usuario.criado_em && !isNaN(desde)) { $("tagDesde").textContent = `Membro desde ${desde.getFullYear()}`; $("tagDesde").hidden = false; }
-        definirFoto(usuario.fotoUrl || usuario.foto_perfil);
+        const nome = String(
+            usuario.nome || "Cliente"
+        ).trim();
+
+        const sobrenome = String(
+            usuario.sobrenome || ""
+        ).trim();
+
+        if ($("nomeUsuario")) {
+            $("nomeUsuario").textContent =
+                `${nome} ${sobrenome}`.trim();
+        }
+
+        if ($("miniNome")) {
+            $("miniNome").textContent =
+                nome.split(/\s+/)[0];
+        }
+
+        const hora = new Date().getHours();
+
+        if ($("saudacao")) {
+            $("saudacao").textContent =
+                hora < 12
+                    ? "Bom dia"
+                    : hora < 18
+                        ? "Boa tarde"
+                        : "Boa noite";
+        }
+
+        const criadoEm = new Date(
+            usuario.criado_em
+        );
+
+        if (
+            usuario.criado_em
+            && !Number.isNaN(criadoEm.getTime())
+            && $("tagDesde")
+        ) {
+            $("tagDesde").textContent =
+                `Membro desde ${criadoEm.getFullYear()}`;
+
+            $("tagDesde").hidden = false;
+        }
+
+        definirFoto(
+            usuario.fotoUrl
+            || usuario.foto_perfil
+        );
+
         montarChecklist();
     }
 
-    // ---------------------------------------------------------------- MENU / SAIR
-    const btnConfig = $("btnConfig"), menuConfig = $("menuConfig");
-    function fecharMenu() { menuConfig.classList.remove("mostrar"); btnConfig.setAttribute("aria-expanded", "false"); }
-    btnConfig.addEventListener("click", (e) => {
-        e.stopPropagation();
-        btnConfig.setAttribute("aria-expanded", String(menuConfig.classList.toggle("mostrar")));
-    });
-    document.addEventListener("click", (e) => { if (!menuConfig.contains(e.target) && !btnConfig.contains(e.target)) fecharMenu(); });
+    // ==========================================================
+    // MENU E LOGOUT
+    // ==========================================================
 
-    $("gatilhoSair").addEventListener("click", (e) => { e.preventDefault(); fecharMenu(); abrirModal("modalSairContainer"); });
-    $("btnCancelarSair").addEventListener("click", () => fecharModal("modalSairContainer"));
-    $("btnSair").addEventListener("click", () => {
-        ["usuario", "usuario_logado", "token"].forEach((k) => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
-        location.replace(LOGIN);
+    const btnConfig = $("btnConfig");
+    const menuConfig = $("menuConfig");
+
+    function fecharMenu() {
+        menuConfig?.classList.remove("mostrar");
+
+        btnConfig?.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+
+    btnConfig?.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+
+        const aberto =
+            menuConfig?.classList.toggle("mostrar");
+
+        btnConfig.setAttribute(
+            "aria-expanded",
+            String(Boolean(aberto))
+        );
     });
 
-    // ------------------------------------------------------- FOTO: RECORTE E ENVIO
+    document.addEventListener("click", (evento) => {
+        if (
+            menuConfig
+            && btnConfig
+            && !menuConfig.contains(evento.target)
+            && !btnConfig.contains(evento.target)
+        ) {
+            fecharMenu();
+        }
+    });
+
+    $("gatilhoSair")?.addEventListener(
+        "click",
+        (evento) => {
+            evento.preventDefault();
+            fecharMenu();
+            abrirModal("modalSairContainer");
+        }
+    );
+
+    $("btnCancelarSair")?.addEventListener(
+        "click",
+        () => {
+            fecharModal("modalSairContainer");
+        }
+    );
+
+    $("btnSair")?.addEventListener(
+        "click",
+        encerrarSessao
+    );
+
+    // ==========================================================
+    // FOTO: RECORTE E ENVIO
+    // ==========================================================
+
     const inputFoto = $("inputFotoPerfil");
     let cropper = null;
 
     function cancelarRecorte() {
         fecharModal("modalRecorte");
-        if (cropper) { cropper.destroy(); cropper = null; }
-        inputFoto.value = "";
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+
+        if (inputFoto) {
+            inputFoto.value = "";
+        }
     }
 
-    inputFoto.addEventListener("change", (e) => {
-        const arquivo = e.target.files[0];
-        if (!arquivo) return;
-        if (!["image/jpeg", "image/png", "image/webp"].includes(arquivo.type)) { toast("Selecione uma imagem JPEG, PNG ou WEBP.", "erro"); inputFoto.value = ""; return; }
-        if (arquivo.size > 5 * 1024 * 1024) { toast("A foto deve ter no máximo 5MB.", "erro"); inputFoto.value = ""; return; }
+    inputFoto?.addEventListener(
+        "change",
+        (evento) => {
+            const arquivo =
+                evento.target.files?.[0];
 
-        const leitor = new FileReader();
-        leitor.onload = (ev) => {
-            const img = $("imagemParaCortar");
-            img.src = ev.target.result;
-            abrirModal("modalRecorte");
-            if (cropper) cropper.destroy();
-            cropper = new Cropper(img, {
-                aspectRatio: 1, viewMode: 1, dragMode: "move", autoCropArea: 0.8, restore: false, guides: true, center: true,
-                highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
-                minCropBoxWidth: 120, minCropBoxHeight: 120
-            });
-        };
-        leitor.readAsDataURL(arquivo);
-    });
-    $("btnCancelarRecorte").addEventListener("click", cancelarRecorte);
+            if (!arquivo) return;
 
-    $("btnConfirmarRecorte").addEventListener("click", () => {
-        if (!cropper) return;
-        const btn = $("btnConfirmarRecorte"), textoOriginal = btn.textContent;
-        btn.disabled = true; btn.textContent = "Salvando...";
+            const tiposPermitidos = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
 
-        cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob(async (blob) => {
-            if (!blob) { toast("Não foi possível processar a imagem.", "erro"); btn.disabled = false; btn.textContent = textoOriginal; return; }
-            fecharModal("modalRecorte");
-            const arquivo = new File([blob], "foto-perfil.png", { type: "image/png" });
-            const previa = URL.createObjectURL(arquivo);
-            const anterior = usuario.fotoUrl || usuario.foto_perfil || "";
-            definirFoto(previa);
+            if (
+                !tiposPermitidos.includes(
+                    arquivo.type
+                )
+            ) {
+                toast(
+                    "Selecione uma imagem JPEG, PNG ou WEBP.",
+                    "erro"
+                );
 
-            const fd = new FormData();
-            fd.append("fotoPerfil", arquivo);
-            fd.append("usuarioId", uid);
-            try {
-                const r = await fetch("/api/perfil/upload-foto", { method: "POST", headers: authHeaders(), body: fd });
-                const d = await r.json().catch(() => ({}));
-                if (!r.ok) throw new Error(d.mensagem || d.erro || "Erro no servidor ao salvar a imagem.");
-                const nova = d.fotoUrl || d.foto_perfil;
-                if (nova) {
-                    usuario.fotoUrl = usuario.foto_perfil = nova;
-                    salvarSessao(); definirFoto(nova); montarChecklist();
-                }
-                toast("✨ Foto de perfil atualizada!");
-            } catch (erro) {
-                console.error("Falha no upload:", erro);
-                toast(erro.message || "Não foi possível salvar a nova foto.", "erro");
-                definirFoto(anterior);
-            } finally {
-                URL.revokeObjectURL(previa);
-                if (cropper) { cropper.destroy(); cropper = null; }
                 inputFoto.value = "";
-                btn.disabled = false; btn.textContent = textoOriginal;
+                return;
             }
-        }, "image/png");
-    });
 
-    // ------------------------------------------------------ FOTO: REMOVER
-    $("btnRemoverFoto").addEventListener("click", () => abrirModal("modalRemoverFoto"));
-    $("btnNaoRemover").addEventListener("click", () => fecharModal("modalRemoverFoto"));
-    $("btnSimRemover").addEventListener("click", async () => {
-        const btn = $("btnSimRemover");
-        btn.disabled = true;
-        try {
-            const r = await fetch("/api/perfil/remover-foto", {
-                method: "DELETE", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ usuarioId: uid })
-            });
-            const d = await r.json().catch(() => ({}));
-            if (!r.ok || d.sucesso === false) throw new Error(d.mensagem || "Não foi possível remover a foto.");
-            usuario.fotoUrl = usuario.foto_perfil = null;
-            salvarSessao(); definirFoto(null); montarChecklist();
-            toast("🗑️ Foto de perfil removida.");
-        } catch (erro) {
-            console.error("Erro ao remover foto:", erro);
-            toast(erro.message || "Erro de conexão ao remover a foto.", "erro");
-        } finally { btn.disabled = false; fecharModal("modalRemoverFoto"); }
-    });
+            if (arquivo.size > 5 * 1024 * 1024) {
+                toast(
+                    "A foto deve ter no máximo 5 MB.",
+                    "erro"
+                );
 
-    // ----------------------------------------------------------------- RESUMO
-    const estado = { anuncios: null, conversas: null };
+                inputFoto.value = "";
+                return;
+            }
+
+            if (typeof Cropper === "undefined") {
+                toast(
+                    "O editor de imagem não carregou. Recarregue a página.",
+                    "erro"
+                );
+
+                inputFoto.value = "";
+                return;
+            }
+
+            const leitor = new FileReader();
+
+            leitor.onload = (eventoLeitura) => {
+                const imagem =
+                    $("imagemParaCortar");
+
+                if (!imagem) return;
+
+                imagem.src =
+                    eventoLeitura.target.result;
+
+                abrirModal("modalRecorte");
+
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                cropper = new Cropper(imagem, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: "move",
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    minCropBoxWidth: 120,
+                    minCropBoxHeight: 120
+                });
+            };
+
+            leitor.onerror = () => {
+                toast(
+                    "Não foi possível ler a imagem.",
+                    "erro"
+                );
+
+                inputFoto.value = "";
+            };
+
+            leitor.readAsDataURL(arquivo);
+        }
+    );
+
+    $("btnCancelarRecorte")?.addEventListener(
+        "click",
+        cancelarRecorte
+    );
+
+    $("btnConfirmarRecorte")?.addEventListener(
+        "click",
+        () => {
+            if (!cropper) return;
+
+            const botao =
+                $("btnConfirmarRecorte");
+
+            const textoOriginal =
+                botao.textContent;
+
+            botao.disabled = true;
+            botao.textContent = "Salvando...";
+
+            cropper.getCroppedCanvas({
+                width: 400,
+                height: 400
+            }).toBlob(async (blob) => {
+                if (!blob) {
+                    toast(
+                        "Não foi possível processar a imagem.",
+                        "erro"
+                    );
+
+                    botao.disabled = false;
+                    botao.textContent = textoOriginal;
+                    return;
+                }
+
+                fecharModal("modalRecorte");
+
+                const arquivo = new File(
+                    [blob],
+                    "foto-perfil.png",
+                    { type: "image/png" }
+                );
+
+                const previa =
+                    URL.createObjectURL(arquivo);
+
+                const fotoAnterior =
+                    usuario.fotoUrl
+                    || usuario.foto_perfil
+                    || "";
+
+                definirFoto(previa);
+
+                const formData = new FormData();
+
+                /*
+                 * O ID não é enviado.
+                 * O servidor identifica o usuário
+                 * através do token.
+                 */
+                formData.append(
+                    "fotoPerfil",
+                    arquivo
+                );
+
+                try {
+                    const resposta = await fetch(
+                        "/api/usuarios/upload-foto",
+                        {
+                            method: "POST",
+
+                            /*
+                             * Não definir Content-Type.
+                             * O navegador configura o
+                             * multipart/form-data.
+                             */
+                            headers: authHeaders(),
+                            body: formData
+                        }
+                    );
+
+                    const dados = await resposta
+                        .json()
+                        .catch(() => ({}));
+
+                    /*
+                     * Somente 401 encerra a sessão.
+                     */
+                    if (resposta.status === 401) {
+                        encerrarSessao();
+
+                        throw new Error(
+                            "Sua sessão expirou. Entre novamente."
+                        );
+                    }
+
+                    if (
+                        !resposta.ok
+                        || dados.sucesso === false
+                    ) {
+                        throw new Error(
+                            dados.mensagem
+                            || dados.erro
+                            || `Erro ${resposta.status} ao salvar a imagem.`
+                        );
+                    }
+
+                    const novaFoto =
+                        dados.fotoUrl
+                        || dados.foto_perfil
+                        || dados.url;
+
+                    if (!novaFoto) {
+                        throw new Error(
+                            "O servidor não retornou o endereço da foto."
+                        );
+                    }
+
+                    usuario.fotoUrl = novaFoto;
+                    usuario.foto_perfil = novaFoto;
+
+                    salvarSessao();
+                    definirFoto(novaFoto);
+                    montarChecklist();
+
+                    toast(
+                        "✨ Foto de perfil atualizada!"
+                    );
+                } catch (erro) {
+                    console.error(
+                        "Falha no upload:",
+                        erro
+                    );
+
+                    definirFoto(fotoAnterior);
+
+                    toast(
+                        erro.message
+                        || "Não foi possível salvar a nova foto.",
+                        "erro"
+                    );
+                } finally {
+                    URL.revokeObjectURL(previa);
+
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+
+                    inputFoto.value = "";
+                    botao.disabled = false;
+                    botao.textContent =
+                        textoOriginal;
+                }
+            }, "image/png");
+        }
+    );
+
+    // ==========================================================
+    // FOTO: REMOVER
+    // ==========================================================
+
+    $("btnRemoverFoto")?.addEventListener(
+        "click",
+        () => {
+            abrirModal("modalRemoverFoto");
+        }
+    );
+
+    $("btnNaoRemover")?.addEventListener(
+        "click",
+        () => {
+            fecharModal("modalRemoverFoto");
+        }
+    );
+
+    $("btnSimRemover")?.addEventListener(
+        "click",
+        async () => {
+            const botao =
+                $("btnSimRemover");
+
+            botao.disabled = true;
+
+            try {
+                const resposta = await fetch(
+                    "/api/usuarios/remover-foto",
+                    {
+                        method: "DELETE",
+                        headers: authHeaders()
+                    }
+                );
+
+                const dados = await resposta
+                    .json()
+                    .catch(() => ({}));
+
+                /*
+                 * Somente 401 encerra a sessão.
+                 * Um 403 exibirá o erro sem sair da conta.
+                 */
+                if (resposta.status === 401) {
+                    encerrarSessao();
+
+                    throw new Error(
+                        "Sua sessão expirou. Entre novamente."
+                    );
+                }
+
+                if (
+                    !resposta.ok
+                    || dados.sucesso === false
+                ) {
+                    throw new Error(
+                        dados.mensagem
+                        || dados.erro
+                        || `Não foi possível remover a foto. Erro ${resposta.status}.`
+                    );
+                }
+
+                usuario.fotoUrl = null;
+                usuario.foto_perfil = null;
+
+                salvarSessao();
+                definirFoto(null);
+                montarChecklist();
+
+                toast(
+                    "🗑️ Foto de perfil removida."
+                );
+            } catch (erro) {
+                console.error(
+                    "Erro ao remover foto:",
+                    erro
+                );
+
+                toast(
+                    erro.message
+                    || "Erro de conexão ao remover a foto.",
+                    "erro"
+                );
+            } finally {
+                botao.disabled = false;
+
+                fecharModal(
+                    "modalRemoverFoto"
+                );
+            }
+        }
+    );
+
+    // ==========================================================
+    // RESUMO
+    // ==========================================================
+
+    const estado = {
+        anuncios: null,
+        conversas: null
+    };
+
     const LIDAS_KEY = `mf_lidas_${uid}`;
     let lidas = {};
-    try { lidas = JSON.parse(localStorage.getItem(LIDAS_KEY)) || {}; } catch { lidas = {}; }
 
-    function animarNumero(el, alvo) {
-        if (!el) return;
-        if (typeof alvo !== "number") { el.textContent = "—"; return; }
-        const ini = performance.now(), dur = 700;
-        (function passo(t) {
-            const p = Math.min(1, (t - ini) / dur);
-            el.textContent = Math.round(alvo * (1 - Math.pow(1 - p, 3))).toLocaleString("pt-BR");
-            if (p < 1) requestAnimationFrame(passo);
-        })(ini);
+    try {
+        lidas = JSON.parse(
+            localStorage.getItem(LIDAS_KEY)
+        ) || {};
+    } catch {
+        lidas = {};
     }
-    const stat = (nome, valor) => animarNumero(document.querySelector(`[data-stat="${nome}"]`), valor);
 
-    const brl = (n) => "R$ " + Number(n || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
-    const vazio = (icone, texto, link) => `<div class="vazio"><svg class="i"><use href="#${icone}"/></svg>${texto}${link ? `<br><a href="${link[0]}">${link[1]}</a>` : ""}</div>`;
+    function animarNumero(elemento, alvo) {
+        if (!elemento) return;
+
+        if (typeof alvo !== "number") {
+            elemento.textContent = "—";
+            return;
+        }
+
+        const inicio = performance.now();
+        const duracao = 700;
+
+        function passo(tempo) {
+            const progresso = Math.min(
+                1,
+                (tempo - inicio) / duracao
+            );
+
+            elemento.textContent = Math.round(
+                alvo * (
+                    1 - Math.pow(
+                        1 - progresso,
+                        3
+                    )
+                )
+            ).toLocaleString("pt-BR");
+
+            if (progresso < 1) {
+                requestAnimationFrame(passo);
+            }
+        }
+
+        requestAnimationFrame(passo);
+    }
+
+    function stat(nome, valor) {
+        const elemento =
+            document.querySelector(
+                `[data-stat="${nome}"]`
+            );
+
+        animarNumero(elemento, valor);
+    }
+
+    function brl(valor) {
+        return `R$ ${Number(
+            valor || 0
+        ).toLocaleString(
+            "pt-BR",
+            { maximumFractionDigits: 0 }
+        )}`;
+    }
+
+    function vazio(icone, texto, link) {
+        return `
+            <div class="vazio">
+                <svg class="i">
+                    <use href="#${icone}"></use>
+                </svg>
+
+                ${texto}
+
+                ${
+                    link
+                        ? `<br><a href="${link[0]}">${link[1]}</a>`
+                        : ""
+                }
+            </div>
+        `;
+    }
 
     function renderAnuncios(lista) {
-        const el = $("listaAnuncios");
-        if (!lista.length) { el.innerHTML = vazio("i-car", "Você ainda não anunciou nenhum veículo.", ["/pages/catalogo.html?tab=cadastrar", "Anunciar meu primeiro carro"]); return; }
-        el.innerHTML = [...lista].sort((a, b) => b.id - a.id).slice(0, 3).map((v) => {
-            const foto = imgSrc(v.imagem);
-            const ano = v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : (v.ano_fabricacao || "");
-            return `<a class="item" href="/pages/editar-anuncio.html?id=${encodeURIComponent(v.id)}">
-                ${foto ? `<img class="item-foto" src="${esc(foto)}" alt="" loading="lazy">` : `<span class="item-foto vazia"><svg class="i"><use href="#i-car"/></svg></span>`}
-                <div class="item-info"><h4>${esc(v.marca)} ${esc(v.modelo)}</h4><p>${esc([v.versao, ano].filter(Boolean).join(" · "))}</p></div>
-                <div class="item-meta"><strong>${brl(v.preco)}</strong><span class="views"><svg class="i"><use href="#i-eye"/></svg>${Number(v.total_visualizacoes || 0)}</span></div>
-            </a>`;
-        }).join("");
+        const elemento = $("listaAnuncios");
+
+        if (!elemento) return;
+
+        if (!lista.length) {
+            elemento.innerHTML = vazio(
+                "i-car",
+                "Você ainda não anunciou nenhum veículo.",
+                [
+                    "/pages/catalogo.html?tab=cadastrar",
+                    "Anunciar meu primeiro carro"
+                ]
+            );
+
+            return;
+        }
+
+        elemento.innerHTML = [...lista]
+            .sort((a, b) => b.id - a.id)
+            .slice(0, 3)
+            .map((veiculo) => {
+                const foto =
+                    imgSrc(veiculo.imagem);
+
+                const ano =
+                    veiculo.ano_fabricacao
+                    && veiculo.ano_modelo
+                        ? `${veiculo.ano_fabricacao}/${veiculo.ano_modelo}`
+                        : veiculo.ano_fabricacao || "";
+
+                return `
+                    <a
+                        class="item"
+                        href="/pages/editar-anuncio.html?id=${
+                            encodeURIComponent(
+                                veiculo.id
+                            )
+                        }"
+                    >
+                        ${
+                            foto
+                                ? `
+                                    <img
+                                        class="item-foto"
+                                        src="${esc(foto)}"
+                                        alt=""
+                                        loading="lazy"
+                                    >
+                                `
+                                : `
+                                    <span class="item-foto vazia">
+                                        <svg class="i">
+                                            <use href="#i-car"></use>
+                                        </svg>
+                                    </span>
+                                `
+                        }
+
+                        <div class="item-info">
+                            <h4>
+                                ${esc(veiculo.marca)}
+                                ${esc(veiculo.modelo)}
+                            </h4>
+
+                            <p>
+                                ${esc(
+                                    [
+                                        veiculo.versao,
+                                        ano
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" · ")
+                                )}
+                            </p>
+                        </div>
+
+                        <div class="item-meta">
+                            <strong>
+                                ${brl(veiculo.preco)}
+                            </strong>
+
+                            <span class="views">
+                                <svg class="i">
+                                    <use href="#i-eye"></use>
+                                </svg>
+
+                                ${Number(
+                                    veiculo.total_visualizacoes
+                                    || 0
+                                )}
+                            </span>
+                        </div>
+                    </a>
+                `;
+            })
+            .join("");
     }
 
-    function naoLidas(c) {
-        if (c.nao_lidas != null) return Number(c.nao_lidas) || 0;
-        if (c.ultimo_remetente_id != null && String(c.ultimo_remetente_id) === String(uid)) return 0;
-        const v = lidas[c.id];
-        if (v == null) return 0;
-        const tot = Number(c.total_mensagens);
-        if (!isNaN(tot) && !isNaN(Number(v))) return Math.max(0, tot - Number(v));
-        return String(v) !== String(c.total_mensagens ?? c.ultima_mensagem ?? "") ? 1 : 0;
+    function naoLidas(conversa) {
+        if (conversa.nao_lidas != null) {
+            return Number(
+                conversa.nao_lidas
+            ) || 0;
+        }
+
+        if (
+            conversa.ultimo_remetente_id != null
+            && String(
+                conversa.ultimo_remetente_id
+            ) === String(uid)
+        ) {
+            return 0;
+        }
+
+        const ultimaLida =
+            lidas[conversa.id];
+
+        if (ultimaLida == null) {
+            return 0;
+        }
+
+        const total = Number(
+            conversa.total_mensagens
+        );
+
+        if (
+            !Number.isNaN(total)
+            && !Number.isNaN(
+                Number(ultimaLida)
+            )
+        ) {
+            return Math.max(
+                0,
+                total - Number(ultimaLida)
+            );
+        }
+
+        return String(ultimaLida) !== String(
+            conversa.total_mensagens
+            ?? conversa.ultima_mensagem
+            ?? ""
+        ) ? 1 : 0;
     }
-    function horaCurta(x) {
-        const d = new Date(x); if (isNaN(d)) return "";
+
+    function horaCurta(valor) {
+        const data = new Date(valor);
+
+        if (Number.isNaN(data.getTime())) {
+            return "";
+        }
+
         const hoje = new Date();
-        if (d.toDateString() === hoje.toDateString()) return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-        if (d.toDateString() === new Date(Date.now() - 864e5).toDateString()) return "Ontem";
-        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+
+        if (
+            data.toDateString()
+            === hoje.toDateString()
+        ) {
+            return data.toLocaleTimeString(
+                "pt-BR",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+        }
+
+        const ontem =
+            new Date(Date.now() - 86400000);
+
+        if (
+            data.toDateString()
+            === ontem.toDateString()
+        ) {
+            return "Ontem";
+        }
+
+        return data.toLocaleDateString(
+            "pt-BR",
+            {
+                day: "2-digit",
+                month: "2-digit"
+            }
+        );
     }
+
     function avatarConversa(nome, foto) {
-        const n = String(nome || "?").trim(), p = n.split(/\s+/);
-        let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360;
+        const nomeSeguro =
+            String(nome || "?").trim();
+
+        const partes =
+            nomeSeguro.split(/\s+/);
+
+        let cor = 0;
+
+        for (const caractere of nomeSeguro) {
+            cor = (
+                cor * 31
+                + caractere.charCodeAt(0)
+            ) % 360;
+        }
+
         const src = imgSrc(foto);
-        return `<span class="av" style="background:linear-gradient(135deg,hsl(${h} 45% 28%),hsl(${(h + 40) % 360} 50% 20%))">${esc(((p[0]?.[0] || "?") + (p[1]?.[0] || "")).toUpperCase())}${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`;
+
+        const iniciais = (
+            (partes[0]?.[0] || "?")
+            + (partes[1]?.[0] || "")
+        ).toUpperCase();
+
+        return `
+            <span
+                class="av"
+                style="
+                    background:
+                    linear-gradient(
+                        135deg,
+                        hsl(${cor} 45% 28%),
+                        hsl(${(cor + 40) % 360} 50% 20%)
+                    );
+                "
+            >
+                ${esc(iniciais)}
+
+                ${
+                    src
+                        ? `
+                            <img
+                                src="${esc(src)}"
+                                alt=""
+                                loading="lazy"
+                                onerror="this.remove()"
+                            >
+                        `
+                        : ""
+                }
+            </span>
+        `;
     }
+
     function renderConversas(lista) {
-        const el = $("listaConversas");
-        if (!lista.length) { el.innerHTML = vazio("i-chat", "Nenhuma conversa por enquanto.<br>Fale com um vendedor pelo anúncio.", ["/pages/catalogo.html", "Explorar catálogo"]); return; }
-        const ord = [...lista].sort((a, b) => (new Date(b.ultimo_envio).getTime() || 0) - (new Date(a.ultimo_envio).getTime() || 0)).slice(0, 4);
-        el.innerHTML = ord.map((c) => {
-            const n = naoLidas(c);
-            return `<a class="item ${n ? "tem-nova" : ""}" href="/pages/mensagens.html?conversa=${encodeURIComponent(c.id)}">
-                ${avatarConversa(c.outro_usuario_nome, c.outro_usuario_foto)}
-                <div class="item-info"><h4>${esc(c.outro_usuario_nome || "Usuário")}</h4><p>${esc(c.ultima_mensagem || "Inicie a conversa...")}${c.veiculo_nome ? ` · ${esc(c.veiculo_nome)}` : ""}</p></div>
-                <div class="item-meta"><span>${esc(horaCurta(c.ultimo_envio))}</span>${n ? `<span class="nova-badge">${n > 99 ? "99+" : n}</span>` : ""}</div>
-            </a>`;
-        }).join("");
+        const elemento =
+            $("listaConversas");
+
+        if (!elemento) return;
+
+        if (!lista.length) {
+            elemento.innerHTML = vazio(
+                "i-chat",
+                "Nenhuma conversa por enquanto.<br>Fale com um vendedor pelo anúncio.",
+                [
+                    "/pages/catalogo.html",
+                    "Explorar catálogo"
+                ]
+            );
+
+            return;
+        }
+
+        const ordenadas = [...lista]
+            .sort((a, b) => {
+                const dataB =
+                    new Date(
+                        b.ultimo_envio
+                    ).getTime() || 0;
+
+                const dataA =
+                    new Date(
+                        a.ultimo_envio
+                    ).getTime() || 0;
+
+                return dataB - dataA;
+            })
+            .slice(0, 4);
+
+        elemento.innerHTML = ordenadas
+            .map((conversa) => {
+                const quantidadeNaoLidas =
+                    naoLidas(conversa);
+
+                return `
+                    <a
+                        class="item ${
+                            quantidadeNaoLidas
+                                ? "tem-nova"
+                                : ""
+                        }"
+                        href="/pages/mensagens.html?conversa=${
+                            encodeURIComponent(
+                                conversa.id
+                            )
+                        }"
+                    >
+                        ${avatarConversa(
+                            conversa.outro_usuario_nome,
+                            conversa.outro_usuario_foto
+                        )}
+
+                        <div class="item-info">
+                            <h4>
+                                ${esc(
+                                    conversa.outro_usuario_nome
+                                    || "Usuário"
+                                )}
+                            </h4>
+
+                            <p>
+                                ${esc(
+                                    conversa.ultima_mensagem
+                                    || "Inicie a conversa..."
+                                )}
+
+                                ${
+                                    conversa.veiculo_nome
+                                        ? ` · ${esc(
+                                            conversa.veiculo_nome
+                                        )}`
+                                        : ""
+                                }
+                            </p>
+                        </div>
+
+                        <div class="item-meta">
+                            <span>
+                                ${esc(
+                                    horaCurta(
+                                        conversa.ultimo_envio
+                                    )
+                                )}
+                            </span>
+
+                            ${
+                                quantidadeNaoLidas
+                                    ? `
+                                        <span class="nova-badge">
+                                            ${
+                                                quantidadeNaoLidas > 99
+                                                    ? "99+"
+                                                    : quantidadeNaoLidas
+                                            }
+                                        </span>
+                                    `
+                                    : ""
+                            }
+                        </div>
+                    </a>
+                `;
+            })
+            .join("");
     }
 
     async function carregarResumo() {
-        const [v, c, f] = await Promise.allSettled([
-            get(`/api/veiculos/usuario/${encodeURIComponent(uid)}`),
-            get(`/api/mensagens/conversas?usuarioId=${encodeURIComponent(uid)}`),
-            API_FAVORITOS ? get(API_FAVORITOS + encodeURIComponent(uid)) : Promise.reject(new Error("sem-api"))
-        ]);
+        const resultados =
+            await Promise.allSettled([
+                get(
+                    `/api/veiculos/usuario/${
+                        encodeURIComponent(uid)
+                    }`
+                ),
 
-        if (v.status === "fulfilled") {
-            const lista = Array.isArray(v.value.veiculos) ? v.value.veiculos : [];
+                get(
+                    `/api/mensagens/conversas?usuarioId=${
+                        encodeURIComponent(uid)
+                    }`
+                ),
+
+                API_FAVORITOS
+                    ? get(
+                        API_FAVORITOS
+                        + encodeURIComponent(uid)
+                    )
+                    : Promise.reject(
+                        new Error(
+                            "API de favoritos indisponível"
+                        )
+                    )
+            ]);
+
+        const [
+            resultadoVeiculos,
+            resultadoConversas,
+            resultadoFavoritos
+        ] = resultados;
+
+        if (
+            resultadoVeiculos.status
+            === "fulfilled"
+        ) {
+            const lista = Array.isArray(
+                resultadoVeiculos.value.veiculos
+            )
+                ? resultadoVeiculos.value.veiculos
+                : [];
+
             estado.anuncios = lista;
+
             stat("anuncios", lista.length);
-            stat("views", lista.reduce((s, x) => s + Number(x.total_visualizacoes || 0), 0));
+
+            stat(
+                "views",
+                lista.reduce(
+                    (total, item) =>
+                        total
+                        + Number(
+                            item.total_visualizacoes
+                            || 0
+                        ),
+                    0
+                )
+            );
+
             renderAnuncios(lista);
         } else {
-            stat("anuncios"); stat("views");
-            $("listaAnuncios").innerHTML = vazio("i-alert", "Não foi possível carregar seus anúncios.");
+            stat("anuncios");
+            stat("views");
+
+            if ($("listaAnuncios")) {
+                $("listaAnuncios").innerHTML =
+                    vazio(
+                        "i-alert",
+                        "Não foi possível carregar seus anúncios."
+                    );
+            }
         }
 
-        if (c.status === "fulfilled") {
-            const lista = Array.isArray(c.value.conversas) ? c.value.conversas : [];
+        if (
+            resultadoConversas.status
+            === "fulfilled"
+        ) {
+            const lista = Array.isArray(
+                resultadoConversas.value.conversas
+            )
+                ? resultadoConversas.value.conversas
+                : [];
+
             estado.conversas = lista;
-            const total = lista.reduce((s, x) => s + naoLidas(x), 0);
-            stat("naolidas", total);
-            $("pontoMsg").hidden = !total; $("pontoMsg").textContent = total > 99 ? "99+" : total;
+
+            const totalNaoLidas = lista.reduce(
+                (total, conversa) =>
+                    total + naoLidas(conversa),
+                0
+            );
+
+            stat(
+                "naolidas",
+                totalNaoLidas
+            );
+
+            if ($("pontoMsg")) {
+                $("pontoMsg").hidden =
+                    !totalNaoLidas;
+
+                $("pontoMsg").textContent =
+                    totalNaoLidas > 99
+                        ? "99+"
+                        : totalNaoLidas;
+            }
+
             renderConversas(lista);
         } else {
             stat("naolidas");
-            $("listaConversas").innerHTML = vazio("i-alert", "Não foi possível carregar suas conversas.");
+
+            if ($("listaConversas")) {
+                $("listaConversas").innerHTML =
+                    vazio(
+                        "i-alert",
+                        "Não foi possível carregar suas conversas."
+                    );
+            }
         }
 
-        if (f.status === "fulfilled") {
-            const d = f.value, lista = Array.isArray(d) ? d : (d.favoritos || d.dados || []);
-            stat("favoritos", lista.length);
-        } else stat("favoritos");
+        if (
+            resultadoFavoritos.status
+            === "fulfilled"
+        ) {
+            const dados =
+                resultadoFavoritos.value;
+
+            const lista =
+                Array.isArray(dados)
+                    ? dados
+                    : dados.favoritos
+                        || dados.dados
+                        || [];
+
+            stat(
+                "favoritos",
+                lista.length
+            );
+        } else {
+            stat("favoritos");
+        }
 
         montarChecklist();
     }
 
-    // --------------------------------------------------------- COMPLETAR PERFIL
+    // ==========================================================
+    // CHECKLIST DO PERFIL
+    // ==========================================================
+
     function montarChecklist() {
         const itens = [
-            { ok: !!(usuario.fotoUrl || usuario.foto_perfil), txt: "Adicionar foto de perfil", acao: "foto" },
-            { ok: !!String(usuario.telefone || "").trim(), txt: "Cadastrar telefone de contato", href: "/pages/perfil.html" },
-            { ok: !!(estado.anuncios && estado.anuncios.length), txt: "Publicar o primeiro anúncio", href: "/pages/catalogo.html?tab=cadastrar" },
-            { ok: !!(estado.conversas && estado.conversas.length), txt: "Iniciar uma conversa", href: "/pages/catalogo.html" }
+            {
+                ok: Boolean(
+                    usuario.fotoUrl
+                    || usuario.foto_perfil
+                ),
+                txt: "Adicionar foto de perfil",
+                acao: "foto"
+            },
+            {
+                ok: Boolean(
+                    String(
+                        usuario.telefone || ""
+                    ).trim()
+                ),
+                txt: "Cadastrar telefone de contato",
+                href: "/pages/perfil.html"
+            },
+            {
+                ok: Boolean(
+                    estado.anuncios
+                    && estado.anuncios.length
+                ),
+                txt: "Publicar o primeiro anúncio",
+                href: "/pages/catalogo.html?tab=cadastrar"
+            },
+            {
+                ok: Boolean(
+                    estado.conversas
+                    && estado.conversas.length
+                ),
+                txt: "Iniciar uma conversa",
+                href: "/pages/catalogo.html"
+            }
         ];
-        const feitos = itens.filter((i) => i.ok).length, pct = Math.round((feitos / itens.length) * 100);
-        $("percentual").textContent = `${pct}%`;
-        $("barraProgresso").style.width = `${pct}%`;
-        $("checklist").innerHTML = itens.map((i) => {
-            const marca = `<span class="check"><svg class="i"><use href="#i-check"/></svg></span>`;
-            const corpo = i.ok ? `<span>${marca}${esc(i.txt)}</span>`
-                : `<a href="${i.href || "#"}" ${i.acao ? `data-acao="${i.acao}"` : ""}>${marca}${esc(i.txt)}</a>`;
-            return `<li class="${i.ok ? "feito" : ""}">${corpo}</li>`;
-        }).join("");
-    }
-    $("checklist").addEventListener("click", (e) => {
-        const a = e.target.closest('[data-acao="foto"]');
-        if (a) { e.preventDefault(); inputFoto.click(); }
-    });
 
-    // Atualiza os dados da conta com o servidor (foto, telefone, membro desde)
+        const concluidos =
+            itens.filter(
+                (item) => item.ok
+            ).length;
+
+        const percentual = Math.round(
+            (concluidos / itens.length) * 100
+        );
+
+        if ($("percentual")) {
+            $("percentual").textContent =
+                `${percentual}%`;
+        }
+
+        if ($("barraProgresso")) {
+            $("barraProgresso").style.width =
+                `${percentual}%`;
+        }
+
+        if (!$("checklist")) return;
+
+        $("checklist").innerHTML = itens
+            .map((item) => {
+                const marca = `
+                    <span class="check">
+                        <svg class="i">
+                            <use href="#i-check"></use>
+                        </svg>
+                    </span>
+                `;
+
+                const corpo = item.ok
+                    ? `
+                        <span>
+                            ${marca}
+                            ${esc(item.txt)}
+                        </span>
+                    `
+                    : `
+                        <a
+                            href="${item.href || "#"}"
+                            ${
+                                item.acao
+                                    ? `data-acao="${item.acao}"`
+                                    : ""
+                            }
+                        >
+                            ${marca}
+                            ${esc(item.txt)}
+                        </a>
+                    `;
+
+                return `
+                    <li class="${
+                        item.ok ? "feito" : ""
+                    }">
+                        ${corpo}
+                    </li>
+                `;
+            })
+            .join("");
+    }
+
+    $("checklist")?.addEventListener(
+        "click",
+        (evento) => {
+            const linkFoto =
+                evento.target.closest(
+                    '[data-acao="foto"]'
+                );
+
+            if (!linkFoto) return;
+
+            evento.preventDefault();
+            inputFoto?.click();
+        }
+    );
+
+    // ==========================================================
+    // SINCRONIZAÇÃO COM O SERVIDOR
+    // ==========================================================
+
     async function sincronizarConta() {
         try {
-            const d = await get(`/api/perfil/meu-perfil?id=${encodeURIComponent(uid)}`);
-            if (!d.usuario) return;
-            const { senha, ...novo } = d.usuario;
-            Object.assign(usuario, novo); delete usuario.senha;
-            if (novo.foto_perfil) usuario.fotoUrl = novo.foto_perfil;
-            salvarSessao(); preencherPerfil();
-        } catch { /* usa o que já está salvo */ }
+            const dados = await get(
+                "/api/perfil/meu-perfil"
+            );
+
+            if (!dados.usuario) return;
+
+            const {
+                senha,
+                token_verificacao,
+                token_recuperacao,
+                token_expiracao,
+                ...dadosAtualizados
+            } = dados.usuario;
+
+            Object.assign(
+                usuario,
+                dadosAtualizados
+            );
+
+            delete usuario.senha;
+            delete usuario.token_verificacao;
+            delete usuario.token_recuperacao;
+            delete usuario.token_expiracao;
+
+            if (
+                dadosAtualizados.foto_perfil
+            ) {
+                usuario.fotoUrl =
+                    dadosAtualizados.foto_perfil;
+            }
+
+            salvarSessao();
+            preencherPerfil();
+        } catch (erro) {
+            console.error(
+                "Não foi possível sincronizar o perfil:",
+                erro
+            );
+        }
     }
 
-    // ---------------------------------------------------- SINCRONIZAÇÃO ENTRE ABAS
-    addEventListener("storage", (e) => {
-        if (e.key !== "usuario" && e.key !== "usuario_logado" && e.key !== null) return;
-        const s = lerSessao();
-        if (!s) location.replace(LOGIN);
-        else if (String(s.dados.id ?? s.dados._id) !== String(uid)) location.reload();
-    });
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) carregarResumo(); });
+    // ==========================================================
+    // SINCRONIZAÇÃO ENTRE ABAS
+    // ==========================================================
 
-    // -------------------------------------------------------------------- INIT
+    window.addEventListener(
+        "storage",
+        (evento) => {
+            if (
+                evento.key !== "usuario"
+                && evento.key !== "usuario_logado"
+                && evento.key !== null
+            ) {
+                return;
+            }
+
+            const novaSessao =
+                lerSessao();
+
+            if (!novaSessao) {
+                window.location.replace(LOGIN);
+                return;
+            }
+
+            const novoUsuarioId =
+                novaSessao.dados.id
+                ?? novaSessao.dados._id;
+
+            if (
+                String(novoUsuarioId)
+                !== String(uid)
+            ) {
+                window.location.reload();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+            if (!document.hidden) {
+                carregarResumo();
+            }
+        }
+    );
+
+    // ==========================================================
+    // INICIALIZAÇÃO
+    // ==========================================================
+
     preencherPerfil();
     carregarResumo();
     sincronizarConta();

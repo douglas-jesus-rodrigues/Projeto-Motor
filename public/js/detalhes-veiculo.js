@@ -1,99 +1,206 @@
+"use strict";
+
 // ==========================================
 // ESTADO E UTILITÁRIOS
 // ==========================================
 const CHAVES_SESSAO = ["usuario", "usuario_logado"];
-const IMAGEM_PADRAO = "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
+
+const IMAGEM_PADRAO =
+    "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
 
 let veiculoAtual = null;
 let veiculoIdAtual = null;
 
 // ==========================================
-// COMBUSTÍVEL E CÂMBIO: sempre o que está no banco (nunca um valor "chutado")
+// COMBUSTÍVEL E CÂMBIO
 // ==========================================
 const ICONES = {
-    raio:  { classe: "fa-bolt" },
+    raio: { classe: "fa-bolt" },
     folha: { classe: "fa-leaf" }
 };
 
-// Regra dos ícones: folha = combustível líquido · raio = elétrico · híbrido = os dois
 const COMBUSTIVEIS = {
-    gasolina: { rotulo: "Gasolina", grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
-        descricao: "O combustível fóssil mais comum para veículos leves, derivado do petróleo, que oferece uma boa resposta de desempenho e autonomia." },
-    etanol:   { rotulo: "Etanol",   grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
-        descricao: "Um biocombustível renovável (produzido a partir da cana-de-açúcar), que emite menos poluentes, embora o veículo costume apresentar um consumo ligeiramente superior por quilômetro." },
-    flex:     { rotulo: "Flex",     grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
-        descricao: "Veículos equipados com motores capazes de funcionar com gasolina, etanol ou qualquer proporção de mistura entre ambos no mesmo depósito." },
-    diesel:   { rotulo: "Diesel",   grupo: "liquido",  tipo: "Combustível líquido",  icones: ["folha"],
-        descricao: "Um combustível fóssil mais denso e pesado, utilizado em motores próprios que oferecem maior torque e eficiência em longas distâncias, sendo comum em veículos comerciais e de grande porte." },
-    eletrico: { rotulo: "Elétrico", grupo: "eletrico", tipo: "Energia elétrica",     icones: ["raio"],
-        descricao: "Veículos que funcionam exclusivamente com energia elétrica armazenada em baterias recarregáveis, sem emissões diretas de gases de escape." },
-    hibrido:  { rotulo: "Híbrido",  grupo: "hibrido",  tipo: "Combustível + elétrico", icones: ["raio", "folha"],
-        descricao: "Veículos que combinam um motor tradicional (combustível) com um motor elétrico, alternando ou unindo as duas fontes para maximizar a eficiência energética e reduzir o consumo." }
+    gasolina: {
+        rotulo: "Gasolina",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "O combustível fóssil mais comum para veículos leves, derivado do petróleo, que oferece uma boa resposta de desempenho e autonomia."
+    },
+
+    etanol: {
+        rotulo: "Etanol",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Um biocombustível renovável produzido a partir da cana-de-açúcar, que emite menos poluentes."
+    },
+
+    flex: {
+        rotulo: "Flex",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Veículos equipados com motores capazes de funcionar com gasolina, etanol ou uma mistura dos dois combustíveis."
+    },
+
+    diesel: {
+        rotulo: "Diesel",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Combustível utilizado em motores que oferecem maior torque e eficiência em longas distâncias."
+    },
+
+    eletrico: {
+        rotulo: "Elétrico",
+        grupo: "eletrico",
+        tipo: "Energia elétrica",
+        icones: ["raio"],
+        descricao:
+            "Veículos que funcionam exclusivamente com energia elétrica armazenada em baterias recarregáveis."
+    },
+
+    hibrido: {
+        rotulo: "Híbrido",
+        grupo: "hibrido",
+        tipo: "Combustível + elétrico",
+        icones: ["raio", "folha"],
+        descricao:
+            "Veículos que combinam um motor tradicional com um motor elétrico para melhorar a eficiência energética."
+    }
 };
 
-// Nomes por id (iguais aos do banco). As rotas /api/combustiveis e /api/cambios atualizam estas listas.
-const nomesCombustivel = { 1: "Gasolina", 2: "Etanol", 3: "Flex", 4: "Diesel", 5: "Elétrico", 6: "Híbrido" };
-const nomesCambio = { 1: "Manual", 2: "Automático", 3: "Semi-automático" };
+const nomesCombustivel = {
+    1: "Gasolina",
+    2: "Etanol",
+    3: "Flex",
+    4: "Diesel",
+    5: "Elétrico",
+    6: "Híbrido"
+};
+
+const nomesCambio = {
+    1: "Manual",
+    2: "Automático",
+    3: "Semi-automático"
+};
 
 async function carregarListaAuxiliar(url, destino) {
     try {
-        const r = await fetch(url);
-        if (!r.ok) return;
-        const lista = await r.json();
-        if (Array.isArray(lista)) {
-            lista.forEach(i => { if (i && i.id != null && i.nome) destino[i.id] = String(i.nome); });
-        }
+        const resposta = await fetch(url);
+
+        if (!resposta.ok) return;
+
+        const lista = await resposta.json();
+
+        if (!Array.isArray(lista)) return;
+
+        lista.forEach((item) => {
+            if (item && item.id != null && item.nome) {
+                destino[item.id] = String(item.nome);
+            }
+        });
     } catch {
-        // usa os nomes padrão acima
+        // Mantém os nomes padrões definidos acima.
     }
 }
 
 function carregarListasAuxiliares() {
     return Promise.all([
-        carregarListaAuxiliar("/api/combustiveis", nomesCombustivel),
-        carregarListaAuxiliar("/api/cambios", nomesCambio)
+        carregarListaAuxiliar(
+            "/api/combustiveis",
+            nomesCombustivel
+        ),
+
+        carregarListaAuxiliar(
+            "/api/cambios",
+            nomesCambio
+        )
     ]);
 }
 
-// Só aceita texto de verdade (ignora vazio e números soltos, que seriam ids)
 function nomeValido(valor) {
     if (typeof valor !== "string") return null;
-    const t = valor.trim();
-    return t && !/^\d+$/.test(t) ? t : null;
+
+    const texto = valor.trim();
+
+    return texto && !/^\d+$/.test(texto)
+        ? texto
+        : null;
 }
 
-function normalizarTexto(str) {
-    return String(str ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function normalizarTexto(valor) {
+    return String(valor ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 }
 
-// Descobre o tipo pelo nome que está no banco (ex.: "Elétrico", "Híbrido", "Gasolina/Etanol")
 function infoCombustivel(nomeBanco) {
     const nome = normalizarTexto(nomeBanco);
+
     let chave = null;
 
-    if (nome.includes("hibrid")) chave = "hibrido";            // híbrido primeiro (pode citar gasolina/elétrico)
-    else if (nome.includes("eletric")) chave = "eletrico";
-    else if (nome.includes("flex") || (nome.includes("gasolina") && (nome.includes("etanol") || nome.includes("alcool")))) chave = "flex";
-    else if (nome.includes("gasolina")) chave = "gasolina";
-    else if (nome.includes("etanol") || nome.includes("alcool")) chave = "etanol";
-    else if (nome.includes("diesel")) chave = "diesel";
+    if (nome.includes("hibrid")) {
+        chave = "hibrido";
+    } else if (nome.includes("eletric")) {
+        chave = "eletrico";
+    } else if (
+        nome.includes("flex") ||
+        (
+            nome.includes("gasolina") &&
+            (
+                nome.includes("etanol") ||
+                nome.includes("alcool")
+            )
+        )
+    ) {
+        chave = "flex";
+    } else if (nome.includes("gasolina")) {
+        chave = "gasolina";
+    } else if (
+        nome.includes("etanol") ||
+        nome.includes("alcool")
+    ) {
+        chave = "etanol";
+    } else if (nome.includes("diesel")) {
+        chave = "diesel";
+    }
 
-    return chave ? COMBUSTIVEIS[chave] : null;                // GNV e outros: sem ícone/descrição
+    return chave
+        ? COMBUSTIVEIS[chave]
+        : null;
 }
 
-// Troca o conteúdo de um contêiner pelos ícones do tipo (ou pela bomba de combustível, se não houver tipo)
 function aplicarIcones(id, icones) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const lista = icones && icones.length ? icones : null;
-    el.replaceChildren(...(lista || ["bomba"]).map(nome => {
-        const i = document.createElement("i");
-        i.setAttribute("aria-hidden", "true");
-        i.className = nome === "bomba"
-            ? "fa-solid fa-gas-pump"
-            : `fa-solid ${ICONES[nome].classe} ic-${nome}`;
-        return i;
-    }));
+    const elemento = document.getElementById(id);
+
+    if (!elemento) return;
+
+    const lista =
+        Array.isArray(icones) && icones.length
+            ? icones
+            : ["bomba"];
+
+    const elementos = lista.map((nome) => {
+        const icone = document.createElement("i");
+
+        icone.setAttribute("aria-hidden", "true");
+
+        icone.className =
+            nome === "bomba"
+                ? "fa-solid fa-gas-pump"
+                : `fa-solid ${ICONES[nome].classe} ic-${nome}`;
+
+        return icone;
+    });
+
+    elemento.replaceChildren(...elementos);
 }
 
 function mostrarTipoCombustivel(nomeBanco) {
@@ -103,519 +210,1387 @@ function mostrarTipoCombustivel(nomeBanco) {
     aplicarIcones("chipCombIcones", icones);
     aplicarIcones("specCombIcones", icones);
 
-    const caixa = document.getElementById("combustivelInfo");
-    if (!caixa) return;
-    if (!info) { caixa.hidden = true; return; }
+    const caixa = document.getElementById(
+        "combustivelInfo"
+    );
 
-    aplicarIcones("combustivelInfoIcones", icones);
-    definirTexto("combustivelInfoNome", nomeBanco);          // o nome exatamente como está no banco
-    definirTexto("combustivelInfoTipo", info.tipo);
-    definirTexto("combustivelInfoTexto", info.descricao);
-    caixa.className = `combustivel-info combustivel-info--${info.grupo}`;
+    if (!caixa) return;
+
+    if (!info) {
+        caixa.hidden = true;
+        return;
+    }
+
+    aplicarIcones(
+        "combustivelInfoIcones",
+        icones
+    );
+
+    definirTexto(
+        "combustivelInfoNome",
+        nomeBanco
+    );
+
+    definirTexto(
+        "combustivelInfoTipo",
+        info.tipo
+    );
+
+    definirTexto(
+        "combustivelInfoTexto",
+        info.descricao
+    );
+
+    caixa.className =
+        `combustivel-info combustivel-info--${info.grupo}`;
+
     caixa.hidden = false;
 
-    const chip = document.getElementById("chipCombustivel");
-    if (chip) chip.title = `${info.rotulo}: ${info.tipo}`;
+    const chip = document.getElementById(
+        "chipCombustivel"
+    );
+
+    if (chip) {
+        chip.title =
+            `${info.rotulo}: ${info.tipo}`;
+    }
 }
 
+// ==========================================
+// SESSÃO E AUTENTICAÇÃO
+// ==========================================
 function lerUsuario() {
     for (const chave of CHAVES_SESSAO) {
-        const bruto = localStorage.getItem(chave) || sessionStorage.getItem(chave);
-        if (!bruto || bruto === "undefined" || bruto === "null") continue;
+        const valor =
+            localStorage.getItem(chave) ||
+            sessionStorage.getItem(chave);
+
+        if (
+            !valor ||
+            valor === "undefined" ||
+            valor === "null"
+        ) {
+            continue;
+        }
+
         try {
-            const obj = JSON.parse(bruto);
-            if (obj && typeof obj === "object") return obj;
+            const usuario = JSON.parse(valor);
+
+            if (
+                usuario &&
+                typeof usuario === "object"
+            ) {
+                return usuario;
+            }
         } catch {
-            // ignora e tenta a próxima chave
+            // Tenta a próxima chave.
         }
     }
+
     return null;
 }
 
 function obterToken() {
-    return localStorage.getItem("token") || sessionStorage.getItem("token");
+    return (
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token")
+    );
 }
 
 function usuarioEstaLogado() {
-    const u = lerUsuario();
-    return !!(u && u.id);
+    const usuario = lerUsuario();
+    const token = obterToken();
+
+    return Boolean(
+        usuario?.id &&
+        token
+    );
 }
 
-// Painel correto de acordo com o tipo de conta logada
 function obterRotaPainel(usuario) {
-    if (!usuario) return "/pages/login.html";
-    if (usuario.tipo === "empresa") return "/pages/painel-empresa.html";
-    if (["admin", "super_admin"].includes(usuario.tipo) || usuario.cargo === "admin") {
+    if (!usuario) {
+        return "/pages/login.html";
+    }
+
+    if (usuario.tipo === "empresa") {
+        return "/pages/painel-empresa.html";
+    }
+
+    if (
+        ["admin", "super_admin"].includes(
+            usuario.tipo
+        ) ||
+        usuario.cargo === "admin"
+    ) {
         return "/pages/painel-admin.html";
     }
+
     return "/pages/painel-cliente.html";
 }
 
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
 function normalizarUrlImagem(valor) {
-    if (typeof valor !== "string") return null;
-    let src = valor.trim();
-    if (!src || ["null", "undefined", "false", "0"].includes(src.toLowerCase())) return null;
+    if (typeof valor !== "string") {
+        return null;
+    }
 
-    if (/^(data:image\/|blob:|https?:\/\/|\/\/)/i.test(src)) return src;
+    let caminho = valor.trim();
 
-    src = src.replace(/\\/g, "/").replace(/^\.\//, "");
-    if (src.startsWith("/")) return src;
-    if (src.startsWith("uploads/")) return `/${src}`;
-    return `/uploads/${encodeURIComponent(src)}`;
+    if (
+        !caminho ||
+        ["null", "undefined", "false", "0"].includes(
+            caminho.toLowerCase()
+        )
+    ) {
+        return null;
+    }
+
+    if (
+        /^(data:image\/|blob:|https?:\/\/|\/\/)/i.test(
+            caminho
+        )
+    ) {
+        return caminho;
+    }
+
+    caminho = caminho
+        .replace(/\\/g, "/")
+        .replace(/^\.\//, "");
+
+    if (caminho.startsWith("/")) {
+        return caminho;
+    }
+
+    if (caminho.startsWith("uploads/")) {
+        return `/${caminho}`;
+    }
+
+    return `/uploads/${encodeURIComponent(caminho)}`;
 }
 
 function formatarPreco(valor) {
-    const n = Number(valor);
-    if (!isFinite(n)) return "R$ --";
-    return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const numero = Number(valor);
+
+    if (!Number.isFinite(numero)) {
+        return "R$ --";
+    }
+
+    return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
 }
 
 function definirTexto(id, texto) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = texto;
+    const elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.textContent = texto;
+    }
+}
+
+async function lerRespostaJson(resposta) {
+    try {
+        return await resposta.json();
+    } catch {
+        return {};
+    }
 }
 
 let temporizadorToast = null;
+
 function mostrarToast(mensagem) {
     const toast = document.getElementById("toast");
-    if (!toast) return;
+
+    if (!toast) {
+        console.log(mensagem);
+        return;
+    }
+
     toast.textContent = mensagem;
     toast.hidden = false;
+
     clearTimeout(temporizadorToast);
-    temporizadorToast = setTimeout(() => { toast.hidden = true; }, 3500);
+
+    temporizadorToast = setTimeout(() => {
+        toast.hidden = true;
+    }, 3500);
 }
 
 function atualizarBloqueioScroll() {
-    const algumAberto =
-        !document.getElementById("modalProposta")?.hidden ||
-        !document.getElementById("modalLoginNecessario")?.hidden ||
-        document.getElementById("modalImagem")?.classList.contains("ativo");
-    document.body.classList.toggle("modal-aberto", !!algumAberto);
+    const propostaAberta =
+        !document.getElementById(
+            "modalProposta"
+        )?.hidden;
+
+    const loginAberto =
+        !document.getElementById(
+            "modalLoginNecessario"
+        )?.hidden;
+
+    const imagemAberta =
+        document.getElementById(
+            "modalImagem"
+        )?.classList.contains("ativo");
+
+    document.body.classList.toggle(
+        "modal-aberto",
+        Boolean(
+            propostaAberta ||
+            loginAberto ||
+            imagemAberta
+        )
+    );
 }
 
 // ==========================================
 // INICIALIZAÇÃO
 // ==========================================
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+        window.addEventListener(
+            "pageshow",
+            (evento) => {
+                if (evento.persisted) {
+                    window.location.reload();
+                }
+            }
+        );
 
-    // Correção de cache/estado ao voltar (BFCACHE)
-    window.addEventListener("pageshow", (event) => {
-        if (event.persisted) window.location.reload();
-    });
+        const parametros =
+            new URLSearchParams(
+                window.location.search
+            );
 
-    const urlParams = new URLSearchParams(window.location.search);
-    veiculoIdAtual = urlParams.get("id");
+        veiculoIdAtual =
+            parametros.get("id");
 
-    if (!veiculoIdAtual) {
-        alert("Veículo não especificado!");
-        window.location.href = "/pages/catalogo.html";
-        return;
-    }
+        if (!veiculoIdAtual) {
+            alert("Veículo não especificado!");
 
-    configurarModais();
+            window.location.href =
+                "/pages/catalogo.html";
 
-    await carregarDetalhesDoCarro(veiculoIdAtual);
-    configurarBotaoFavorito(veiculoIdAtual);
-    registrarVisualizacaoUnica(veiculoIdAtual);
-});
-
-// ==========================================
-// BUSCAR DADOS DO VEÍCULO NA API
-// ==========================================
-async function carregarDetalhesDoCarro(id) {
-    const loadingEl = document.getElementById("loading");
-    const conteudoEl = document.getElementById("conteudoVeiculo");
-
-    try {
-        const [resposta] = await Promise.all([
-            fetch(`/api/veiculos/${encodeURIComponent(id)}`),
-            carregarListasAuxiliares()
-        ]);
-        const data = await resposta.json();
-
-        if (!data.sucesso || !data.veiculo) {
-            alert("Veículo não encontrado.");
-            window.location.href = "/pages/catalogo.html";
             return;
         }
 
-        const v = data.veiculo;
-        veiculoAtual = v;
+        configurarModais();
 
-        const marca = v.marca_nome || v.marca || "Marca";
-        const modelo = v.modelo_nome || v.modelo || "Modelo";
-        const titulo = `${marca} ${modelo}`.trim();
+        await carregarDetalhesDoCarro(
+            veiculoIdAtual
+        );
 
-        document.title = `${titulo} - MotorFlex`;
-        definirTexto("breadcrumbAtual", titulo);
-        definirTexto("marcaModeloBadge", `${marca} / ${modelo}`);
-        definirTexto("tituloVeiculo", titulo);
-        definirTexto("versaoVeiculo", v.versao || "Versão padrão");
-        definirTexto("precoVeiculo", formatarPreco(v.preco));
+        configurarBotaoFavorito(
+            veiculoIdAtual
+        );
 
-        // Especificações
-        const ano = `${v.ano_fabricacao || "--"} / ${v.ano_modelo || "--"}`;
-        const km = v.quilometragem ? `${Number(v.quilometragem).toLocaleString("pt-BR")} km` : "0 km";
-        // Valores vindos do banco (pelo nome ou pelo id). Sem dado, mostra "Não informado": nada de valor inventado.
-        const combustivel = nomeValido(v.combustivel_nome) || nomeValido(v.combustivel)
-            || nomesCombustivel[v.tipo_combustivel_id] || "Não informado";
-        const cambio = nomeValido(v.cambio_nome) || nomeValido(v.cambio) || nomeValido(v.transmissao_nome)
-            || nomesCambio[v.tipo_transmissao_id] || "Não informado";
+        registrarVisualizacaoUnica(
+            veiculoIdAtual
+        );
+    }
+);
 
-        definirTexto("specAno", ano);
-        definirTexto("specQuilometragem", km);
-        definirTexto("specCombustivel", combustivel);
-        definirTexto("specCambio", cambio);
-        definirTexto("specCor", v.cor || "Não informada");
-        definirTexto("specPortas", v.portas ? `${v.portas} portas` : "Não informado");
+// ==========================================
+// BUSCAR VEÍCULO
+// ==========================================
+async function carregarDetalhesDoCarro(id) {
+    const loadingEl =
+        document.getElementById("loading");
 
-        // Chips de resumo
-        definirTexto("chipAno", v.ano_modelo || v.ano_fabricacao || "--");
-        definirTexto("chipKm", km);
-        definirTexto("chipComb", combustivel);
-        mostrarTipoCombustivel(combustivel);
+    const conteudoEl =
+        document.getElementById(
+            "conteudoVeiculo"
+        );
 
-        // Descrição
-        if (v.descricao && String(v.descricao).trim() !== "") {
-            definirTexto("descricaoVeiculo", v.descricao);
+    try {
+        const [resposta] =
+            await Promise.all([
+                fetch(
+                    `/api/veiculos/${encodeURIComponent(id)}`
+                ),
+
+                carregarListasAuxiliares()
+            ]);
+
+        const dados =
+            await lerRespostaJson(resposta);
+
+        if (
+            !resposta.ok ||
+            !dados.sucesso ||
+            !dados.veiculo
+        ) {
+            alert("Veículo não encontrado.");
+
+            window.location.href =
+                "/pages/catalogo.html";
+
+            return;
         }
 
-        montarGaleria(v);
-        renderizarCardContato(v);
+        const veiculo = dados.veiculo;
 
-        if (loadingEl) loadingEl.style.display = "none";
-        if (conteudoEl) conteudoEl.style.display = "block";
+        veiculoAtual = veiculo;
 
+        const marca =
+            veiculo.marca_nome ||
+            veiculo.marca ||
+            "Marca";
+
+        const modelo =
+            veiculo.modelo_nome ||
+            veiculo.modelo ||
+            "Modelo";
+
+        const titulo =
+            `${marca} ${modelo}`.trim();
+
+        document.title =
+            `${titulo} - MotorFlex`;
+
+        definirTexto(
+            "breadcrumbAtual",
+            titulo
+        );
+
+        definirTexto(
+            "marcaModeloBadge",
+            `${marca} / ${modelo}`
+        );
+
+        definirTexto(
+            "tituloVeiculo",
+            titulo
+        );
+
+        definirTexto(
+            "versaoVeiculo",
+            veiculo.versao ||
+            "Versão padrão"
+        );
+
+        definirTexto(
+            "precoVeiculo",
+            formatarPreco(veiculo.preco)
+        );
+
+        const ano =
+            `${veiculo.ano_fabricacao || "--"} / ` +
+            `${veiculo.ano_modelo || "--"}`;
+
+        const quilometragem =
+            Number(veiculo.quilometragem) > 0
+                ? `${Number(
+                    veiculo.quilometragem
+                ).toLocaleString("pt-BR")} km`
+                : "0 km";
+
+        const combustivel =
+            nomeValido(
+                veiculo.combustivel_nome
+            ) ||
+            nomeValido(
+                veiculo.combustivel
+            ) ||
+            nomesCombustivel[
+                veiculo.tipo_combustivel_id
+            ] ||
+            "Não informado";
+
+        const cambio =
+            nomeValido(
+                veiculo.cambio_nome
+            ) ||
+            nomeValido(
+                veiculo.cambio
+            ) ||
+            nomeValido(
+                veiculo.transmissao_nome
+            ) ||
+            nomesCambio[
+                veiculo.tipo_transmissao_id
+            ] ||
+            "Não informado";
+
+        definirTexto("specAno", ano);
+
+        definirTexto(
+            "specQuilometragem",
+            quilometragem
+        );
+
+        definirTexto(
+            "specCombustivel",
+            combustivel
+        );
+
+        definirTexto(
+            "specCambio",
+            cambio
+        );
+
+        definirTexto(
+            "specCor",
+            veiculo.cor ||
+            "Não informada"
+        );
+
+        definirTexto(
+            "specPortas",
+            veiculo.portas
+                ? `${veiculo.portas} portas`
+                : "Não informado"
+        );
+
+        definirTexto(
+            "chipAno",
+            veiculo.ano_modelo ||
+            veiculo.ano_fabricacao ||
+            "--"
+        );
+
+        definirTexto(
+            "chipKm",
+            quilometragem
+        );
+
+        definirTexto(
+            "chipComb",
+            combustivel
+        );
+
+        mostrarTipoCombustivel(
+            combustivel
+        );
+
+        if (
+            veiculo.descricao &&
+            String(
+                veiculo.descricao
+            ).trim()
+        ) {
+            definirTexto(
+                "descricaoVeiculo",
+                veiculo.descricao
+            );
+        }
+
+        montarGaleria(veiculo);
+        renderizarCardContato(veiculo);
+
+        if (loadingEl) {
+            loadingEl.style.display = "none";
+        }
+
+        if (conteudoEl) {
+            conteudoEl.style.display = "block";
+        }
     } catch (erro) {
-        console.error("Erro ao carregar detalhes:", erro);
-        if (loadingEl) loadingEl.innerHTML = `<p style="color: #e50914;">Erro ao carregar os dados do veículo.</p>`;
+        console.error(
+            "Erro ao carregar detalhes:",
+            erro
+        );
+
+        if (loadingEl) {
+            loadingEl.innerHTML = `
+                <p style="color: #e50914;">
+                    Erro ao carregar os dados do veículo.
+                </p>
+            `;
+        }
     }
 }
 
 // ==========================================
-// GALERIA (foto principal + miniaturas opcionais)
+// GALERIA
 // ==========================================
-function montarGaleria(v) {
-    const fotoEl = document.getElementById("fotoPrincipal");
-    const miniaturasEl = document.getElementById("miniaturas");
+function montarGaleria(veiculo) {
+    const fotoEl =
+        document.getElementById(
+            "fotoPrincipal"
+        );
+
+    const miniaturasEl =
+        document.getElementById(
+            "miniaturas"
+        );
 
     if (!fotoEl) return;
 
-    const principal = normalizarUrlImagem(v.imagem) || IMAGEM_PADRAO;
+    const principal =
+        normalizarUrlImagem(
+            veiculo.imagem
+        ) ||
+        IMAGEM_PADRAO;
 
-    // Se a API devolver várias fotos (v.fotos), monta as miniaturas
-    const listaBruta = Array.isArray(v.fotos) ? v.fotos : [];
+    const listaBruta =
+        Array.isArray(veiculo.fotos)
+            ? veiculo.fotos
+            : [];
+
     const fotos = listaBruta
-        .map(f => typeof f === "string" ? f : (f?.url || f?.caminho || f?.caminho_arquivo || f?.imagem))
+        .map((foto) => {
+            if (typeof foto === "string") {
+                return foto;
+            }
+
+            return (
+                foto?.url ||
+                foto?.caminho ||
+                foto?.caminho_arquivo ||
+                foto?.imagem
+            );
+        })
         .map(normalizarUrlImagem)
         .filter(Boolean);
 
-    if (!fotos.includes(principal)) fotos.unshift(principal);
+    if (!fotos.includes(principal)) {
+        fotos.unshift(principal);
+    }
 
     fotoEl.onerror = () => {
         fotoEl.onerror = null;
         fotoEl.src = IMAGEM_PADRAO;
     };
+
     fotoEl.src = principal;
-    fotoEl.alt = `Foto de ${v.marca_nome || v.marca || ""} ${v.modelo_nome || v.modelo || ""}`.trim();
 
-    if (miniaturasEl && fotos.length > 1) {
+    fotoEl.alt = (
+        `Foto de ${
+            veiculo.marca_nome ||
+            veiculo.marca ||
+            ""
+        } ${
+            veiculo.modelo_nome ||
+            veiculo.modelo ||
+            ""
+        }`
+    ).trim();
+
+    if (
+        miniaturasEl &&
+        fotos.length > 1
+    ) {
         miniaturasEl.innerHTML = "";
-        fotos.forEach((url, i) => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = i === fotos.indexOf(principal) ? "ativa" : "";
-            btn.setAttribute("aria-label", `Ver foto ${i + 1}`);
 
-            const img = document.createElement("img");
-            img.src = url;
-            img.alt = "";
-            img.onerror = () => { btn.remove(); };
-            btn.appendChild(img);
+        fotos.forEach((url, indice) => {
+            const botao =
+                document.createElement(
+                    "button"
+                );
 
-            btn.addEventListener("click", () => {
-                fotoEl.src = url;
-                miniaturasEl.querySelectorAll("button").forEach(b => b.classList.remove("ativa"));
-                btn.classList.add("ativa");
-            });
+            botao.type = "button";
 
-            miniaturasEl.appendChild(btn);
+            botao.className =
+                indice === 0
+                    ? "ativa"
+                    : "";
+
+            botao.setAttribute(
+                "aria-label",
+                `Ver foto ${indice + 1}`
+            );
+
+            const imagem =
+                document.createElement("img");
+
+            imagem.src = url;
+            imagem.alt = "";
+
+            imagem.onerror = () => {
+                botao.remove();
+            };
+
+            botao.appendChild(imagem);
+
+            botao.addEventListener(
+                "click",
+                () => {
+                    fotoEl.src = url;
+
+                    miniaturasEl
+                        .querySelectorAll("button")
+                        .forEach((item) => {
+                            item.classList.remove(
+                                "ativa"
+                            );
+                        });
+
+                    botao.classList.add(
+                        "ativa"
+                    );
+                }
+            );
+
+            miniaturasEl.appendChild(
+                botao
+            );
         });
+
         miniaturasEl.hidden = false;
+    } else if (miniaturasEl) {
+        miniaturasEl.hidden = true;
     }
 }
 
 // ==========================================
-// CARD DE CONTATO: DONO x OUTRAS CONTAS
+// CARD DE CONTATO
 // ==========================================
-function renderizarCardContato(v) {
-    const card = document.getElementById("contatoCard");
+function renderizarCardContato(veiculo) {
+    const card =
+        document.getElementById(
+            "contatoCard"
+        );
+
     if (!card) return;
 
     const usuario = lerUsuario();
-    const idDono = Number(v.usuario_id || v.proprietario_id || 0);
-    const idAtual = usuario?.id ? Number(usuario.id) : null;
-    const ehDono = !!(idAtual && idDono > 0 && idAtual === idDono);
+
+    const idDono = Number(
+        veiculo.usuario_id ||
+        veiculo.proprietario_id ||
+        0
+    );
+
+    const idAtual =
+        usuario?.id
+            ? Number(usuario.id)
+            : null;
+
+    const ehDono =
+        Boolean(
+            idAtual &&
+            idDono > 0 &&
+            idAtual === idDono
+        );
 
     if (ehDono) {
-        // Leva ao painel correto conforme o tipo de login (cliente / empresa / admin)
-        const destino = `${obterRotaPainel(usuario)}?editar=${encodeURIComponent(v.id || veiculoIdAtual)}`;
+        const destino =
+            `${obterRotaPainel(usuario)}` +
+            `?editar=${encodeURIComponent(
+                veiculo.id ||
+                veiculoIdAtual
+            )}`;
 
         card.innerHTML = `
-            <span class="selo-dono"><i class="fa-solid fa-circle-check"></i> Este anúncio é seu</span>
-            <h3><i class="fa-solid fa-sliders"></i> Gestão do Anúncio</h3>
-            <p>Você é o proprietário deste veículo na plataforma. Clique abaixo para editar as informações, fotos e preço no seu painel.</p>
-            <a href="${destino}" class="btn-proposta secundario">
-                <i class="fa-solid fa-pen-to-square"></i> Editar meu anúncio
+            <span class="selo-dono">
+                <i class="fa-solid fa-circle-check"></i>
+                Este anúncio é seu
+            </span>
+
+            <h3>
+                <i class="fa-solid fa-sliders"></i>
+                Gestão do Anúncio
+            </h3>
+
+            <p>
+                Você é o proprietário deste veículo.
+                Clique abaixo para editar as informações,
+                fotos e preço no seu painel.
+            </p>
+
+            <a
+                href="${destino}"
+                class="btn-proposta secundario"
+            >
+                <i class="fa-solid fa-pen-to-square"></i>
+                Editar meu anúncio
             </a>
         `;
+
         return;
     }
 
     card.innerHTML = `
-        <h3><i class="fa-solid fa-headset"></i> Interessado neste carro?</h3>
-        <p>Envie uma proposta direto ao anunciante. Deixamos a mensagem pronta, é só clicar em enviar.</p>
-        <button type="button" class="btn-proposta" id="btnAbrirProposta">
-            <i class="fa-solid fa-paper-plane"></i> Enviar Proposta
+        <h3>
+            <i class="fa-solid fa-headset"></i>
+            Interessado neste carro?
+        </h3>
+
+        <p>
+            Envie uma mensagem diretamente ao anunciante.
+            Deixamos a mensagem pronta para você.
+        </p>
+
+        <button
+            type="button"
+            class="btn-proposta"
+            id="btnAbrirProposta"
+        >
+            <i class="fa-solid fa-paper-plane"></i>
+            Enviar mensagem
         </button>
     `;
-    document.getElementById("btnAbrirProposta")?.addEventListener("click", abrirFluxoProposta);
+
+    document
+        .getElementById("btnAbrirProposta")
+        ?.addEventListener(
+            "click",
+            abrirFluxoProposta
+        );
 }
 
 // ==========================================
-// REGISTRAR VISUALIZAÇÃO ÚNICA (EXCLUINDO DONO E ADMINS NO BACK-END)
+// REGISTRAR VISUALIZAÇÃO
 // ==========================================
-async function registrarVisualizacaoUnica(veiculoId) {
+async function registrarVisualizacaoUnica(
+    veiculoId
+) {
     try {
         const usuario = lerUsuario();
-        if (!usuario?.id) return; // sem login, não conta
+        const token = obterToken();
 
-        await fetch(`/api/veiculos/${encodeURIComponent(veiculoId)}/visualizar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuario_id: usuario.id })
-        });
+        if (!usuario?.id || !token) {
+            return;
+        }
+
+        const resposta = await fetch(
+            `/api/veiculos/${encodeURIComponent(
+                veiculoId
+            )}/visualizar`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Authorization":
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+        if (
+            !resposta.ok &&
+            resposta.status !== 401 &&
+            resposta.status !== 403
+        ) {
+            console.warn(
+                "Não foi possível registrar a visualização."
+            );
+        }
     } catch (erro) {
-        console.error("Erro ao registrar visualização:", erro);
+        console.error(
+            "Erro ao registrar visualização:",
+            erro
+        );
     }
 }
 
 // ==========================================
-// FAVORITO
+// FAVORITOS
 // ==========================================
 function lerFavoritos() {
     try {
-        const lista = JSON.parse(localStorage.getItem("favoritos_veiculos"));
-        return Array.isArray(lista) ? lista : [];
+        const lista = JSON.parse(
+            localStorage.getItem(
+                "favoritos_veiculos"
+            )
+        );
+
+        return Array.isArray(lista)
+            ? lista
+            : [];
     } catch {
         return [];
     }
 }
 
-function configurarBotaoFavorito(veiculoId) {
-    const btnFav = document.getElementById("btnFavoritarDetalhe");
-    const iconeFav = document.getElementById("iconeFavorito");
-    if (!btnFav || !iconeFav) return;
+function configurarBotaoFavorito(
+    veiculoId
+) {
+    const botao =
+        document.getElementById(
+            "btnFavoritarDetalhe"
+        );
 
-    const idNumerico = Number(veiculoId);
+    const icone =
+        document.getElementById(
+            "iconeFavorito"
+        );
+
+    if (!botao || !icone) return;
+
+    const idNumerico =
+        Number(veiculoId);
 
     atualizarVisualBotaoFavorito(
-        usuarioEstaLogado() && lerFavoritos().includes(idNumerico),
-        btnFav, iconeFav
+        usuarioEstaLogado() &&
+        lerFavoritos().includes(
+            idNumerico
+        ),
+        botao,
+        icone
     );
 
-    btnFav.addEventListener("click", (e) => {
-        e.stopPropagation(); // não abre o lightbox
+    botao.addEventListener(
+        "click",
+        (evento) => {
+            evento.stopPropagation();
 
-        if (!usuarioEstaLogado()) {
-            abrirModalLoginNecessario();
+            if (!usuarioEstaLogado()) {
+                abrirModalLoginNecessario();
+                return;
+            }
+
+            let favoritos =
+                lerFavoritos();
+
+            let ehFavorito;
+
+            if (
+                favoritos.includes(
+                    idNumerico
+                )
+            ) {
+                favoritos =
+                    favoritos.filter(
+                        (id) =>
+                            id !== idNumerico
+                    );
+
+                ehFavorito = false;
+            } else {
+                favoritos.push(
+                    idNumerico
+                );
+
+                ehFavorito = true;
+            }
+
+            localStorage.setItem(
+                "favoritos_veiculos",
+                JSON.stringify(favoritos)
+            );
+
+            atualizarVisualBotaoFavorito(
+                ehFavorito,
+                botao,
+                icone
+            );
+
+            mostrarToast(
+                ehFavorito
+                    ? "Adicionado aos favoritos"
+                    : "Removido dos favoritos"
+            );
+        }
+    );
+}
+
+function atualizarVisualBotaoFavorito(
+    ehFavorito,
+    botao,
+    icone
+) {
+    if (ehFavorito) {
+        icone.className =
+            "fa-solid fa-heart";
+
+        icone.style.color =
+            "#ff2b36";
+
+        botao.setAttribute(
+            "aria-pressed",
+            "true"
+        );
+
+        botao.title =
+            "Remover dos favoritos";
+    } else {
+        icone.className =
+            "fa-regular fa-heart";
+
+        icone.style.color =
+            "#ffffff";
+
+        botao.setAttribute(
+            "aria-pressed",
+            "false"
+        );
+
+        botao.title =
+            "Favoritar veículo";
+    }
+}
+
+window.addEventListener(
+    "storage",
+    (evento) => {
+        if (
+            evento.key !==
+            "favoritos_veiculos"
+        ) {
             return;
         }
 
-        let favoritos = lerFavoritos();
-        let ehFavorito;
+        const botao =
+            document.getElementById(
+                "btnFavoritarDetalhe"
+            );
 
-        if (favoritos.includes(idNumerico)) {
-            favoritos = favoritos.filter(id => id !== idNumerico);
-            ehFavorito = false;
-        } else {
-            favoritos.push(idNumerico);
-            ehFavorito = true;
-        }
+        const icone =
+            document.getElementById(
+                "iconeFavorito"
+            );
 
-        localStorage.setItem("favoritos_veiculos", JSON.stringify(favoritos));
-        atualizarVisualBotaoFavorito(ehFavorito, btnFav, iconeFav);
-        mostrarToast(ehFavorito ? "Adicionado aos favoritos" : "Removido dos favoritos");
-    });
-}
+        const id =
+            Number(veiculoIdAtual);
 
-function atualizarVisualBotaoFavorito(ehFavorito, btn, icone) {
-    if (ehFavorito) {
-        icone.className = "fa-solid fa-heart";
-        icone.style.color = "#ff2b36";
-        btn.setAttribute("aria-pressed", "true");
-        btn.title = "Remover dos favoritos";
-    } else {
-        icone.className = "fa-regular fa-heart";
-        icone.style.color = "#ffffff";
-        btn.setAttribute("aria-pressed", "false");
-        btn.title = "Favoritar veículo";
-    }
-}
-
-// Sincronização com outras abas
-window.addEventListener("storage", (event) => {
-    if (event.key === "favoritos_veiculos") {
-        const btnFav = document.getElementById("btnFavoritarDetalhe");
-        const iconeFav = document.getElementById("iconeFavorito");
-        const id = Number(veiculoIdAtual);
-        if (btnFav && iconeFav && id) {
-            atualizarVisualBotaoFavorito(usuarioEstaLogado() && lerFavoritos().includes(id), btnFav, iconeFav);
+        if (botao && icone && id) {
+            atualizarVisualBotaoFavorito(
+                usuarioEstaLogado() &&
+                lerFavoritos().includes(id),
+                botao,
+                icone
+            );
         }
     }
-});
+);
 
 // ==========================================
-// MODAIS (LOGIN, LIGHTBOX E PROPOSTA)
+// CONFIGURAÇÃO DOS MODAIS
 // ==========================================
 function configurarModais() {
-    // Lightbox
-    document.getElementById("fotoWrapper")?.addEventListener("click", () => {
-        const foto = document.getElementById("fotoPrincipal");
-        if (foto) abrirModalImagem(foto.src);
-    });
-    document.getElementById("modalImagem")?.addEventListener("click", fecharModalImagem);
-    document.querySelector(".modal-imagem-conteudo")?.addEventListener("click", (e) => e.stopPropagation());
-    document.getElementById("btnFecharImagem")?.addEventListener("click", fecharModalImagem);
+    document
+        .getElementById("fotoWrapper")
+        ?.addEventListener(
+            "click",
+            () => {
+                const foto =
+                    document.getElementById(
+                        "fotoPrincipal"
+                    );
 
-    // Login necessário
-    document.getElementById("btnCancelarLogin")?.addEventListener("click", fecharModalLoginNecessario);
-    document.getElementById("modalLoginNecessario")?.addEventListener("click", (e) => {
-        if (e.target.id === "modalLoginNecessario") fecharModalLoginNecessario();
-    });
+                if (foto) {
+                    abrirModalImagem(
+                        foto.src
+                    );
+                }
+            }
+        );
 
-    // Proposta
-    document.getElementById("btnFecharProposta")?.addEventListener("click", fecharModalProposta);
-    document.getElementById("btnCancelarProposta")?.addEventListener("click", fecharModalProposta);
-    document.getElementById("btnEnviarProposta")?.addEventListener("click", enviarProposta);
-    document.getElementById("modalProposta")?.addEventListener("click", (e) => {
-        if (e.target.id === "modalProposta") fecharModalProposta();
-    });
+    document
+        .getElementById("modalImagem")
+        ?.addEventListener(
+            "click",
+            fecharModalImagem
+        );
 
-    // Frases rápidas: acrescentam ao texto sem duplicar
-    document.getElementById("propostaChips")?.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-frase]");
-        if (!btn) return;
-        const area = document.getElementById("propostaTexto");
-        const frase = btn.dataset.frase;
-        if (area && !area.value.includes(frase)) {
-            area.value = `${area.value.trim()} ${frase}`.trim();
+    document
+        .querySelector(
+            ".modal-imagem-conteudo"
+        )
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                evento.stopPropagation();
+            }
+        );
+
+    document
+        .getElementById(
+            "btnFecharImagem"
+        )
+        ?.addEventListener(
+            "click",
+            fecharModalImagem
+        );
+
+    document
+        .getElementById(
+            "btnCancelarLogin"
+        )
+        ?.addEventListener(
+            "click",
+            fecharModalLoginNecessario
+        );
+
+    document
+        .getElementById(
+            "modalLoginNecessario"
+        )
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target.id ===
+                    "modalLoginNecessario"
+                ) {
+                    fecharModalLoginNecessario();
+                }
+            }
+        );
+
+    document
+        .getElementById(
+            "btnFecharProposta"
+        )
+        ?.addEventListener(
+            "click",
+            fecharModalProposta
+        );
+
+    document
+        .getElementById(
+            "btnCancelarProposta"
+        )
+        ?.addEventListener(
+            "click",
+            fecharModalProposta
+        );
+
+    document
+        .getElementById(
+            "btnEnviarProposta"
+        )
+        ?.addEventListener(
+            "click",
+            enviarProposta
+        );
+
+    document
+        .getElementById(
+            "modalProposta"
+        )
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target.id ===
+                    "modalProposta"
+                ) {
+                    fecharModalProposta();
+                }
+            }
+        );
+
+    document
+        .getElementById(
+            "propostaChips"
+        )
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                const botao =
+                    evento.target.closest(
+                        "button[data-frase]"
+                    );
+
+                if (!botao) return;
+
+                const campo =
+                    document.getElementById(
+                        "propostaTexto"
+                    );
+
+                const frase =
+                    botao.dataset.frase || "";
+
+                if (
+                    campo &&
+                    frase &&
+                    !campo.value.includes(frase)
+                ) {
+                    const novoTexto =
+                        `${campo.value.trim()} ${frase}`
+                            .trim();
+
+                    if (novoTexto.length <= 255) {
+                        campo.value = novoTexto;
+                    } else {
+                        mostrarToast(
+                            "A mensagem pode ter no máximo 255 caracteres."
+                        );
+                    }
+                }
+
+                campo?.focus();
+            }
+        );
+
+    document
+        .getElementById(
+            "propostaTexto"
+        )
+        ?.addEventListener(
+            "keydown",
+            (evento) => {
+                if (
+                    evento.key === "Enter" &&
+                    (
+                        evento.ctrlKey ||
+                        evento.metaKey
+                    )
+                ) {
+                    evento.preventDefault();
+                    enviarProposta();
+                }
+            }
+        );
+
+    document.addEventListener(
+        "keydown",
+        (evento) => {
+            if (evento.key === "Escape") {
+                fecharModalImagem();
+                fecharModalLoginNecessario();
+                fecharModalProposta();
+            }
         }
-        area?.focus();
-    });
-
-    // Ctrl/Cmd + Enter envia
-    document.getElementById("propostaTexto")?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            enviarProposta();
-        }
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            fecharModalImagem();
-            fecharModalLoginNecessario();
-            fecharModalProposta();
-        }
-    });
+    );
 }
 
+// ==========================================
+// MODAL DE LOGIN
+// ==========================================
 function abrirModalLoginNecessario() {
-    const modal = document.getElementById("modalLoginNecessario");
-    if (modal) modal.hidden = false;
+    const modal =
+        document.getElementById(
+            "modalLoginNecessario"
+        );
+
+    if (modal) {
+        modal.hidden = false;
+    }
+
     atualizarBloqueioScroll();
 }
 
 function fecharModalLoginNecessario() {
-    const modal = document.getElementById("modalLoginNecessario");
-    if (modal) modal.hidden = true;
+    const modal =
+        document.getElementById(
+            "modalLoginNecessario"
+        );
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
     atualizarBloqueioScroll();
 }
 
+// ==========================================
+// MODAL DE IMAGEM
+// ==========================================
 function abrirModalImagem(url) {
-    const modal = document.getElementById("modalImagem");
-    const img = document.getElementById("imagemAmpliada");
-    if (modal && img) {
-        img.src = url;
-        modal.classList.add("ativo");
-        atualizarBloqueioScroll();
-    }
+    const modal =
+        document.getElementById(
+            "modalImagem"
+        );
+
+    const imagem =
+        document.getElementById(
+            "imagemAmpliada"
+        );
+
+    if (!modal || !imagem) return;
+
+    imagem.src = url;
+    modal.classList.add("ativo");
+
+    atualizarBloqueioScroll();
 }
 
 function fecharModalImagem() {
-    const modal = document.getElementById("modalImagem");
-    if (modal) modal.classList.remove("ativo");
-    atualizarBloqueioScroll();
-}
+    const modal =
+        document.getElementById(
+            "modalImagem"
+        );
 
-function fecharModalProposta() {
-    const modal = document.getElementById("modalProposta");
-    if (modal) modal.hidden = true;
+    if (modal) {
+        modal.classList.remove(
+            "ativo"
+        );
+    }
+
     atualizarBloqueioScroll();
 }
 
 // ==========================================
-// PROPOSTA: MENSAGEM AUTOMÁTICA PARA O DONO DO ANÚNCIO
+// MODAL DE PROPOSTA
+// ==========================================
+function fecharModalProposta() {
+    const modal =
+        document.getElementById(
+            "modalProposta"
+        );
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    atualizarBloqueioScroll();
+}
+
+// ==========================================
+// MENSAGEM AUTOMÁTICA
 // ==========================================
 function montarMensagemAutomatica() {
-    const titulo = document.getElementById("tituloVeiculo")?.textContent || "este veículo";
-    const versao = veiculoAtual?.versao ? ` ${veiculoAtual.versao}` : "";
-    const preco = document.getElementById("precoVeiculo")?.textContent || "";
     const usuario = lerUsuario();
-    const nome = usuario?.tipo === "empresa"
-        ? (usuario.empresa?.nome_empresa || usuario.nome_empresa || usuario.nome)
-        : usuario?.nome;
 
-    const assinatura = nome ? ` Meu nome é ${String(nome).split(" ")[0]}.` : "";
+    const marca =
+        veiculoAtual?.marca_nome ||
+        veiculoAtual?.marca ||
+        "";
 
-    return `Olá! Tenho interesse no ${titulo}${versao} anunciado por ${preco}. Ele ainda está disponível? Gostaria de negociar.${assinatura}`;
+    const modelo =
+        veiculoAtual?.modelo_nome ||
+        veiculoAtual?.modelo ||
+        "";
+
+    const versao =
+        veiculoAtual?.versao
+            ? ` ${veiculoAtual.versao}`
+            : "";
+
+    const ano =
+        veiculoAtual?.ano_modelo ||
+        veiculoAtual?.ano_fabricacao;
+
+    const preco =
+        formatarPreco(
+            veiculoAtual?.preco
+        );
+
+    const nomeUsuario =
+        usuario?.tipo === "empresa"
+            ? (
+                usuario.empresa?.nome_empresa ||
+                usuario.nome_empresa ||
+                usuario.nome
+            )
+            : usuario?.nome;
+
+    const primeiroNome =
+        nomeUsuario
+            ? String(nomeUsuario)
+                .trim()
+                .split(/\s+/)[0]
+            : "";
+
+    const identificacaoVeiculo =
+        `${marca} ${modelo}${versao}`
+            .replace(/\s+/g, " ")
+            .trim() ||
+        "veículo";
+
+    const informacaoAno =
+        ano
+            ? `, ano ${ano}`
+            : "";
+
+    const assinatura =
+        primeiroNome
+            ? ` Meu nome é ${primeiroNome}.`
+            : "";
+
+    const mensagem =
+        `Olá! Tenho interesse no ${identificacaoVeiculo}` +
+        `${informacaoAno}, anunciado por ${preco}. ` +
+        `O veículo ainda está disponível? ` +
+        `Gostaria de conversar sobre a negociação.` +
+        `${assinatura}`;
+
+    return mensagem.slice(0, 255);
 }
 
-// Chamado pelo botão "Enviar Proposta"
+// ==========================================
+// ABRIR PROPOSTA
+// ==========================================
 function abrirFluxoProposta() {
     if (!usuarioEstaLogado()) {
         abrirModalLoginNecessario();
         return;
     }
 
-    const modal = document.getElementById("modalProposta");
+    const usuario = lerUsuario();
+
+    const idDono = Number(
+        veiculoAtual?.usuario_id ||
+        veiculoAtual?.proprietario_id ||
+        0
+    );
+
+    if (
+        idDono > 0 &&
+        Number(usuario?.id) === idDono
+    ) {
+        mostrarToast(
+            "Você não pode enviar mensagem para o próprio anúncio."
+        );
+
+        return;
+    }
+
+    const modal =
+        document.getElementById(
+            "modalProposta"
+        );
+
     if (!modal) return;
 
-    // Mini-resumo do veículo
-    const foto = document.getElementById("propostaFoto");
-    if (foto) {
-        foto.src = document.getElementById("fotoPrincipal")?.src || IMAGEM_PADRAO;
-    }
-    definirTexto("propostaTitulo", document.getElementById("tituloVeiculo")?.textContent || "Veículo");
-    definirTexto("propostaPreco", document.getElementById("precoVeiculo")?.textContent || "");
+    const foto =
+        document.getElementById(
+            "propostaFoto"
+        );
 
-    // Mensagem já pronta
-    const areaTexto = document.getElementById("propostaTexto");
-    if (areaTexto) areaTexto.value = montarMensagemAutomatica();
+    if (foto) {
+        foto.src =
+            document.getElementById(
+                "fotoPrincipal"
+            )?.src ||
+            IMAGEM_PADRAO;
+    }
+
+    definirTexto(
+        "propostaTitulo",
+        document.getElementById(
+            "tituloVeiculo"
+        )?.textContent ||
+        "Veículo"
+    );
+
+    definirTexto(
+        "propostaPreco",
+        document.getElementById(
+            "precoVeiculo"
+        )?.textContent ||
+        ""
+    );
+
+    const campo =
+        document.getElementById(
+            "propostaTexto"
+        );
+
+    if (campo) {
+        campo.value =
+            montarMensagemAutomatica();
+
+        campo.maxLength = 255;
+    }
 
     modal.hidden = false;
+
     atualizarBloqueioScroll();
 
-    // Foco no botão de enviar: basta apertar Enter/clicar
-    document.getElementById("btnEnviarProposta")?.focus();
+    document
+        .getElementById(
+            "btnEnviarProposta"
+        )
+        ?.focus();
 }
 
-// Mantido por compatibilidade com o nome antigo
+// Compatibilidade com o nome antigo.
 function enviarPropostaModal() {
     abrirFluxoProposta();
 }
 
+// ==========================================
+// ENVIAR MENSAGEM AO ANUNCIANTE
+// ==========================================
 let enviandoProposta = false;
 
 async function enviarProposta() {
@@ -630,67 +1605,167 @@ async function enviarProposta() {
         return;
     }
 
-    const texto = document.getElementById("propostaTexto")?.value.trim();
+    const campo =
+        document.getElementById(
+            "propostaTexto"
+        );
+
+    const texto =
+        campo?.value.trim() || "";
+
     if (!texto) {
-        mostrarToast("Escreva uma mensagem antes de enviar.");
+        mostrarToast(
+            "Escreva uma mensagem antes de enviar."
+        );
+
+        campo?.focus();
         return;
     }
 
-    const donoId = veiculoAtual?.usuario_id || veiculoAtual?.proprietario_id;
+    if (texto.length > 255) {
+        mostrarToast(
+            "A mensagem pode ter no máximo 255 caracteres."
+        );
 
-    const botao = document.getElementById("btnEnviarProposta");
-    const textoOriginal = botao ? botao.innerHTML : "";
-    enviandoProposta = true;
-    if (botao) {
-        botao.disabled = true;
-        botao.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>&nbsp; Enviando...`;
+        campo?.focus();
+        return;
     }
 
-    const veiculoId = veiculoIdAtual;
-    const irParaMensagensComRascunho = () => {
-        window.location.href = `/pages/mensagens.html?veiculo=${encodeURIComponent(veiculoId)}&msg=${encodeURIComponent(texto)}`;
-    };
+    const veiculoId =
+        Number(veiculoIdAtual);
+
+    if (
+        !Number.isInteger(veiculoId) ||
+        veiculoId <= 0
+    ) {
+        mostrarToast(
+            "Não foi possível identificar o veículo."
+        );
+
+        return;
+    }
+
+    const botao =
+        document.getElementById(
+            "btnEnviarProposta"
+        );
+
+    const conteudoOriginal =
+        botao?.innerHTML || "";
+
+    enviandoProposta = true;
+
+    if (botao) {
+        botao.disabled = true;
+
+        botao.innerHTML = `
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            &nbsp;Enviando...
+        `;
+    }
 
     try {
-        const respConversa = await fetch("/api/conversas/iniciar", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                outro_usuario_id: donoId,
-                veiculo_id: veiculoId
-            })
-        });
-
-        const dadosConversa = await respConversa.json();
-
-        if (respConversa.ok && dadosConversa.sucesso && dadosConversa.conversa_id) {
-            const idConversa = dadosConversa.conversa_id;
-
-            await fetch(`/api/conversas/${idConversa}/mensagem`, {
+        /*
+         * Uma única requisição:
+         * o servidor localiza o anunciante pelo veículo
+         * e grava a mensagem na conversa.
+         */
+        const resposta = await fetch(
+            "/api/conversas/iniciar",
+            {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ texto })
-            });
 
-            mostrarToast("Proposta enviada!");
-            window.location.href = `/pages/mensagens.html?conversa=${encodeURIComponent(idConversa)}`;
-        } else {
-            irParaMensagensComRascunho();
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "Authorization":
+                        `Bearer ${token}`
+                },
+
+                body: JSON.stringify({
+                    veiculo_id: veiculoId,
+                    texto
+                })
+            }
+        );
+
+        const dados =
+            await lerRespostaJson(
+                resposta
+            );
+
+        if (
+            resposta.status === 401 ||
+            resposta.status === 403
+        ) {
+            fecharModalProposta();
+
+            mostrarToast(
+                "Sua sessão expirou. Entre novamente."
+            );
+
+            setTimeout(() => {
+                window.location.href =
+                    "/pages/login.html";
+            }, 1200);
+
+            return;
         }
+
+        if (
+            !resposta.ok ||
+            !dados.sucesso ||
+            !dados.conversa_id
+        ) {
+            throw new Error(
+                dados.erro ||
+                dados.mensagem ||
+                "Não foi possível enviar a mensagem ao anunciante."
+            );
+        }
+
+        const conversaId =
+            Number(dados.conversa_id);
+
+        if (
+            !Number.isInteger(conversaId) ||
+            conversaId <= 0
+        ) {
+            throw new Error(
+                "O servidor não retornou uma conversa válida."
+            );
+        }
+
+        fecharModalProposta();
+
+        mostrarToast(
+            "Mensagem enviada ao anunciante!"
+        );
+
+        setTimeout(() => {
+            window.location.href =
+                `/pages/mensagens.html?conversa=${encodeURIComponent(
+                    conversaId
+                )}`;
+        }, 500);
     } catch (erro) {
-        console.error("Erro ao iniciar chat:", erro);
-        irParaMensagensComRascunho();
+        console.error(
+            "Erro ao enviar proposta:",
+            erro
+        );
+
+        mostrarToast(
+            erro.message ||
+            "Erro ao enviar a mensagem. Tente novamente."
+        );
     } finally {
         enviandoProposta = false;
+
         if (botao) {
             botao.disabled = false;
-            botao.innerHTML = textoOriginal;
+            botao.innerHTML =
+                conteudoOriginal;
         }
     }
 }

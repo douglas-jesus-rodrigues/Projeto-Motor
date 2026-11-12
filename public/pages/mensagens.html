@@ -27,9 +27,10 @@
         href="../css/index.css"
     >
 
+    <!-- O número evita que o navegador use o CSS antigo do cache -->
     <link
         rel="stylesheet"
-        href="../css/mensagens.css"
+        href="../css/mensagens.css?v=4"
     >
 
     <link
@@ -57,19 +58,21 @@
 <body class="chat-page">
 
     <!-- ======================================
-         CABEÇALHO PRINCIPAL
+         CABEÇALHO
     ======================================= -->
     <header class="header">
 
         <nav class="navbar">
 
             <div class="logo">
+
                 <a
                     href="/pages/index.html"
                     class="nav-link"
                 >
                     Motor<span>Flex</span>
                 </a>
+
             </div>
 
             <a
@@ -89,7 +92,7 @@
     </header>
 
     <!-- ======================================
-         CONTEÚDO DO CHAT
+         CONTEÚDO DAS MENSAGENS
     ======================================= -->
     <main class="container chat-main-container">
 
@@ -103,65 +106,39 @@
             =================================== -->
             <aside
                 class="chat-sidebar"
-                aria-label="Conversas"
+                aria-label="Lista de conversas"
             >
 
+                <!-- CABEÇALHO DA BARRA LATERAL -->
                 <div class="chat-sidebar-header">
 
                     <h2>Conversas</h2>
 
-                    <span
-                        class="chat-badge-count"
-                        id="totalConversas"
-                    >
-                        0
-                    </span>
-
-                </div>
-
-                <!-- CHAT GLOBAL -->
-                <button
-                    type="button"
-                    class="conversa-global-item"
-                    id="btnChatGlobal"
-                    aria-label="Abrir Chat Global"
-                >
-
-                    <span class="global-avatar">
-                        <i class="fa-solid fa-earth-americas"></i>
-                    </span>
-
-                    <span class="global-info">
-
-                        <strong>
-                            Chat Global
-                        </strong>
-
-                        <small id="globalStatusTexto">
-                            Conectando...
-                        </small>
-
-                    </span>
-
-                    <span
-                        class="global-status"
-                        title="Usuários online"
-                    >
+                    <div class="chat-sidebar-acoes">
 
                         <span
-                            class="global-status-dot"
-                            id="globalStatusDot"
-                        ></span>
-
-                        <span id="globalOnlineCount">
+                            class="chat-badge-count"
+                            id="totalConversas"
+                            title="Total de conversas"
+                        >
                             0
                         </span>
 
-                    </span>
+                        <button
+                            type="button"
+                            class="btn-nova-conversa"
+                            id="btnNovaConversa"
+                            aria-label="Iniciar nova conversa"
+                            title="Nova conversa"
+                        >
+                            <i class="fa-solid fa-user-plus"></i>
+                        </button>
 
-                </button>
+                    </div>
 
-                <!-- PESQUISA DE CONVERSAS PRIVADAS -->
+                </div>
+
+                <!-- PESQUISA DE CONVERSAS -->
                 <div class="chat-search-box">
 
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -171,6 +148,7 @@
                         id="inputPesquisaConversa"
                         placeholder="Pesquisar por nome ou veículo"
                         autocomplete="off"
+                        aria-label="Pesquisar conversas"
                     >
 
                 </div>
@@ -187,6 +165,7 @@
                         class="filtro ativo"
                         data-filtro="todas"
                         role="tab"
+                        aria-selected="true"
                     >
                         Todas
                     </button>
@@ -196,6 +175,7 @@
                         class="filtro"
                         data-filtro="nao-lidas"
                         role="tab"
+                        aria-selected="false"
                     >
                         Não lidas
 
@@ -209,10 +189,11 @@
 
                 </div>
 
-                <!-- LISTA DE CONVERSAS PRIVADAS -->
+                <!-- LISTA DE CONVERSAS -->
                 <div
                     class="conversas-list"
                     id="conversasList"
+                    aria-live="polite"
                 >
                     <div class="chat-loading">
                         Carregando conversas...
@@ -222,11 +203,12 @@
             </aside>
 
             <!-- ==================================
-                 ÁREA DA CONVERSA ATIVA
+                 ÁREA DA CONVERSA
             =================================== -->
             <section
                 class="chat-content-area"
                 id="chatContentArea"
+                aria-label="Conversa selecionada"
             >
 
                 <!-- ESTADO INICIAL -->
@@ -239,32 +221,31 @@
                         <i class="fa-solid fa-comments"></i>
                     </div>
 
-                    <h3>
-                        Suas mensagens
-                    </h3>
+                    <h3>Suas mensagens</h3>
 
                     <p>
-                        Selecione o Chat Global ou uma conversa
-                        privada ao lado.
+                        Selecione uma conversa ao lado para visualizar
+                        e enviar mensagens.
                     </p>
 
                 </div>
 
-                <!-- CHAT ABERTO -->
+                <!-- CONVERSA ABERTA -->
                 <div
                     class="chat-active-box"
                     id="chatActiveBox"
                     hidden
                 >
 
-                    <!-- CABEÇALHO DO CHAT -->
+                    <!-- CABEÇALHO DA CONVERSA -->
                     <div class="chat-header-info">
 
                         <button
                             type="button"
                             class="btn-lista"
                             id="btnListaVoltar"
-                            aria-label="Voltar para as conversas"
+                            aria-label="Voltar para a lista de conversas"
+                            title="Voltar"
                         >
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
@@ -272,6 +253,7 @@
                         <span
                             class="av av-md"
                             id="chatAvatar"
+                            aria-hidden="true"
                         ></span>
 
                         <div class="chat-header-texto">
@@ -286,21 +268,23 @@
                             >
                                 <i class="fa-solid fa-car-side"></i>
 
-                                Veículo em negociação
+                                <span>
+                                    Veículo em negociação
+                                </span>
                             </span>
 
                         </div>
 
                     </div>
 
-                    <!-- MENSAGENS -->
+                    <!-- ÁREA DAS MENSAGENS -->
                     <div class="chat-messages-wrap">
 
                         <div
                             class="chat-messages-scroll"
                             id="chatMessagesScroll"
                             aria-live="polite"
-                            aria-label="Mensagens"
+                            aria-label="Mensagens da conversa"
                         ></div>
 
                         <button
@@ -308,6 +292,7 @@
                             class="btn-baixo"
                             id="btnBaixo"
                             aria-label="Ir para as mensagens mais recentes"
+                            title="Mensagens mais recentes"
                             hidden
                         >
                             <i class="fa-solid fa-chevron-down"></i>
@@ -329,14 +314,14 @@
                         hidden
                     ></div>
 
-                    <!-- EMOJIS -->
+                    <!-- PAINEL DE EMOJIS -->
                     <div
                         class="emoji-panel"
                         id="emojiPanel"
                         hidden
                     ></div>
 
-                    <!-- ENVIO DE MENSAGEM -->
+                    <!-- FORMULÁRIO DE ENVIO -->
                     <form
                         class="chat-input-form"
                         id="chatForm"
@@ -347,7 +332,7 @@
                             type="button"
                             class="btn-icone"
                             id="btnRapidas"
-                            aria-label="Respostas rápidas"
+                            aria-label="Abrir respostas rápidas"
                             title="Respostas rápidas"
                         >
                             <i class="fa-solid fa-bolt"></i>
@@ -357,7 +342,7 @@
                             type="button"
                             class="btn-icone"
                             id="btnEmoji"
-                            aria-label="Emojis"
+                            aria-label="Abrir painel de emojis"
                             title="Emojis"
                         >
                             <i class="fa-regular fa-face-smile"></i>
@@ -366,9 +351,9 @@
                         <textarea
                             id="inputMensagem"
                             rows="1"
-                            maxlength="1000"
+                            maxlength="2000"
                             placeholder="Escreva sua mensagem..."
-                            aria-label="Mensagem"
+                            aria-label="Digite uma mensagem"
                         ></textarea>
 
                         <button
@@ -376,6 +361,7 @@
                             id="btnEnviarMensagem"
                             class="btn-enviar"
                             aria-label="Enviar mensagem"
+                            title="Enviar mensagem"
                             disabled
                         >
                             <i class="fa-solid fa-paper-plane"></i>
@@ -383,7 +369,7 @@
 
                     </form>
 
-                    <!-- RETORNO DE ERROS DO CHAT -->
+                    <!-- RETORNO DE ERROS -->
                     <div
                         class="chat-feedback"
                         id="chatFeedback"
@@ -400,7 +386,82 @@
     </main>
 
     <!-- ======================================
-         MODAL PARA APAGAR MENSAGEM PRIVADA
+         MODAL PARA PESQUISAR CONTAS
+    ======================================= -->
+    <div
+        class="modal-contas-overlay"
+        id="modalNovaConversa"
+        hidden
+    >
+
+        <section
+            class="modal-contas-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloNovaConversa"
+        >
+
+            <div class="modal-contas-header">
+
+                <h3 id="tituloNovaConversa">
+                    Nova conversa
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn-fechar-contas"
+                    id="btnFecharNovaConversa"
+                    aria-label="Fechar busca de contas"
+                    title="Fechar"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+            </div>
+
+            <div class="busca-contas-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="search"
+                    id="inputBuscaUsuarios"
+                    placeholder="Digite o nome da pessoa ou empresa"
+                    autocomplete="off"
+                    maxlength="80"
+                    aria-label="Pesquisar contas"
+                >
+
+            </div>
+
+            <p class="busca-contas-ajuda">
+                Digite pelo menos dois caracteres para encontrar uma conta.
+            </p>
+
+            <div
+                class="lista-contas-busca"
+                id="listaUsuariosBusca"
+                aria-live="polite"
+            >
+
+                <div class="resultado-contas-vazio">
+
+                    <i class="fa-solid fa-user-group"></i>
+
+                    <span>
+                        Pesquise uma conta para iniciar uma conversa.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- ======================================
+         MODAL PARA APAGAR MENSAGEM
     ======================================= -->
     <div
         class="modal-delete-overlay"
@@ -408,15 +469,19 @@
         hidden
     >
 
-        <div class="modal-delete-card wa-style">
+        <div
+            class="modal-delete-card wa-style"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalDeleteTitulo"
+        >
 
             <h3 id="modalDeleteTitulo">
                 Apagar mensagem?
             </h3>
 
             <p id="modalDeleteTexto">
-                Você pode apagar esta mensagem apenas para você
-                ou para todos nesta conversa.
+                Escolha como deseja remover esta mensagem.
             </p>
 
             <div class="modal-delete-acoes wa-acoes">
@@ -458,9 +523,11 @@
         aria-live="polite"
     ></div>
 
-    <!-- Socket.IO precisa carregar antes do mensagens.js -->
+    <!-- SOCKET.IO -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="../js/mensagens.js"></script>
+
+    <!-- JAVASCRIPT DAS MENSAGENS -->
+    <script src="../js/mensagens.js?v=4"></script>
 
 </body>
 

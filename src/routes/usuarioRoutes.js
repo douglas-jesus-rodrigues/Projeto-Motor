@@ -1,250 +1,1227 @@
 const express = require("express");
-const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const usuarioController = require("../controllers/usuarioController");
-const authAdmin = require("../middlewares/authAdmin");
+const router = express.Router();
+
+const usuarioController = require(
+    "../controllers/usuarioController"
+);
+
+const authAdmin = require(
+    "../middlewares/authAdmin"
+);
+
+const authUser = require(
+    "../middlewares/authMiddleware"
+);
+
 const db = require("../config/db");
-const { enviarEmailRecuperacao } = require("../config/emailService");
 
-const TIPOS_VALIDOS = ["individual", "empresa", "admin"];
+const {
+    enviarEmailRecuperacao
+} = require("../config/emailService");
+
+const TIPOS_VALIDOS = [
+    "individual",
+    "empresa",
+    "admin"
+];
+
+const RESPOSTA_RECUPERACAO =
+    "Se o e-mail estiver cadastrado, as instruções serão enviadas.";
+
+const PASTA_UPLOADS = path.join(
+    __dirname,
+    "../../public/uploads"
+);
+
+const TAMANHO_MAXIMO_FOTO =
+    5 * 1024 * 1024;
+
+const JANELA_RECUPERACAO_MS =
+    15 * 60 * 1000;
+
+const MAX_RECUPERACOES_POR_IP = 5;
+
+const tentativasRecuperacao =
+    new Map();
+
+// Garante que a pasta de uploads exista.
+fs.mkdirSync(
+    PASTA_UPLOADS,
+    {
+        recursive: true
+    }
+);
 
 // ==========================================
-// CONFIGURAÇÃO DO MULTER (FOTO DE PERFIL)
+// CONFIGURAÇÃO SEGURA DO UPLOAD
 // ==========================================
+const EXTENSOES_POR_MIME = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp"
+};
+
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(__dirname, "../../public/uploads")),
-    filename: (req, file, cb) => {
-        const sufixo = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, sufixo + path.extname(file.originalname).toLowerCase());
+    destination: (
+        req,
+        file,
+        callback
+    ) => {
+        callback(
+            null,
+            PASTA_UPLOADS
+        );
+    },
+
+    filename: (
+        req,
+        file,
+        callback
+    ) => {
+        const extensao =
+            EXTENSOES_POR_MIME[
+                file.mimetype
+            ];
+
+        const nomeSeguro =
+            `${crypto.randomUUID()}${extensao}`;
+
+        callback(
+            null,
+            nomeSeguro
+        );
     }
 });
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith("image/")) cb(null, true);
-        else cb(new Error("Apenas imagens são permitidas."), false);
+
+    limits: {
+        fileSize: TAMANHO_MAXIMO_FOTO,
+        files: 1
+    },
+
+    fileFilter: (
+        req,
+        file,
+        callback
+    ) => {
+        const extensao =
+            EXTENSOES_POR_MIME[
+                file.mimetype
+            ];
+
+        if (extensao) {
+            return callback(
+                null,
+                true
+            );
+        }
+
+        return callback(
+            new Error(
+                "Envie uma imagem JPG, PNG ou WebP."
+            )
+        );
     }
 });
 
+function processarFotoPerfil(
+    req,
+    res,
+    next
+) {
+    upload.single("fotoPerfil")(
+        req,
+        res,
+        (erro) => {
+            if (!erro) {
+                return next();
+            }
+
+            if (
+                erro instanceof multer.MulterError
+                && erro.code === "LIMIT_FILE_SIZE"
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "A imagem pode ter no máximo 5 MB."
+                    });
+            }
+
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        erro.message
+                        || "Não foi possível processar a imagem."
+                });
+        }
+    );
+}
+
+async function apagarArquivoLocal(
+    caminho
+) {
+    if (!caminho) return;
+
+    try {
+        await fs.promises.unlink(
+            caminho
+        );
+    } catch (erro) {
+        if (erro.code !== "ENOENT") {
+            console.error(
+                "[upload] Não foi possível remover o arquivo:",
+                erro.code || erro.message
+            );
+        }
+    }
+}
+
+/*
+ * Transforma uma URL como:
+ *
+ * /uploads/arquivo.png
+ *
+ * em um caminho seguro dentro de public/uploads.
+ * URLs externas não são apagadas.
+ */
+function obterCaminhoLocalDaFoto(
+    fotoUrl
+) {
+    if (
+        typeof fotoUrl !== "string"
+        || !fotoUrl.startsWith("/uploads/")
+    ) {
+        return null;
+    }
+
+    const nomeInformado =
+        fotoUrl.slice("/uploads/".length);
+
+    const nomeSeguro =
+        path.basename(nomeInformado);
+
+    if (
+        !nomeSeguro
+        || nomeSeguro !== nomeInformado
+    ) {
+        return null;
+    }
+
+    const pastaResolvida =
+        path.resolve(PASTA_UPLOADS);
+
+    const caminhoResolvido =
+        path.resolve(
+            PASTA_UPLOADS,
+            nomeSeguro
+        );
+
+    if (
+        !caminhoResolvido.startsWith(
+            `${pastaResolvida}${path.sep}`
+        )
+    ) {
+        return null;
+    }
+
+    return caminhoResolvido;
+}
+
 // ==========================================
-// LOGIN: GUARDA A SESSÃO E GARANTE O TOKEN (corrige o 401 do painel admin)
+// SESSÃO E JWT DO LOGIN
 // ==========================================
-// Envolve o loginUsuario existente. Quando o login dá certo:
-//  - grava o usuário em req.session (o authAdmin lê dali);
-//  - se o controller não enviou token, gera um JWT;
-//  - só responde depois de a sessão estar salva.
 function extrairUsuario(corpo) {
-    const u = corpo.usuario || corpo.user || corpo.dados || corpo.data;
-    if (!u || typeof u !== "object") return null;
+    const usuario =
+        corpo?.usuario
+        || corpo?.user
+        || corpo?.dados
+        || corpo?.data;
+
+    if (
+        !usuario
+        || typeof usuario !== "object"
+    ) {
+        return null;
+    }
+
     return {
-        id: u.id ?? u.id_usuario ?? u.usuario_id ?? null,
-        email: u.email || null,
-        tipo: u.tipo,
-        cargo: u.cargo
+        id:
+            usuario.id
+            ?? usuario.id_usuario
+            ?? usuario.usuario_id
+            ?? null,
+
+        email:
+            usuario.email
+            || null,
+
+        tipo:
+            usuario.tipo,
+
+        cargo:
+            usuario.cargo
     };
 }
 
-async function prepararSessao(req, res, corpo) {
-    if (res.statusCode >= 400 || !corpo || typeof corpo !== "object" || corpo.sucesso === false) return;
-
-    const u = extrairUsuario(corpo);
-    if (!u) {
-        console.warn("[login] Resposta sem objeto de usuário; sessão NÃO criada. Chaves:", Object.keys(corpo));
+async function prepararSessao(
+    req,
+    res,
+    corpo
+) {
+    if (
+        res.statusCode >= 400
+        || !corpo
+        || typeof corpo !== "object"
+        || corpo.sucesso === false
+    ) {
         return;
     }
 
-    // Se o controller não devolveu o id, descobre pelo e-mail
-    if (!u.id && u.email) {
-        const [rows] = await db.query(
-            "SELECT id, tipo, cargo FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1",
-            [u.email]
-        );
-        if (rows.length) Object.assign(u, rows[0]);
+    const usuario =
+        extrairUsuario(corpo);
+
+    if (!usuario) return;
+
+    if (
+        !usuario.id
+        && usuario.email
+    ) {
+        const [linhas] =
+            await db.query(
+                `
+                    SELECT
+                        id,
+                        tipo,
+                        cargo
+                    FROM usuarios
+                    WHERE email = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [usuario.email]
+            );
+
+        if (linhas.length) {
+            Object.assign(
+                usuario,
+                linhas[0]
+            );
+        }
     }
 
-    if (!u.id) {
-        console.warn("[login] Não foi possível identificar o id do usuário; sessão NÃO criada.");
-        return;
-    }
+    if (!usuario.id) return;
 
     if (req.session) {
-        req.session.usuario = { id: u.id, tipo: u.tipo, cargo: u.cargo };
-        await new Promise((resolve) => req.session.save(() => resolve()));
+        req.session.usuario = {
+            id: usuario.id,
+            tipo: usuario.tipo,
+            cargo: usuario.cargo
+        };
+
+        await new Promise(
+            (resolve, reject) => {
+                req.session.save(
+                    (erro) => {
+                        if (erro) {
+                            return reject(
+                                erro
+                            );
+                        }
+
+                        return resolve();
+                    }
+                );
+            }
+        );
     }
 
     if (!corpo.token) {
-        if (process.env.JWT_SECRET) {
-            corpo.token = jwt.sign({ id: u.id, tipo: u.tipo }, process.env.JWT_SECRET, { expiresIn: "1d" });
-        } else {
-            console.warn("[login] JWT_SECRET não definido no .env; token NÃO gerado.");
+        if (!process.env.JWT_SECRET) {
+            throw new Error(
+                "JWT_SECRET não foi configurado."
+            );
         }
-    }
 
-    console.log(`[login] Sessão criada para usuário id=${u.id} tipo=${u.tipo}`);
+        corpo.token = jwt.sign(
+            {
+                id: usuario.id,
+                tipo: usuario.tipo
+            },
+
+            process.env.JWT_SECRET,
+
+            {
+                expiresIn: "1d"
+            }
+        );
+    }
 }
 
 function comSessao(handler) {
-    return (req, res, next) => {
-        const jsonOriginal = res.json.bind(res);
+    return (
+        req,
+        res,
+        next
+    ) => {
+        const jsonOriginal =
+            res.json.bind(res);
 
         res.json = (corpo) => {
-            Promise.resolve(prepararSessao(req, res, corpo))
-                .catch((e) => console.error("[login] Erro ao gravar sessão:", e.sqlMessage || e.message || e))
-                .then(() => jsonOriginal(corpo));
+            Promise.resolve(
+                prepararSessao(
+                    req,
+                    res,
+                    corpo
+                )
+            )
+                .then(() => {
+                    jsonOriginal(corpo);
+                })
+                .catch(next);
+
             return res;
         };
 
-        return handler(req, res, next);
+        return handler(
+            req,
+            res,
+            next
+        );
     };
 }
 
 // ==========================================
-// CADASTRO, LOGIN E PERFIL
+// LIMITE DA RECUPERAÇÃO DE SENHA
 // ==========================================
-router.post("/cadastro", usuarioController.cadastrarUsuario);
-router.post("/login", comSessao(usuarioController.loginUsuario));
-router.get("/verificar-email/:token", usuarioController.verificarEmail);
+function limitarRecuperacao(
+    req,
+    res,
+    next
+) {
+    const agora = Date.now();
 
-// Solicitar recuperação de senha
-router.post("/esqueci-senha", async (req, res) => {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ sucesso: false, erro: "O e-mail é obrigatório." });
+    const chave =
+        req.ip
+        || req.socket.remoteAddress
+        || "desconhecido";
 
-    try {
-        const [usuarios] = await db.query("SELECT id, email FROM usuarios WHERE email = ?", [email]);
-
-        // Mesma resposta exista ou não o e-mail (não revela cadastros)
-        if (usuarios.length === 0) {
-            return res.status(200).json({ sucesso: true, mensagem: "Se o e-mail estiver cadastrado, as instruções foram enviadas." });
-        }
-
-        const usuario = usuarios[0];
-        const token = crypto.randomBytes(32).toString("hex");
-        const expiracao = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
-
-        await db.query("UPDATE usuarios SET token_recuperacao = ?, token_expiracao = ? WHERE id = ?", [token, expiracao, usuario.id]);
-        await enviarEmailRecuperacao(usuario.email, token);
-
-        return res.status(200).json({ sucesso: true, mensagem: "E-mail de recuperação enviado com sucesso!" });
-
-    } catch (erro) {
-        console.error("Erro na rota de esqueci-senha:", erro.sqlMessage || erro);
-        return res.status(500).json({ sucesso: false, erro: "Erro interno ao processar a recuperação de senha." });
-    }
-});
-
-// Salvar nova senha
-router.post("/redefinir-senha", async (req, res) => {
-    const { token, novaSenha } = req.body;
-    if (!token || !novaSenha) return res.status(400).json({ sucesso: false, erro: "Token e nova senha são obrigatórios." });
-
-    try {
-        const [usuarios] = await db.query(
-            "SELECT id, senha FROM usuarios WHERE token_recuperacao = ? AND token_expiracao > NOW()",
-            [token]
-        );
-        if (usuarios.length === 0) return res.status(400).json({ sucesso: false, erro: "Token inválido ou expirado." });
-
-        const usuario = usuarios[0];
-
-        if (await bcrypt.compare(novaSenha, usuario.senha)) {
-            return res.status(400).json({ sucesso: false, erro: "A nova senha não pode ser igual à sua senha atual." });
-        }
-
-        const hash = await bcrypt.hash(novaSenha, 10);
-        await db.query(
-            "UPDATE usuarios SET senha = ?, token_recuperacao = NULL, token_expiracao = NULL WHERE id = ?",
-            [hash, usuario.id]
+    const registro =
+        tentativasRecuperacao.get(
+            chave
         );
 
-        return res.status(200).json({ sucesso: true, mensagem: "Senha redefinida com sucesso!" });
+    if (
+        !registro
+        || agora - registro.inicio
+            >= JANELA_RECUPERACAO_MS
+    ) {
+        tentativasRecuperacao.set(
+            chave,
+            {
+                inicio: agora,
+                total: 1
+            }
+        );
 
-    } catch (erro) {
-        console.error("Erro ao redefinir senha:", erro.sqlMessage || erro);
-        return res.status(500).json({ sucesso: false, erro: "Erro interno ao redefinir a senha." });
+        return next();
     }
-});
 
-// Upload de foto de perfil (coluna correta: foto_perfil)
-router.post("/upload-foto", upload.single("fotoPerfil"), async (req, res) => {
-    try {
-        const { usuarioId } = req.body;
+    if (
+        registro.total
+        >= MAX_RECUPERACOES_POR_IP
+    ) {
+        return res
+            .status(429)
+            .json({
+                sucesso: false,
+                erro:
+                    "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+            });
+    }
+
+    registro.total += 1;
+
+    return next();
+}
+
+// ==========================================
+// TOKEN DE RECUPERAÇÃO
+// ==========================================
+function hashToken(token) {
+    return crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+}
+
+function senhaValida(senha) {
+    return (
+        typeof senha === "string"
+        && senha.length >= 8
+        && senha.length <= 72
+    );
+}
+
+// ==========================================
+// CADASTRO, LOGIN E VERIFICAÇÃO
+// ==========================================
+router.post(
+    "/cadastro",
+    usuarioController.cadastrarUsuario
+);
+
+router.post(
+    "/login",
+    comSessao(
+        usuarioController.loginUsuario
+    )
+);
+
+router.get(
+    "/verificar-email/:token",
+    usuarioController.verificarEmail
+);
+
+// ==========================================
+// SOLICITAR RECUPERAÇÃO DE SENHA
+// ==========================================
+router.post(
+    "/esqueci-senha",
+    limitarRecuperacao,
+    async (req, res) => {
+        const email = String(
+            req.body?.email || ""
+        )
+            .trim()
+            .toLowerCase();
+
+        if (!email) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "O e-mail é obrigatório."
+                });
+        }
+
+        try {
+            const [usuarios] =
+                await db.query(
+                    `
+                        SELECT
+                            id,
+                            email
+                        FROM usuarios
+                        WHERE email = ?
+                          AND deleted_at IS NULL
+                        LIMIT 1
+                    `,
+                    [email]
+                );
+
+            if (usuarios.length > 0) {
+                const usuario =
+                    usuarios[0];
+
+                const tokenOriginal =
+                    crypto
+                        .randomBytes(32)
+                        .toString("hex");
+
+                const tokenHash =
+                    hashToken(
+                        tokenOriginal
+                    );
+
+                const expiracao =
+                    new Date(
+                        Date.now()
+                        + 10 * 60 * 1000
+                    );
+
+                await db.query(
+                    `
+                        UPDATE usuarios
+                        SET
+                            token_recuperacao = ?,
+                            token_expiracao = ?
+                        WHERE id = ?
+                    `,
+                    [
+                        tokenHash,
+                        expiracao,
+                        usuario.id
+                    ]
+                );
+
+                try {
+                    await enviarEmailRecuperacao(
+                        usuario.email,
+                        tokenOriginal
+                    );
+                } catch (erroEmail) {
+                    await db.query(
+                        `
+                            UPDATE usuarios
+                            SET
+                                token_recuperacao = NULL,
+                                token_expiracao = NULL
+                            WHERE id = ?
+                              AND token_recuperacao = ?
+                        `,
+                        [
+                            usuario.id,
+                            tokenHash
+                        ]
+                    );
+
+                    console.error(
+                        "[recuperação] Falha no envio do e-mail:",
+                        erroEmail.message
+                    );
+                }
+            }
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    mensagem:
+                        RESPOSTA_RECUPERACAO
+                });
+        } catch (erro) {
+            console.error(
+                "[recuperação] Erro interno:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao processar a recuperação de senha."
+                });
+        }
+    }
+);
+
+// ==========================================
+// REDEFINIR SENHA
+// ==========================================
+router.post(
+    "/redefinir-senha",
+    async (req, res) => {
+        const token = String(
+            req.body?.token || ""
+        ).trim();
+
+        const novaSenha =
+            req.body?.novaSenha;
+
+        if (
+            !/^[a-f0-9]{64}$/i.test(
+                token
+            )
+        ) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Token inválido ou expirado."
+                });
+        }
+
+        if (!senhaValida(novaSenha)) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "A nova senha deve possuir entre 8 e 72 caracteres."
+                });
+        }
+
+        try {
+            const tokenHash =
+                hashToken(token);
+
+            const [usuarios] =
+                await db.query(
+                    `
+                        SELECT
+                            id,
+                            senha
+                        FROM usuarios
+                        WHERE token_recuperacao = ?
+                          AND token_expiracao > NOW()
+                          AND deleted_at IS NULL
+                        LIMIT 1
+                    `,
+                    [tokenHash]
+                );
+
+            if (usuarios.length === 0) {
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Token inválido ou expirado."
+                    });
+            }
+
+            const usuario =
+                usuarios[0];
+
+            const senhaRepetida =
+                await bcrypt.compare(
+                    novaSenha,
+                    usuario.senha
+                );
+
+            if (senhaRepetida) {
+                return res
+                    .status(400)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "A nova senha não pode ser igual à senha atual."
+                    });
+            }
+
+            const hash =
+                await bcrypt.hash(
+                    novaSenha,
+                    12
+                );
+
+            await db.query(
+                `
+                    UPDATE usuarios
+                    SET
+                        senha = ?,
+                        token_recuperacao = NULL,
+                        token_expiracao = NULL
+                    WHERE id = ?
+                      AND token_recuperacao = ?
+                `,
+                [
+                    hash,
+                    usuario.id,
+                    tokenHash
+                ]
+            );
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    mensagem:
+                        "Senha redefinida com sucesso!"
+                });
+        } catch (erro) {
+            console.error(
+                "[recuperação] Erro ao redefinir senha:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao redefinir a senha."
+                });
+        }
+    }
+);
+
+// ==========================================
+// FOTO DE PERFIL AUTENTICADA
+// ==========================================
+router.post(
+    "/upload-foto",
+    authUser,
+    processarFotoPerfil,
+    async (req, res) => {
         const arquivo = req.file;
 
-        if (!arquivo) return res.status(400).json({ sucesso: false, erro: "Nenhum arquivo enviado." });
-        if (!usuarioId) return res.status(400).json({ sucesso: false, erro: "ID do usuário não informado." });
+        const usuarioId = Number(
+            req.usuario?.id
+        );
 
-        const fotoUrl = `/uploads/${arquivo.filename}`;
-
-        const [resultado] = await db.query("UPDATE usuarios SET foto_perfil = ? WHERE id = ?", [fotoUrl, usuarioId]);
-        if (resultado.affectedRows === 0) {
-            return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado no banco de dados." });
+        if (!arquivo) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Nenhum arquivo enviado."
+                });
         }
 
-        return res.status(200).json({ sucesso: true, mensagem: "Foto de perfil atualizada com sucesso!", fotoUrl });
+        if (
+            !Number.isInteger(usuarioId)
+            || usuarioId <= 0
+        ) {
+            await apagarArquivoLocal(
+                arquivo.path
+            );
 
-    } catch (erro) {
-        console.error("Erro no upload da foto de perfil:", erro.sqlMessage || erro);
-        return res.status(500).json({ sucesso: false, erro: "Erro interno no servidor ao salvar a foto." });
-    }
-});
-
-// ==========================================
-// PAINEL ADMINISTRATIVO (ROTAS PROTEGIDAS)
-// ==========================================
-router.get("/", authAdmin, usuarioController.listarUsuarios);
-router.get("/admin/estatisticas", authAdmin, usuarioController.obterEstatisticasAdmin);
-router.get("/admin/cadastros-mes", authAdmin, usuarioController.obterCadastrosPorMes);
-router.delete("/:id", authAdmin, usuarioController.deletarUsuario);
-
-router.put("/:id/tipo", authAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { tipo } = req.body;
-
-    if (!tipo) return res.status(400).json({ sucesso: false, erro: "O novo tipo de acesso é obrigatório." });
-    if (!TIPOS_VALIDOS.includes(tipo)) {
-        return res.status(400).json({ sucesso: false, erro: `Tipo inválido. Use: ${TIPOS_VALIDOS.join(", ")}.` });
-    }
-
-    try {
-        const [resultado] = await db.query("UPDATE usuarios SET tipo = ? WHERE id = ?", [tipo, id]);
-        if (resultado.affectedRows === 0) return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
-
-        return res.status(200).json({ sucesso: true, mensagem: `Tipo de acesso alterado para ${tipo} com sucesso!` });
-
-    } catch (erro) {
-        console.error("Erro ao alterar tipo do usuário:", erro.sqlMessage || erro);
-        return res.status(500).json({ sucesso: false, erro: "Erro interno no servidor ao alterar o tipo de acesso." });
-    }
-});
-
-// ==========================================
-// VERIFICAR SENHA ATUAL (modal) — não devolve mais a senha
-// ==========================================
-router.post("/verificar-senha", async (req, res) => {
-    const { id, senha } = req.body;
-    if (!id || !senha) return res.status(400).json({ sucesso: false, erro: "ID e senha são obrigatórios." });
-
-    try {
-        const [usuarios] = await db.query("SELECT senha FROM usuarios WHERE id = ?", [id]);
-        if (usuarios.length === 0) return res.status(404).json({ sucesso: false, erro: "Usuário não encontrado." });
-
-        if (!(await bcrypt.compare(senha, usuarios[0].senha))) {
-            return res.status(200).json({ sucesso: false, erro: "Senha incorreta." });
+            return res
+                .status(401)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Usuário não autenticado."
+                });
         }
-        return res.status(200).json({ sucesso: true, mensagem: "Senha verificada com sucesso!" });
 
-    } catch (erro) {
-        console.error("Erro ao verificar senha:", erro.sqlMessage || erro);
-        return res.status(500).json({ sucesso: false, erro: "Erro interno no servidor ao verificar a senha." });
+        try {
+            /*
+             * Busca a foto anterior para removê-la
+             * depois que a nova foto for salva.
+             */
+            const [usuarios] =
+                await db.query(
+                    `
+                        SELECT foto_perfil
+                        FROM usuarios
+                        WHERE id = ?
+                          AND deleted_at IS NULL
+                        LIMIT 1
+                    `,
+                    [usuarioId]
+                );
+
+            if (usuarios.length === 0) {
+                await apagarArquivoLocal(
+                    arquivo.path
+                );
+
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Usuário não encontrado."
+                    });
+            }
+
+            const fotoAnterior =
+                usuarios[0].foto_perfil;
+
+            const fotoUrl =
+                `/uploads/${arquivo.filename}`;
+
+            const [resultado] =
+                await db.query(
+                    `
+                        UPDATE usuarios
+                        SET foto_perfil = ?
+                        WHERE id = ?
+                          AND deleted_at IS NULL
+                    `,
+                    [
+                        fotoUrl,
+                        usuarioId
+                    ]
+                );
+
+            if (
+                resultado.affectedRows === 0
+            ) {
+                await apagarArquivoLocal(
+                    arquivo.path
+                );
+
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Usuário não encontrado."
+                    });
+            }
+
+            /*
+             * A nova foto já está salva no banco.
+             * Agora remove a foto anterior, caso ela
+             * seja um arquivo local seguro.
+             */
+            const caminhoFotoAnterior =
+                obterCaminhoLocalDaFoto(
+                    fotoAnterior
+                );
+
+            if (
+                caminhoFotoAnterior
+                && caminhoFotoAnterior
+                    !== arquivo.path
+            ) {
+                await apagarArquivoLocal(
+                    caminhoFotoAnterior
+                );
+            }
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    mensagem:
+                        "Foto de perfil atualizada com sucesso!",
+                    fotoUrl
+                });
+        } catch (erro) {
+            await apagarArquivoLocal(
+                arquivo.path
+            );
+
+            console.error(
+                "[upload] Erro ao salvar foto:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao salvar a foto."
+                });
+        }
     }
-});
+);
+
+// ==========================================
+// REMOVER FOTO DE PERFIL AUTENTICADA
+//
+// IMPORTANTE:
+// Esta rota precisa ficar antes de DELETE /:id.
+// ==========================================
+router.delete(
+    "/remover-foto",
+    authUser,
+    async (req, res) => {
+        const usuarioId = Number(
+            req.usuario?.id
+        );
+
+        if (
+            !Number.isInteger(usuarioId)
+            || usuarioId <= 0
+        ) {
+            return res
+                .status(401)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Usuário não autenticado."
+                });
+        }
+
+        try {
+            const [usuarios] =
+                await db.query(
+                    `
+                        SELECT foto_perfil
+                        FROM usuarios
+                        WHERE id = ?
+                          AND deleted_at IS NULL
+                        LIMIT 1
+                    `,
+                    [usuarioId]
+                );
+
+            if (usuarios.length === 0) {
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Usuário não encontrado."
+                    });
+            }
+
+            const fotoAnterior =
+                usuarios[0].foto_perfil;
+
+            await db.query(
+                `
+                    UPDATE usuarios
+                    SET foto_perfil = NULL
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                `,
+                [usuarioId]
+            );
+
+            const caminhoFoto =
+                obterCaminhoLocalDaFoto(
+                    fotoAnterior
+                );
+
+            if (caminhoFoto) {
+                await apagarArquivoLocal(
+                    caminhoFoto
+                );
+            }
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    mensagem:
+                        "Foto de perfil removida com sucesso!",
+                    fotoUrl: null
+                });
+        } catch (erro) {
+            console.error(
+                "[upload] Erro ao remover foto:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao remover a foto."
+                });
+        }
+    }
+);
+
+// ==========================================
+// PAINEL ADMINISTRATIVO
+// ==========================================
+router.get(
+    "/",
+    authAdmin,
+    usuarioController.listarUsuarios
+);
+
+router.get(
+    "/admin/estatisticas",
+    authAdmin,
+    usuarioController.obterEstatisticasAdmin
+);
+
+router.get(
+    "/admin/cadastros-mes",
+    authAdmin,
+    usuarioController.obterCadastrosPorMes
+);
+
+/*
+ * Esta rota dinâmica precisa ficar depois
+ * de /remover-foto.
+ */
+router.delete(
+    "/:id",
+    authAdmin,
+    usuarioController.deletarUsuario
+);
+
+router.put(
+    "/:id/tipo",
+    authAdmin,
+    async (req, res) => {
+        const id =
+            Number(req.params.id);
+
+        const { tipo } =
+            req.body;
+
+        if (
+            !Number.isInteger(id)
+            || id <= 0
+        ) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "ID inválido."
+                });
+        }
+
+        if (
+            !TIPOS_VALIDOS.includes(
+                tipo
+            )
+        ) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        `Tipo inválido. Use: ${TIPOS_VALIDOS.join(", ")}.`
+                });
+        }
+
+        try {
+            const [resultado] =
+                await db.query(
+                    `
+                        UPDATE usuarios
+                        SET tipo = ?
+                        WHERE id = ?
+                          AND deleted_at IS NULL
+                    `,
+                    [tipo, id]
+                );
+
+            if (
+                resultado.affectedRows === 0
+            ) {
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Usuário não encontrado."
+                    });
+            }
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: true,
+                    mensagem:
+                        `Tipo de acesso alterado para ${tipo} com sucesso!`
+                });
+        } catch (erro) {
+            console.error(
+                "[admin] Erro ao alterar tipo:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao alterar o tipo de acesso."
+                });
+        }
+    }
+);
+
+// ==========================================
+// VERIFICAR SENHA DO USUÁRIO AUTENTICADO
+// ==========================================
+router.post(
+    "/verificar-senha",
+    authUser,
+    async (req, res) => {
+        const usuarioId = Number(
+            req.usuario?.id
+        );
+
+        const senha = String(
+            req.body?.senha || ""
+        );
+
+        if (
+            !Number.isInteger(usuarioId)
+            || usuarioId <= 0
+        ) {
+            return res
+                .status(401)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Usuário não autenticado."
+                });
+        }
+
+        if (!senha) {
+            return res
+                .status(400)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "A senha é obrigatória."
+                });
+        }
+
+        try {
+            const [usuarios] =
+                await db.query(
+                    `
+                        SELECT senha
+                        FROM usuarios
+                        WHERE id = ?
+                          AND deleted_at IS NULL
+                        LIMIT 1
+                    `,
+                    [usuarioId]
+                );
+
+            if (usuarios.length === 0) {
+                return res
+                    .status(404)
+                    .json({
+                        sucesso: false,
+                        erro:
+                            "Usuário não encontrado."
+                    });
+            }
+
+            const correta =
+                await bcrypt.compare(
+                    senha,
+                    usuarios[0].senha
+                );
+
+            return res
+                .status(200)
+                .json({
+                    sucesso: correta,
+
+                    ...(correta
+                        ? {
+                            mensagem:
+                                "Senha verificada com sucesso!"
+                        }
+                        : {
+                            erro:
+                                "Senha incorreta."
+                        })
+                });
+        } catch (erro) {
+            console.error(
+                "[senha] Erro ao verificar senha:",
+                erro.code || erro.message
+            );
+
+            return res
+                .status(500)
+                .json({
+                    sucesso: false,
+                    erro:
+                        "Erro interno ao verificar a senha."
+                });
+        }
+    }
+);
 
 module.exports = router;
