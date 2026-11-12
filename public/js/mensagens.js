@@ -1,11 +1,9 @@
 "use strict";
 
-// ==========================================================
-// CONFIGURAÇÕES E ESTADO
-// ==========================================================
 const API_URL = "/api/conversas";
 const LOGIN_URL = "/pages/login.html";
-const MAX_MENSAGENS_GLOBAIS = 200;
+const MAX_CARACTERES_MENSAGEM = 2000;
+const TEMPO_ESPERA_BUSCA = 350;
 
 const EMOJIS = [
     "👍", "👋", "🚗", "🤝", "💰", "🔑",
@@ -22,22 +20,22 @@ const RESPOSTAS_RAPIDAS = [
 
 let conversaAtivaId = null;
 let meuUsuarioId = null;
-let listaConversasGlobal = [];
-let mensagensGlobais = [];
-let socketGlobal = null;
-let modoAtivo = "nenhum";
-let intervaloPolling = null;
+let listaConversas = [];
+let socketPrivado = null;
 let filtroAtual = "todas";
 let termoBusca = "";
 let mensagemSelecionadaId = null;
 let novasMensagensAbaixoCount = 0;
-let totalGlobalOnline = 0;
+let assinaturaMensagens = "";
+let mapaNaoLidas = new Map();
+let totalNaoLidasGeral = 0;
+let temporizadorBuscaUsuarios = null;
+let controleBuscaUsuarios = null;
+let iniciandoConversaDireta = false;
+let temporizadorAjusteBaloes = null;
 
 const $ = (id) => document.getElementById(id);
 
-// ==========================================================
-// SESSÃO
-// ==========================================================
 function obterSessao() {
     const bruto =
         localStorage.getItem("usuario") ||
@@ -59,13 +57,19 @@ function obterToken() {
     );
 }
 
+function limparSessaoEIrParaLogin() {
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    window.location.replace(LOGIN_URL);
+}
+
 function configurarNavegacao(sessao) {
-    const btnVoltar = $("btnVoltar");
-    const btnTexto = $("btnVoltarTexto");
+    const botao = $("btnVoltar");
+    const texto = $("btnVoltarTexto");
 
-    if (!btnVoltar) return;
+    if (!botao) return;
 
-    btnVoltar.addEventListener("click", (evento) => {
+    botao.addEventListener("click", (evento) => {
         if (
             document.referrer &&
             document.referrer.includes(window.location.host)
@@ -79,63 +83,58 @@ function configurarNavegacao(sessao) {
         sessao?.tipo || "individual"
     ).toLowerCase();
 
-    if (tipo === "admin") {
-        btnVoltar.href = "/pages/painel-admin.html";
+    if (
+        ["admin", "super_admin"].includes(tipo) ||
+        sessao?.cargo === "admin"
+    ) {
+        botao.href = "/pages/painel-admin.html";
 
-        if (btnTexto) {
-            btnTexto.textContent = "Painel Admin";
+        if (texto) {
+            texto.textContent = "Painel Admin";
         }
-    } else if (tipo === "empresa") {
-        btnVoltar.href = "/pages/painel-empresa.html";
 
-        if (btnTexto) {
-            btnTexto.textContent = "Painel Empresa";
-        }
-    } else {
-        btnVoltar.href = "/pages/catalogo.html";
+        return;
+    }
 
-        if (btnTexto) {
-            btnTexto.textContent = "Voltar";
+    if (tipo === "empresa") {
+        botao.href = "/pages/painel-empresa.html";
+
+        if (texto) {
+            texto.textContent = "Painel Empresa";
         }
+
+        return;
+    }
+
+    botao.href = "/pages/catalogo.html";
+
+    if (texto) {
+        texto.textContent = "Voltar";
     }
 }
 
-// ==========================================================
-// API DAS CONVERSAS PRIVADAS
-// ==========================================================
 async function requisitarApi(caminho, opcoes = {}) {
     const token = obterToken();
 
-    const headers = {
-        "Content-Type": "application/json",
-
-        ...(token && {
-            Authorization: `Bearer ${token}`
-        }),
-
-        ...opcoes.headers
-    };
-
-    const resposta = await fetch(
-        `${API_URL}${caminho}`,
-        {
-            ...opcoes,
-            headers
+    const resposta = await fetch(`${API_URL}${caminho}`, {
+        ...opcoes,
+        headers: {
+            "Content-Type": "application/json",
+            ...(token
+                ? { Authorization: `Bearer ${token}` }
+                : {}),
+            ...(opcoes.headers || {})
         }
-    );
-
-    if (resposta.status === 401) {
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
-
-        window.location.replace(LOGIN_URL);
-
-        throw new Error("Sessão expirada");
-    }
+    });
 
     const dados = await resposta
         .json()
         .catch(() => ({}));
+
+    if (resposta.status === 401) {
+        limparSessaoEIrParaLogin();
+        throw new Error("Sessão expirada.");
+    }
 
     if (!resposta.ok) {
         throw new Error(
@@ -148,9 +147,32 @@ async function requisitarApi(caminho, opcoes = {}) {
     return dados;
 }
 
-// ==========================================================
-// AVISOS
-// ==========================================================
+function esc(valor) {
+    return String(valor ?? "").replace(
+        /[&<>"']/g,
+        (caractere) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[caractere]
+    );
+}
+
+function obterIniciais(nome) {
+    const iniciais = String(nome || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((parte) => parte.charAt(0))
+        .join("")
+        .toUpperCase();
+
+    return iniciais || "US";
+}
+
 function exibirToast(mensagem, tipo = "ok") {
     const area = $("toastArea");
 
@@ -184,19 +206,6 @@ function exibirToast(mensagem, tipo = "ok") {
     }, 3500);
 }
 
-function esc(valor) {
-    return String(valor ?? "").replace(
-        /[&<>"']/g,
-        (caractere) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
-        }[caractere])
-    );
-}
-
 function mostrarFeedback(texto = "", erro = false) {
     const elemento = $("chatFeedback");
 
@@ -206,585 +215,361 @@ function mostrarFeedback(texto = "", erro = false) {
     elemento.classList.toggle("erro", erro);
 }
 
-// ==========================================================
-// SOCKET.IO — CHAT GLOBAL
-// ==========================================================
-function inicializarSocketGlobal() {
-    const token = obterToken();
-
-    if (!token) {
-        window.location.replace(LOGIN_URL);
-        return;
-    }
-
-    if (typeof window.io !== "function") {
-        atualizarStatusGlobal(
-            false,
-            "Socket.IO indisponível"
-        );
-
-        exibirToast(
-            "Não foi possível carregar o Socket.IO.",
-            "erro"
-        );
-
-        return;
-    }
-
-    socketGlobal = window.io({
-        auth: {
-            token
-        },
-
-        transports: [
-            "websocket",
-            "polling"
-        ]
-    });
-
-    socketGlobal.on("connect", () => {
-        atualizarStatusGlobal(
-            true,
-            "Conectado"
-        );
-
-        mostrarFeedback("");
-        atualizarEstadoDoFormulario();
-    });
-
-    socketGlobal.on("disconnect", () => {
-        atualizarStatusGlobal(
-            false,
-            "Reconectando..."
-        );
-
-        atualizarEstadoDoFormulario();
-    });
-
-    socketGlobal.on(
-        "connect_error",
-        (erro) => {
-            const mensagem =
-                erro?.message ||
-                "Não foi possível conectar ao Chat Global.";
-
-            atualizarStatusGlobal(
-                false,
-                "Desconectado"
-            );
-
-            if (modoAtivo === "global") {
-                mostrarFeedback(
-                    mensagem,
-                    true
-                );
-            }
-
-            console.error(
-                "Erro no Chat Global:",
-                mensagem
-            );
-        }
-    );
-
-    socketGlobal.on(
-        "chat:presenca",
-        (dados) => {
-            totalGlobalOnline =
-                Number(dados?.online) || 0;
-
-            const contador =
-                $("globalOnlineCount");
-
-            if (contador) {
-                contador.textContent =
-                    totalGlobalOnline;
-            }
-
-            if (modoAtivo === "global") {
-                atualizarCabecalhoGlobal();
-            }
-        }
-    );
-
-    socketGlobal.on(
-        "chat:mensagem",
-        (mensagem) => {
-            if (
-                !mensagem ||
-                typeof mensagem.texto !== "string" ||
-                !mensagem.usuario
-            ) {
-                return;
-            }
-
-            mensagensGlobais.push(mensagem);
-
-            if (
-                mensagensGlobais.length >
-                MAX_MENSAGENS_GLOBAIS
-            ) {
-                mensagensGlobais =
-                    mensagensGlobais.slice(
-                        -MAX_MENSAGENS_GLOBAIS
-                    );
-            }
-
-            if (modoAtivo === "global") {
-                adicionarMensagemGlobal(
-                    mensagem
-                );
-            }
-        }
-    );
-}
-
-function atualizarStatusGlobal(
-    conectado,
-    texto
-) {
-    const ponto = $("globalStatusDot");
-    const status = $("globalStatusTexto");
-
-    if (ponto) {
-        ponto.classList.toggle(
-            "conectado",
-            conectado
-        );
-    }
-
-    if (status) {
-        status.textContent = texto;
-    }
-}
-
-function abrirChatGlobal() {
-    modoAtivo = "global";
-    conversaAtivaId = null;
-
-    const wrapper = $("chatWrapper");
-
-    if (wrapper) {
-        wrapper.classList.add(
-            "em-conversa"
-        );
-    }
-
-    if ($("chatEmptyState")) {
-        $("chatEmptyState").hidden = true;
-    }
-
-    if ($("chatActiveBox")) {
-        $("chatActiveBox").hidden = false;
-    }
-
-    const btnGlobal = $("btnChatGlobal");
-
-    if (btnGlobal) {
-        btnGlobal.classList.add("ativo");
-    }
-
-    document
-        .querySelectorAll(".conversa-item")
-        .forEach((item) => {
-            item.classList.remove("ativo");
-        });
-
-    atualizarCabecalhoGlobal();
-    configurarFormularioParaModo();
-    renderizarMensagensGlobais();
-
-    if (socketGlobal?.connected) {
-        mostrarFeedback("");
-    } else {
-        mostrarFeedback(
-            "Aguardando conexão com o Chat Global...",
-            true
-        );
-    }
-}
-
-function atualizarCabecalhoGlobal() {
-    const avatar = $("chatAvatar");
-    const nome = $("chatDestinatarioNome");
-    const referencia = $("chatVeiculoRef");
-
-    if (avatar) {
-        avatar.innerHTML =
-            '<i class="fa-solid fa-earth-americas"></i>';
-    }
-
-    if (nome) {
-        nome.textContent = "Chat Global";
-    }
-
-    if (referencia) {
-        referencia.innerHTML = `
-            <i class="fa-solid fa-user-group"></i>
-            ${totalGlobalOnline} online · mensagens temporárias
-        `;
-    }
-}
-
-function configurarFormularioParaModo() {
-    const input = $("inputMensagem");
-    const btnRapidas = $("btnRapidas");
-    const respostas = $("respostasRapidas");
-
-    if (input) {
-        input.value = "";
-        input.style.height = "auto";
-
-        if (modoAtivo === "global") {
-            input.maxLength = 500;
-            input.placeholder =
-                "Escreva no Chat Global...";
-        } else {
-            input.maxLength = 1000;
-            input.placeholder =
-                "Escreva sua mensagem...";
-        }
-    }
-
-    if (btnRapidas) {
-        btnRapidas.hidden =
-            modoAtivo === "global";
-    }
-
-    if (
-        respostas &&
-        modoAtivo === "global"
-    ) {
-        respostas.hidden = true;
-    }
-
-    atualizarEstadoDoFormulario();
-}
-
 function atualizarEstadoDoFormulario() {
     const input = $("inputMensagem");
     const botao = $("btnEnviarMensagem");
 
     if (!input || !botao) return;
 
-    let destinoDisponivel = false;
+    const conversaDisponivel =
+        Number.isInteger(conversaAtivaId) &&
+        conversaAtivaId > 0;
 
-    if (modoAtivo === "global") {
-        destinoDisponivel =
-            Boolean(socketGlobal?.connected);
-    }
-
-    if (modoAtivo === "privado") {
-        destinoDisponivel =
-            Boolean(conversaAtivaId);
-    }
-
-    input.disabled = !destinoDisponivel;
+    input.disabled = !conversaDisponivel;
 
     botao.disabled =
-        !destinoDisponivel ||
+        !conversaDisponivel ||
         !input.value.trim();
 }
 
-function renderizarMensagensGlobais() {
-    const container =
-        $("chatMessagesScroll");
+function inicializarSocketPrivado() {
+    const token = obterToken();
 
-    if (!container) return;
-
-    container.replaceChildren();
-
-    const aviso =
-        document.createElement("div");
-
-    aviso.className = "msg-sistema";
-    aviso.textContent =
-        "Mensagens temporárias — nenhum conteúdo é salvo no banco";
-
-    container.appendChild(aviso);
-
-    if (!mensagensGlobais.length) {
-        const inicio =
-            document.createElement("div");
-
-        inicio.className = "msg-sistema";
-        inicio.textContent =
-            "A conversa começa aqui";
-
-        container.appendChild(inicio);
-    } else {
-        mensagensGlobais.forEach(
-            (mensagem) => {
-                adicionarMensagemGlobal(
-                    mensagem,
-                    false
-                );
-            }
+    if (!token || typeof window.io !== "function") {
+        mostrarFeedback(
+            "Não foi possível iniciar as mensagens em tempo real.",
+            true
         );
-    }
-
-    container.scrollTop =
-        container.scrollHeight;
-}
-
-function adicionarMensagemGlobal(
-    mensagem,
-    rolar = true
-) {
-    const container =
-        $("chatMessagesScroll");
-
-    if (
-        !container ||
-        modoAtivo !== "global"
-    ) {
         return;
     }
 
-    const minha =
-        Number(mensagem.usuario?.id) ===
-        Number(meuUsuarioId);
+    socketPrivado = window.io({
+        auth: { token },
+        transports: ["websocket", "polling"]
+    });
 
-    const bolha =
-        document.createElement("article");
+    socketPrivado.on("privado:conectado", () => {
+        mostrarFeedback("");
+        carregarConversas(true);
+    });
 
-    bolha.className =
-        `msg-bubble ${
-            minha
-                ? "enviada"
-                : "recebida"
-        }`;
+    socketPrivado.on("connect_error", (erro) => {
+        const codigo = erro?.data?.codigo;
 
-    if (mensagem.id) {
-        bolha.dataset.id =
-            mensagem.id;
-    }
+        const errosDeToken = [
+            "TOKEN_AUSENTE",
+            "TOKEN_EXPIRADO",
+            "TOKEN_INVALIDO",
+            "USUARIO_INVALIDO"
+        ];
 
-    const autor =
-        document.createElement("strong");
+        if (errosDeToken.includes(codigo)) {
+            limparSessaoEIrParaLogin();
+            return;
+        }
 
-    autor.className = "autor-msg";
-
-    autor.textContent = minha
-        ? "Você"
-        : (
-            mensagem.usuario?.nome ||
-            "Usuário"
+        console.error(
+            "Erro no Socket.IO privado:",
+            erro?.message || erro
         );
 
-    const conteudo =
-        document.createElement("span");
+        mostrarFeedback(
+            "Tentando reconectar às mensagens em tempo real...",
+            true
+        );
+    });
 
-    conteudo.className =
-        "conteudo-texto";
+    socketPrivado.on("disconnect", (motivo) => {
+        if (motivo !== "io client disconnect") {
+            mostrarFeedback(
+                "Reconectando às mensagens em tempo real...",
+                true
+            );
+        }
+    });
 
-    conteudo.textContent =
-        mensagem.texto;
+    socketPrivado.on("privado:mensagem", async (dados) => {
+        const conversaId = Number(dados?.conversa_id);
+        const remetenteId = Number(
+            dados?.mensagem?.remetente_id
+        );
 
-    const rodape =
-        document.createElement("span");
+        if (
+            !Number.isInteger(conversaId) ||
+            conversaId <= 0
+        ) {
+            return;
+        }
 
-    rodape.className = "rodape-msg";
+        await carregarConversas(true);
 
-    const hora =
-        document.createElement("time");
+        if (
+            conversaId === Number(conversaAtivaId) &&
+            remetenteId !== Number(meuUsuarioId)
+        ) {
+            await marcarConversaComoLida(
+                conversaId,
+                true
+            );
+        }
 
-    hora.className = "hora";
+        if (
+            conversaId !== Number(conversaAtivaId) &&
+            remetenteId !== Number(meuUsuarioId)
+        ) {
+            exibirToast(
+                "Você recebeu uma nova mensagem."
+            );
+        }
+    });
 
-    const data =
-        new Date(mensagem.enviadaEm);
-
-    hora.textContent =
-        Number.isNaN(data.getTime())
-            ? "Agora"
-            : data.toLocaleTimeString(
-                "pt-BR",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
+    socketPrivado.on(
+        "privado:mensagem_excluida",
+        async (dados) => {
+            const conversaId = Number(
+                dados?.conversa_id
             );
 
-    rodape.appendChild(hora);
-
-    bolha.append(
-        autor,
-        conteudo,
-        rodape
-    );
-
-    container.appendChild(bolha);
-
-    if (!rolar) return;
-
-    const pertoDoFim =
-        container.scrollHeight -
-        container.scrollTop <=
-        container.clientHeight + 180;
-
-    if (pertoDoFim) {
-        container.scrollTop =
-            container.scrollHeight;
-    } else {
-        novasMensagensAbaixoCount++;
-
-        atualizarBotaoBaixoScroll();
-    }
-}
-
-function enviarMensagemGlobal(texto) {
-    return new Promise(
-        (resolve, reject) => {
-            if (!socketGlobal?.connected) {
-                reject(
-                    new Error(
-                        "O Chat Global está desconectado."
-                    )
-                );
-
+            if (
+                !Number.isInteger(conversaId) ||
+                conversaId <= 0
+            ) {
                 return;
             }
 
-            socketGlobal
-                .timeout(5000)
-                .emit(
-                    "chat:mensagem",
-                    { texto },
-                    (
-                        erroTimeout,
-                        resposta
-                    ) => {
-                        if (erroTimeout) {
-                            reject(
-                                new Error(
-                                    "O servidor não respondeu. Tente novamente."
-                                )
-                            );
+            if (
+                conversaId === Number(conversaAtivaId)
+            ) {
+                assinaturaMensagens = "";
+            }
 
-                            return;
-                        }
+            await carregarConversas(true);
+        }
+    );
 
-                        if (!resposta?.sucesso) {
-                            reject(
-                                new Error(
-                                    resposta?.erro ||
-                                    "Não foi possível enviar a mensagem."
-                                )
-                            );
+    socketPrivado.on(
+        "privado:conversa_atualizada",
+        async () => {
+            await carregarConversas(true);
+        }
+    );
 
-                            return;
-                        }
+    socketPrivado.on(
+        "privado:mensagens_lidas",
+        async (dados) => {
+            const conversaId = Number(
+                dados?.conversa_id
+            );
 
-                        resolve(resposta);
-                    }
+            if (
+                conversaId === Number(conversaAtivaId)
+            ) {
+                assinaturaMensagens = "";
+
+                await carregarMensagens(
+                    conversaId,
+                    true
                 );
+            }
+
+            await carregarResumoNaoLidas(true);
+            aplicarFiltrosEBusca();
         }
     );
 }
 
-// ==========================================================
-// LISTA DE CONVERSAS PRIVADAS
-// ==========================================================
-async function carregarConversas(
+async function carregarResumoNaoLidas(
     silencioso = false
 ) {
     try {
-        const dados =
-            await requisitarApi("/");
+        const dados = await requisitarApi(
+            "/nao-lidas/resumo"
+        );
 
-        listaConversasGlobal =
-            Array.isArray(dados.conversas)
-                ? dados.conversas
-                : [];
+        const resumos = Array.isArray(dados.conversas)
+            ? dados.conversas
+            : [];
 
-        const total =
-            $("totalConversas");
+        mapaNaoLidas = new Map(
+            resumos.map((item) => [
+                Number(item.conversa_id),
+                Number(item.total_nao_lidas) || 0
+            ])
+        );
+
+        totalNaoLidasGeral =
+            Number(dados.total_nao_lidas) || 0;
+
+        listaConversas = listaConversas.map(
+            (conversa) => {
+                const totalNaoLidas =
+                    mapaNaoLidas.get(
+                        Number(conversa.id)
+                    ) || 0;
+
+                return {
+                    ...conversa,
+                    total_nao_lidas: totalNaoLidas,
+                    tem_nova: totalNaoLidas > 0
+                };
+            }
+        );
+
+        const contador = $("totalNaoLidas");
+
+        if (contador) {
+            contador.textContent = totalNaoLidasGeral;
+            contador.hidden = totalNaoLidasGeral <= 0;
+        }
+
+        return true;
+    } catch (erro) {
+        if (!silencioso) {
+            console.error(
+                "Erro ao carregar mensagens não lidas:",
+                erro
+            );
+        }
+
+        return false;
+    }
+}
+
+async function marcarConversaComoLida(
+    conversaId,
+    silencioso = false
+) {
+    const id = Number(conversaId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return;
+    }
+
+    try {
+        await requisitarApi(`/${id}/ler`, {
+            method: "POST",
+            body: JSON.stringify({})
+        });
+
+        mapaNaoLidas.delete(id);
+
+        listaConversas = listaConversas.map(
+            (conversa) =>
+                Number(conversa.id) === id
+                    ? {
+                        ...conversa,
+                        total_nao_lidas: 0,
+                        tem_nova: false
+                    }
+                    : conversa
+        );
+
+        totalNaoLidasGeral = [
+            ...mapaNaoLidas.values()
+        ].reduce(
+            (total, quantidade) =>
+                total + Number(quantidade || 0),
+            0
+        );
+
+        const contador = $("totalNaoLidas");
+
+        if (contador) {
+            contador.textContent = totalNaoLidasGeral;
+            contador.hidden = totalNaoLidasGeral <= 0;
+        }
+
+        aplicarFiltrosEBusca();
+    } catch (erro) {
+        if (!silencioso) {
+            console.error(
+                "Erro ao marcar conversa como lida:",
+                erro
+            );
+        }
+    }
+}
+
+async function carregarConversas(silencioso = false) {
+    try {
+        const dados = await requisitarApi("/");
+
+        listaConversas = Array.isArray(dados.conversas)
+            ? dados.conversas
+            : [];
+
+        await carregarResumoNaoLidas(true);
+
+        const total = $("totalConversas");
 
         if (total) {
-            total.textContent =
-                listaConversasGlobal.length;
+            total.textContent = listaConversas.length;
         }
 
         aplicarFiltrosEBusca();
 
-        if (
-            modoAtivo === "privado" &&
-            conversaAtivaId
-        ) {
+        if (conversaAtivaId) {
             await carregarMensagens(
                 conversaAtivaId,
                 true
             );
         }
     } catch (erro) {
-        if (!silencioso) {
-            console.error(
-                "Erro ao carregar conversas:",
-                erro
-            );
+        if (silencioso) return;
 
-            const container =
-                $("conversasList");
+        console.error(
+            "Erro ao carregar conversas:",
+            erro
+        );
 
-            if (container) {
-                container.innerHTML = `
-                    <div class="chat-loading">
-                        Erro ao carregar conversas.
-                    </div>
-                `;
-            }
+        const container = $("conversasList");
+
+        if (container) {
+            container.innerHTML = `
+                <div class="chat-loading">
+                    Erro ao carregar conversas.
+                </div>
+            `;
         }
     }
 }
 
 function aplicarFiltrosEBusca() {
-    const termo =
-        termoBusca.toLowerCase().trim();
+    const termo = termoBusca.toLowerCase().trim();
 
-    const filtradas =
-        listaConversasGlobal.filter(
-            (conversa) => {
-                const nome = String(
-                    conversa.outro_usuario_nome ||
-                    ""
-                ).toLowerCase();
+    const filtradas = listaConversas.filter(
+        (conversa) => {
+            const campos = [
+                conversa.outro_usuario_nome,
+                conversa.veiculo_modelo,
+                conversa.veiculo_marca,
+                conversa.ultima_mensagem
+            ].map((valor) =>
+                String(valor || "").toLowerCase()
+            );
 
-                const modelo = String(
-                    conversa.veiculo_modelo ||
-                    ""
-                ).toLowerCase();
+            const corresponde =
+                !termo ||
+                campos.some((campo) =>
+                    campo.includes(termo)
+                );
 
-                const marca = String(
-                    conversa.veiculo_marca ||
-                    ""
-                ).toLowerCase();
-
-                const corresponde =
-                    !termo ||
-                    nome.includes(termo) ||
-                    modelo.includes(termo) ||
-                    marca.includes(termo);
-
-                if (
-                    filtroAtual ===
-                    "nao-lidas"
-                ) {
-                    return (
-                        corresponde &&
-                        conversa.tem_nova
-                    );
-                }
-
-                return corresponde;
+            if (filtroAtual === "nao-lidas") {
+                return (
+                    corresponde &&
+                    Boolean(conversa.tem_nova)
+                );
             }
-        );
+
+            return corresponde;
+        }
+    );
 
     renderizarListaSidebar(filtradas);
 }
 
 function renderizarListaSidebar(conversas) {
-    const container =
-        $("conversasList");
+    const container = $("conversasList");
 
     if (!container) return;
 
@@ -795,84 +580,76 @@ function renderizarListaSidebar(conversas) {
                 Nenhuma conversa encontrada.
             </div>
         `;
-
         return;
     }
 
-    container.innerHTML =
-        conversas.map((conversa) => {
+    container.innerHTML = conversas
+        .map((conversa) => {
+            const conversaId = Number(conversa.id);
+
             const ativa =
-                modoAtivo === "privado" &&
-                Number(conversa.id) ===
-                Number(conversaAtivaId)
+                conversaId === Number(conversaAtivaId)
                     ? "ativo"
                     : "";
 
+            const totalNaoLidas =
+                Number(conversa.total_nao_lidas) || 0;
+
             const nova =
-                conversa.tem_nova
-                    ? "tem-nova"
-                    : "";
+                totalNaoLidas > 0 ? "tem-nova" : "";
 
             const nome =
                 conversa.outro_usuario_nome ||
                 "Usuário";
 
-            const iniciais =
-                nome
-                    .substring(0, 2)
-                    .toUpperCase();
+            const iniciais = obterIniciais(nome);
 
-            const data =
+            const data = new Date(
                 conversa.ultimo_envio ||
-                conversa.criado_em;
+                conversa.criado_em
+            );
 
-            let hora = "";
+            const hora = Number.isNaN(data.getTime())
+                ? ""
+                : data.toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
 
-            if (data) {
-                const dataFormatada =
-                    new Date(data);
+            const temVeiculo = Boolean(
+                conversa.veiculo_id
+            );
 
-                if (
-                    !Number.isNaN(
-                        dataFormatada.getTime()
-                    )
-                ) {
-                    hora =
-                        dataFormatada
-                            .toLocaleTimeString(
-                                "pt-BR",
-                                {
-                                    hour: "2-digit",
-                                    minute: "2-digit"
-                                }
-                            );
-                }
-            }
+            const referencia = conversa.veiculo_modelo
+                ? `${conversa.veiculo_marca || ""} ${conversa.veiculo_modelo}`.trim()
+                : temVeiculo
+                    ? "Veículo em negociação"
+                    : "Conversa direta";
 
-            const veiculo =
-                conversa.veiculo_modelo
-                    ? `${
-                        conversa.veiculo_marca ||
-                        ""
-                    } ${
-                        conversa.veiculo_modelo
-                    }`.trim()
-                    : "Negociação geral";
+            const iconeReferencia = temVeiculo
+                ? "fa-car-side"
+                : "fa-user";
+
+            const foto =
+                conversa.outro_usuario_foto ||
+                conversa.foto_perfil;
 
             return `
                 <div
                     class="conversa-item ${ativa} ${nova}"
-                    data-id="${Number(conversa.id)}"
+                    data-id="${conversaId}"
                     tabindex="0"
                     role="button"
+                    aria-label="Abrir conversa com ${esc(nome)}"
                 >
                     <div class="av av-md">
                         ${
-                            conversa.foto_perfil
+                            foto
                                 ? `
                                     <img
-                                        src="${esc(conversa.foto_perfil)}"
+                                        src="${esc(foto)}"
                                         alt="Foto de ${esc(nome)}"
+                                        loading="lazy"
                                     >
                                 `
                                 : esc(iniciais)
@@ -895,51 +672,45 @@ function renderizarListaSidebar(conversas) {
                                     "Conversa iniciada"
                                 )}
                             </p>
+
+                            ${
+                                totalNaoLidas > 0
+                                    ? `
+                                        <span class="badge-nova">
+                                            ${
+                                                totalNaoLidas > 99
+                                                    ? "99+"
+                                                    : totalNaoLidas
+                                            }
+                                        </span>
+                                    `
+                                    : ""
+                            }
                         </div>
 
                         <span class="conversa-veic">
-                            <i class="fa-solid fa-car-side"></i>
-                            ${esc(veiculo)}
+                            <i class="fa-solid ${iconeReferencia}"></i>
+                            ${esc(referencia)}
                         </span>
                     </div>
                 </div>
             `;
-        }).join("");
+        })
+        .join("");
 }
 
-// ==========================================================
-// CONVERSA PRIVADA
-// ==========================================================
 async function abrirConversa(conversaId) {
     const id = Number(conversaId);
 
-    if (
-        !Number.isInteger(id) ||
-        id <= 0
-    ) {
+    if (!Number.isInteger(id) || id <= 0) {
         return;
     }
 
-    modoAtivo = "privado";
     conversaAtivaId = id;
+    assinaturaMensagens = "";
+    novasMensagensAbaixoCount = 0;
 
-    const btnGlobal =
-        $("btnChatGlobal");
-
-    if (btnGlobal) {
-        btnGlobal.classList.remove(
-            "ativo"
-        );
-    }
-
-    const wrapper =
-        $("chatWrapper");
-
-    if (wrapper) {
-        wrapper.classList.add(
-            "em-conversa"
-        );
-    }
+    $("chatWrapper")?.classList.add("em-conversa");
 
     if ($("chatEmptyState")) {
         $("chatEmptyState").hidden = true;
@@ -947,6 +718,16 @@ async function abrirConversa(conversaId) {
 
     if ($("chatActiveBox")) {
         $("chatActiveBox").hidden = false;
+    }
+
+    const container = $("chatMessagesScroll");
+
+    if (container) {
+        container.innerHTML = `
+            <div class="chat-loading">
+                Carregando mensagens...
+            </div>
+        `;
     }
 
     document
@@ -958,135 +739,246 @@ async function abrirConversa(conversaId) {
             );
         });
 
-    const conversa =
-        listaConversasGlobal.find(
-            (item) =>
-                Number(item.id) === id
-        );
+    const conversa = listaConversas.find(
+        (item) => Number(item.id) === id
+    );
 
     if (conversa) {
         const nome =
-            conversa.outro_usuario_nome ||
-            "Usuário";
+            conversa.outro_usuario_nome || "Usuário";
 
-        const titulo =
-            $("chatDestinatarioNome");
+        const temVeiculo = Boolean(conversa.veiculo_id);
 
-        if (titulo) {
-            titulo.textContent = nome;
+        const referencia = conversa.veiculo_modelo
+            ? `${conversa.veiculo_marca || ""} ${conversa.veiculo_modelo}`.trim()
+            : temVeiculo
+                ? "Veículo em negociação"
+                : "Conversa direta";
+
+        const iconeReferencia = temVeiculo
+            ? "fa-car-side"
+            : "fa-user";
+
+        const foto =
+            conversa.outro_usuario_foto ||
+            conversa.foto_perfil;
+
+        if ($("chatDestinatarioNome")) {
+            $("chatDestinatarioNome").textContent =
+                nome;
         }
 
-        const veiculo =
-            conversa.veiculo_modelo
-                ? `${
-                    conversa.veiculo_marca ||
-                    ""
-                } ${
-                    conversa.veiculo_modelo
-                }`.trim()
-                : "Veículo em negociação";
-
-        const referencia =
-            $("chatVeiculoRef");
-
-        if (referencia) {
-            referencia.innerHTML = `
-                <i class="fa-solid fa-car-side"></i>
-                ${esc(veiculo)}
+        if ($("chatVeiculoRef")) {
+            $("chatVeiculoRef").innerHTML = `
+                <i class="fa-solid ${iconeReferencia}"></i>
+                <span>${esc(referencia)}</span>
             `;
         }
 
-        const avatar =
-            $("chatAvatar");
-
-        if (avatar) {
-            if (conversa.foto_perfil) {
-                avatar.innerHTML = `
+        if ($("chatAvatar")) {
+            $("chatAvatar").innerHTML = foto
+                ? `
                     <img
-                        src="${esc(conversa.foto_perfil)}"
+                        src="${esc(foto)}"
                         alt="Foto de ${esc(nome)}"
                     >
-                `;
-            } else {
-                avatar.textContent =
-                    nome
-                        .substring(0, 2)
-                        .toUpperCase();
-            }
+                `
+                : esc(obterIniciais(nome));
         }
     }
 
-    configurarFormularioParaModo();
-    mostrarFeedback("");
+    const input = $("inputMensagem");
 
-    novasMensagensAbaixoCount = 0;
-    atualizarBotaoBaixoScroll();
+    if (input) {
+        input.value = "";
+        input.style.height = "auto";
+        input.maxLength = MAX_CARACTERES_MENSAGEM;
+        input.placeholder = "Escreva sua mensagem...";
+    }
+
+    mostrarFeedback("");
+    atualizarEstadoDoFormulario();
 
     await carregarMensagens(id);
+    await marcarConversaComoLida(id, true);
 }
 
 async function carregarMensagens(
     conversaId,
     silencioso = false
 ) {
-    const container =
-        $("chatMessagesScroll");
+    const container = $("chatMessagesScroll");
 
-    if (
-        !container ||
-        !conversaId ||
-        modoAtivo !== "privado"
-    ) {
+    if (!container || !conversaId) {
         return;
     }
 
     try {
-        const dados =
-            await requisitarApi(
-                `/${conversaId}/mensagens`
-            );
+        const dados = await requisitarApi(
+            `/${conversaId}/mensagens`
+        );
 
         if (
-            Array.isArray(
-                dados.mensagens
-            )
+            Number(conversaAtivaId) !==
+            Number(conversaId)
         ) {
-            renderizarListaMensagens(
-                dados.mensagens,
-                container
-            );
+            return;
         }
+
+        const mensagens = Array.isArray(dados.mensagens)
+            ? dados.mensagens
+            : [];
+
+        renderizarListaMensagens(
+            mensagens,
+            container
+        );
     } catch (erro) {
-        if (!silencioso) {
-            console.error(
-                "Erro ao buscar mensagens:",
-                erro
+        if (silencioso) return;
+
+        console.error(
+            "Erro ao buscar mensagens:",
+            erro
+        );
+
+        container.innerHTML = `
+            <div class="chat-loading">
+                Erro ao carregar mensagens.
+            </div>
+        `;
+    }
+}
+
+function ajustarLarguraBaloes() {
+    const container = $("chatMessagesScroll");
+
+    if (
+        !container ||
+        container.clientWidth <= 0
+    ) {
+        return;
+    }
+
+    const canvas = document.createElement("canvas");
+    const contexto = canvas.getContext("2d");
+
+    if (!contexto) return;
+
+    const limitePercentual =
+        window.innerWidth <= 767 ? 0.84 : 0.68;
+
+    const larguraMaxima =
+        container.clientWidth * limitePercentual;
+
+    container
+        .querySelectorAll(".msg-bubble")
+        .forEach((balao) => {
+            const textoElemento =
+                balao.querySelector(".conteudo-texto");
+
+            const rodape =
+                balao.querySelector(".rodape-msg");
+
+            if (!textoElemento) return;
+
+            const estiloTexto =
+                window.getComputedStyle(textoElemento);
+
+            contexto.font = [
+                estiloTexto.fontWeight || "400",
+                estiloTexto.fontSize || "14px",
+                estiloTexto.fontFamily || "Arial"
+            ].join(" ");
+
+            const texto =
+                textoElemento.textContent.trim() || " ";
+
+            const larguraTexto = Math.max(
+                ...texto.split("\n").map((linha) =>
+                    contexto.measureText(
+                        linha || " "
+                    ).width
+                )
             );
 
-            container.innerHTML = `
-                <div class="chat-loading">
-                    Erro ao carregar mensagens.
-                </div>
-            `;
-        }
-    }
+            const larguraHora =
+                rodape
+                    ?.querySelector(".hora")
+                    ?.getBoundingClientRect()
+                    .width || 0;
+
+            const larguraLeitura =
+                rodape
+                    ?.querySelector(".status-leitura")
+                    ?.getBoundingClientRect()
+                    .width || 0;
+
+            const larguraRodape =
+                larguraHora + larguraLeitura + 8;
+
+            const larguraNecessaria =
+                Math.max(
+                    larguraTexto,
+                    larguraRodape
+                ) + 18;
+
+            const larguraFinal = Math.min(
+                Math.max(larguraNecessaria, 58),
+                larguraMaxima
+            );
+
+            balao.style.setProperty(
+                "width",
+                `${Math.ceil(larguraFinal)}px`,
+                "important"
+            );
+
+            balao.style.setProperty(
+                "min-width",
+                "0",
+                "important"
+            );
+
+            balao.style.setProperty(
+                "max-width",
+                `${Math.floor(larguraMaxima)}px`,
+                "important"
+            );
+        });
 }
 
 function renderizarListaMensagens(
     mensagens,
     container
 ) {
-    if (modoAtivo !== "privado") {
-        return;
-    }
+    const assinaturaAtual = mensagens
+        .map((mensagem) => {
+            const id = Number(mensagem.id);
+            const lida = mensagem.lida_em ? 1 : 0;
+
+            return `${id}:${lida}`;
+        })
+        .join(",");
 
     if (!mensagens.length) {
         container.innerHTML = `
             <div class="dia-sep">
-                Início da negociação
+                Início da conversa
+            </div>
+
+            <div class="msg-sistema">
+                Envie a primeira mensagem.
             </div>
         `;
 
+        assinaturaMensagens = "";
+        novasMensagensAbaixoCount = 0;
+        atualizarBotaoBaixoScroll();
+        return;
+    }
+
+    if (assinaturaAtual === assinaturaMensagens) {
+        ajustarLarguraBaloes();
         return;
     }
 
@@ -1095,53 +987,84 @@ function renderizarListaMensagens(
         container.scrollTop <=
         container.clientHeight + 100;
 
-    const elementos =
-        mensagens.map((mensagem) => {
+    const quantidadeAnterior = assinaturaMensagens
+        ? assinaturaMensagens
+            .split(",")
+            .filter(Boolean)
+            .length
+        : 0;
+
+    const elementos = mensagens
+        .map((mensagem) => {
             const minha =
-                mensagem.enviada_por_mim ||
-                Number(
-                    mensagem.remetente_id
-                ) === Number(meuUsuarioId);
+                Number(mensagem.enviada_por_mim) === 1 ||
+                Number(mensagem.remetente_id) ===
+                Number(meuUsuarioId);
 
-            const data =
-                new Date(
-                    mensagem.criado_em
-                );
+            const data = new Date(
+                mensagem.criado_em
+            );
 
-            const hora =
-                Number.isNaN(data.getTime())
-                    ? "Agora"
-                    : data.toLocaleTimeString(
-                        "pt-BR",
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    );
+            const hora = Number.isNaN(data.getTime())
+                ? "Agora"
+                : data.toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
 
             return `
                 <div
                     class="msg-bubble ${
-                        minha
-                            ? "enviada"
-                            : "recebida"
+                        minha ? "enviada" : "recebida"
                     }"
                     data-id="${Number(mensagem.id)}"
                 >
-                    <span class="conteudo-texto">
-                        ${esc(mensagem.texto)}
-                    </span>
+                    <span class="conteudo-texto">${esc(
+                        mensagem.texto
+                    )}</span>
 
                     <span class="rodape-msg">
-                        <span class="hora">
-                            ${esc(hora)}
-                        </span>
+                        <span class="hora">${esc(hora)}</span>
+
+                        ${
+                            minha
+                                ? `
+                                    <span
+                                        class="status-leitura ${
+                                            mensagem.lida_em
+                                                ? "lida"
+                                                : ""
+                                        }"
+                                        title="${
+                                            mensagem.lida_em
+                                                ? "Mensagem lida"
+                                                : "Mensagem enviada"
+                                        }"
+                                        aria-label="${
+                                            mensagem.lida_em
+                                                ? "Mensagem lida"
+                                                : "Mensagem enviada"
+                                        }"
+                                    >
+                                        <i class="fa-solid ${
+                                            mensagem.lida_em
+                                                ? "fa-check-double"
+                                                : "fa-check"
+                                        }"></i>
+                                    </span>
+                                `
+                                : ""
+                        }
 
                         <button
                             type="button"
                             class="btn-opcoes-msg"
-                            data-mensagem-id="${Number(mensagem.id)}"
-                            data-minha="${minha}"
+                            data-mensagem-id="${Number(
+                                mensagem.id
+                            )}"
+                            data-minha="${
+                                minha ? "true" : "false"
+                            }"
                             title="Opções"
                             aria-label="Opções da mensagem"
                         >
@@ -1150,7 +1073,8 @@ function renderizarListaMensagens(
                     </span>
                 </div>
             `;
-        }).join("");
+        })
+        .join("");
 
     container.innerHTML = `
         <div class="dia-sep">
@@ -1160,41 +1084,49 @@ function renderizarListaMensagens(
         ${elementos}
     `;
 
-    if (estavaNoFim) {
-        container.scrollTop =
-            container.scrollHeight;
+    requestAnimationFrame(() => {
+        ajustarLarguraBaloes();
 
+        if (estavaNoFim) {
+            container.scrollTop =
+                container.scrollHeight;
+        }
+    });
+
+    assinaturaMensagens = assinaturaAtual;
+
+    if (estavaNoFim) {
         novasMensagensAbaixoCount = 0;
     } else {
-        novasMensagensAbaixoCount++;
+        novasMensagensAbaixoCount += Math.max(
+            0,
+            mensagens.length - quantidadeAnterior
+        );
     }
 
     atualizarBotaoBaixoScroll();
 }
 
-// ==========================================================
-// ENVIO DE MENSAGENS
-// ==========================================================
 async function enviarMensagem(evento) {
-    if (evento) {
-        evento.preventDefault();
+    evento?.preventDefault();
+
+    const input = $("inputMensagem");
+    const botao = $("btnEnviarMensagem");
+
+    if (!input || !conversaAtivaId) {
+        return;
     }
 
-    const input =
-        $("inputMensagem");
+    const texto = input.value.trim();
 
-    const botao =
-        $("btnEnviarMensagem");
+    if (!texto) return;
 
-    if (!input) return;
+    if (texto.length > MAX_CARACTERES_MENSAGEM) {
+        const aviso =
+            `A mensagem pode ter no máximo ${MAX_CARACTERES_MENSAGEM} caracteres.`;
 
-    const texto =
-        input.value.trim();
-
-    if (
-        !texto ||
-        modoAtivo === "nenhum"
-    ) {
+        mostrarFeedback(aviso, true);
+        exibirToast(aviso, "erro");
         return;
     }
 
@@ -1205,35 +1137,24 @@ async function enviarMensagem(evento) {
     mostrarFeedback("");
 
     try {
-        if (modoAtivo === "global") {
-            await enviarMensagemGlobal(
-                texto
-            );
-        } else if (
-            modoAtivo === "privado" &&
-            conversaAtivaId
-        ) {
-            await requisitarApi(
-                `/${conversaAtivaId}/mensagem`,
-                {
-                    method: "POST",
-
-                    body: JSON.stringify({
-                        texto
-                    })
-                }
-            );
-
-            await carregarMensagens(
-                conversaAtivaId,
-                true
-            );
-
-            await carregarConversas(true);
-        }
+        await requisitarApi(
+            `/${conversaAtivaId}/mensagem`,
+            {
+                method: "POST",
+                body: JSON.stringify({ texto })
+            }
+        );
 
         input.value = "";
         input.style.height = "auto";
+        assinaturaMensagens = "";
+
+        await carregarMensagens(
+            conversaAtivaId,
+            true
+        );
+
+        await carregarConversas(true);
     } catch (erro) {
         console.error(
             "Erro ao enviar mensagem:",
@@ -1241,14 +1162,12 @@ async function enviarMensagem(evento) {
         );
 
         mostrarFeedback(
-            erro.message ||
-            "Erro ao enviar mensagem.",
+            erro.message || "Erro ao enviar mensagem.",
             true
         );
 
         exibirToast(
-            erro.message ||
-            "Erro ao enviar mensagem.",
+            erro.message || "Erro ao enviar mensagem.",
             "erro"
         );
     } finally {
@@ -1257,14 +1176,10 @@ async function enviarMensagem(evento) {
     }
 }
 
-// ==========================================================
-// SCROLL
-// ==========================================================
 function atualizarBotaoBaixoScroll() {
     const botao = $("btnBaixo");
     const contador = $("baixoContador");
-    const container =
-        $("chatMessagesScroll");
+    const container = $("chatMessagesScroll");
 
     if (!botao || !container) {
         return;
@@ -1291,12 +1206,8 @@ function atualizarBotaoBaixoScroll() {
     }
 }
 
-// ==========================================================
-// EXCLUSÃO DE MENSAGEM PRIVADA
-// ==========================================================
 function fecharModalDelecao() {
-    const modal =
-        $("modalDeleteMsg");
+    const modal = $("modalDeleteMsg");
 
     if (modal) {
         modal.hidden = true;
@@ -1305,30 +1216,25 @@ function fecharModalDelecao() {
     mensagemSelecionadaId = null;
 }
 
-function abrirMenuExclusao(
-    mensagemId,
-    minha
-) {
-    if (modoAtivo !== "privado") {
+function abrirMenuExclusao(mensagemId, minha) {
+    if (
+        !Number.isInteger(mensagemId) ||
+        mensagemId <= 0
+    ) {
         return;
     }
 
-    mensagemSelecionadaId =
-        mensagemId;
+    mensagemSelecionadaId = mensagemId;
 
-    const modal =
-        $("modalDeleteMsg");
+    const modal = $("modalDeleteMsg");
 
     if (!modal) return;
 
-    const btnTodos =
-        $("btnDeleteParaTodos");
+    const botaoTodos = $("btnDeleteParaTodos");
+    const texto = $("modalDeleteTexto");
 
-    const texto =
-        $("modalDeleteTexto");
-
-    if (btnTodos) {
-        btnTodos.hidden = !minha;
+    if (botaoTodos) {
+        botaoTodos.hidden = !minha;
     }
 
     if (texto) {
@@ -1340,32 +1246,22 @@ function abrirMenuExclusao(
     modal.hidden = false;
 }
 
-async function apagarMensagem(
-    mensagemId,
-    tipo
-) {
+async function apagarMensagem(mensagemId, tipo) {
     try {
-        const dados =
-            await requisitarApi(
-                `/mensagem/${mensagemId}`,
-                {
-                    method: "DELETE",
+        await requisitarApi(
+            `/mensagem/${mensagemId}`,
+            {
+                method: "DELETE",
+                body: JSON.stringify({ tipo })
+            }
+        );
 
-                    body: JSON.stringify({
-                        tipo
-                    })
-                }
-            );
-
-        if (!dados.sucesso) {
-            throw new Error(
-                dados.erro ||
-                "Não foi possível apagar a mensagem."
-            );
-        }
+        assinaturaMensagens = "";
 
         exibirToast(
-            "Mensagem removida com sucesso!"
+            tipo === "para_todos"
+                ? "Mensagem removida para todos."
+                : "Mensagem removida para você."
         );
 
         await carregarMensagens(
@@ -1381,47 +1277,38 @@ async function apagarMensagem(
         );
 
         exibirToast(
-            erro.message ||
-            "Erro ao apagar mensagem.",
+            erro.message || "Erro ao apagar mensagem.",
             "erro"
         );
     }
 }
 
-// ==========================================================
-// EMOJIS E RESPOSTAS RÁPIDAS
-// ==========================================================
 function inicializarPaineisAuxiliares() {
-    const painelEmoji =
-        $("emojiPanel");
-
-    const respostas =
-        $("respostasRapidas");
+    const painelEmoji = $("emojiPanel");
+    const respostas = $("respostasRapidas");
 
     if (painelEmoji) {
-        painelEmoji.innerHTML =
-            EMOJIS.map(
-                (emoji) => `
-                    <button type="button">
-                        ${emoji}
-                    </button>
-                `
-            ).join("");
+        painelEmoji.innerHTML = EMOJIS
+            .map((emoji) => `
+                <button
+                    type="button"
+                    aria-label="Adicionar emoji ${emoji}"
+                >
+                    ${emoji}
+                </button>
+            `)
+            .join("");
 
         painelEmoji.addEventListener(
             "click",
             (evento) => {
                 const botao =
-                    evento.target.closest(
-                        "button"
-                    );
+                    evento.target.closest("button");
 
-                if (!botao) return;
-
-                const input =
-                    $("inputMensagem");
+                const input = $("inputMensagem");
 
                 if (
+                    !botao ||
                     !input ||
                     input.disabled
                 ) {
@@ -1441,37 +1328,27 @@ function inicializarPaineisAuxiliares() {
     }
 
     if (respostas) {
-        respostas.innerHTML =
-            RESPOSTAS_RAPIDAS.map(
-                (resposta) => `
-                    <button
-                        type="button"
-                        class="resposta-chip"
-                    >
-                        ${esc(resposta)}
-                    </button>
-                `
-            ).join("");
+        respostas.innerHTML = RESPOSTAS_RAPIDAS
+            .map((texto) => `
+                <button
+                    type="button"
+                    class="resposta-chip"
+                >
+                    ${esc(texto)}
+                </button>
+            `)
+            .join("");
 
         respostas.addEventListener(
             "click",
             (evento) => {
-                const botao =
-                    evento.target.closest(
-                        ".resposta-chip"
-                    );
+                const botao = evento.target.closest(
+                    ".resposta-chip"
+                );
 
-                if (
-                    !botao ||
-                    modoAtivo !== "privado"
-                ) {
-                    return;
-                }
+                const input = $("inputMensagem");
 
-                const input =
-                    $("inputMensagem");
-
-                if (!input) return;
+                if (!botao || !input) return;
 
                 input.value =
                     botao.textContent.trim();
@@ -1485,68 +1362,641 @@ function inicializarPaineisAuxiliares() {
         );
     }
 
-    const btnEmoji =
-        $("btnEmoji");
+    $("btnEmoji")?.addEventListener("click", () => {
+        if (painelEmoji) {
+            painelEmoji.hidden =
+                !painelEmoji.hidden;
+        }
 
-    if (btnEmoji) {
-        btnEmoji.addEventListener(
-            "click",
-            () => {
-                if (painelEmoji) {
-                    painelEmoji.hidden =
-                        !painelEmoji.hidden;
-                }
+        if (respostas) {
+            respostas.hidden = true;
+        }
+    });
 
-                if (respostas) {
-                    respostas.hidden = true;
-                }
+    $("btnRapidas")?.addEventListener(
+        "click",
+        () => {
+            if (respostas) {
+                respostas.hidden =
+                    !respostas.hidden;
             }
-        );
+
+            if (painelEmoji) {
+                painelEmoji.hidden = true;
+            }
+        }
+    );
+}
+
+function estadoInicialBuscaContas() {
+    const lista = $("listaUsuariosBusca");
+
+    if (!lista) return;
+
+    lista.innerHTML = `
+        <div class="resultado-contas-vazio">
+            <i class="fa-solid fa-user-group"></i>
+
+            <span>
+                Pesquise uma conta para iniciar uma conversa.
+            </span>
+        </div>
+    `;
+}
+
+function mostrarEstadoBuscaContas(
+    mensagem,
+    icone = "fa-magnifying-glass",
+    erro = false
+) {
+    const lista = $("listaUsuariosBusca");
+
+    if (!lista) return;
+
+    lista.innerHTML = `
+        <div class="resultado-contas-vazio ${
+            erro ? "erro" : ""
+        }">
+            <i class="fa-solid ${esc(icone)}"></i>
+            <span>${esc(mensagem)}</span>
+        </div>
+    `;
+}
+
+function abrirModalNovaConversa() {
+    const modal = $("modalNovaConversa");
+    const input = $("inputBuscaUsuarios");
+
+    if (!modal || !input) return;
+
+    if (temporizadorBuscaUsuarios) {
+        clearTimeout(temporizadorBuscaUsuarios);
+        temporizadorBuscaUsuarios = null;
     }
 
-    const btnRapidas =
-        $("btnRapidas");
+    controleBuscaUsuarios?.abort();
+    controleBuscaUsuarios = null;
 
-    if (btnRapidas) {
-        btnRapidas.addEventListener(
-            "click",
-            () => {
-                if (
-                    modoAtivo !== "privado"
-                ) {
-                    return;
-                }
+    input.value = "";
+    modal.hidden = false;
 
-                if (respostas) {
-                    respostas.hidden =
-                        !respostas.hidden;
-                }
+    estadoInicialBuscaContas();
 
-                if (painelEmoji) {
-                    painelEmoji.hidden = true;
-                }
+    requestAnimationFrame(() => {
+        input.focus();
+    });
+}
+
+function fecharModalNovaConversa() {
+    const modal = $("modalNovaConversa");
+    const input = $("inputBuscaUsuarios");
+
+    if (temporizadorBuscaUsuarios) {
+        clearTimeout(temporizadorBuscaUsuarios);
+        temporizadorBuscaUsuarios = null;
+    }
+
+    controleBuscaUsuarios?.abort();
+    controleBuscaUsuarios = null;
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    if (input) {
+        input.value = "";
+    }
+
+    estadoInicialBuscaContas();
+}
+
+function renderizarUsuariosEncontrados(usuarios) {
+    const lista = $("listaUsuariosBusca");
+
+    if (!lista) return;
+
+    if (
+        !Array.isArray(usuarios) ||
+        usuarios.length === 0
+    ) {
+        mostrarEstadoBuscaContas(
+            "Nenhuma conta encontrada.",
+            "fa-user-slash"
+        );
+        return;
+    }
+
+    lista.innerHTML = usuarios
+        .map((usuario) => {
+            const id = Number(usuario.id);
+
+            const nome = String(
+                usuario.nome ||
+                usuario.nome_usuario ||
+                usuario.nome_empresa ||
+                "Usuário"
+            ).trim();
+
+            const tipo =
+                String(usuario.tipo || "individual")
+                    .toLowerCase() === "empresa"
+                    ? "Empresa"
+                    : "Pessoa";
+
+            const iniciais = obterIniciais(nome);
+
+            const foto = usuario.foto_perfil
+                ? `
+                    <img
+                        src="${esc(usuario.foto_perfil)}"
+                        alt="Foto de ${esc(nome)}"
+                        loading="lazy"
+                    >
+                `
+                : esc(iniciais);
+
+            return `
+                <button
+                    type="button"
+                    class="resultado-conta"
+                    data-usuario-id="${id}"
+                    aria-label="Iniciar conversa com ${esc(nome)}"
+                >
+                    <span class="resultado-conta-avatar">
+                        ${foto}
+                    </span>
+
+                    <span class="resultado-conta-info">
+                        <strong>${esc(nome)}</strong>
+                        <small>${esc(tipo)}</small>
+                    </span>
+
+                    <i
+                        class="fa-solid fa-chevron-right resultado-conta-seta"
+                        aria-hidden="true"
+                    ></i>
+                </button>
+            `;
+        })
+        .join("");
+}
+
+async function pesquisarUsuarios(termoInformado) {
+    const termo = String(termoInformado || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (termo.length < 2) {
+        estadoInicialBuscaContas();
+        return;
+    }
+
+    controleBuscaUsuarios?.abort();
+    controleBuscaUsuarios = new AbortController();
+
+    mostrarEstadoBuscaContas(
+        "Procurando contas...",
+        "fa-spinner fa-spin"
+    );
+
+    try {
+        const token = obterToken();
+
+        const resposta = await fetch(
+            `${API_URL}/usuarios/buscar?termo=${encodeURIComponent(termo)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                signal: controleBuscaUsuarios.signal
             }
+        );
+
+        const dados = await resposta
+            .json()
+            .catch(() => ({}));
+
+        if (resposta.status === 401) {
+            limparSessaoEIrParaLogin();
+            return;
+        }
+
+        if (!resposta.ok) {
+            throw new Error(
+                dados.erro ||
+                dados.mensagem ||
+                "Não foi possível pesquisar as contas."
+            );
+        }
+
+        const input = $("inputBuscaUsuarios");
+
+        const termoAtual = input
+            ? input.value
+                .replace(/\s+/g, " ")
+                .trim()
+            : "";
+
+        if (termoAtual !== termo) {
+            return;
+        }
+
+        renderizarUsuariosEncontrados(
+            dados.usuarios
+        );
+    } catch (erro) {
+        if (erro.name === "AbortError") {
+            return;
+        }
+
+        console.error(
+            "Erro ao pesquisar contas:",
+            erro
+        );
+
+        mostrarEstadoBuscaContas(
+            erro.message ||
+            "Erro ao pesquisar contas.",
+            "fa-triangle-exclamation",
+            true
         );
     }
 }
 
-// ==========================================================
-// INICIALIZAÇÃO DA PÁGINA
-// ==========================================================
+async function iniciarConversaDireta(
+    usuarioId,
+    botao
+) {
+    const destinatarioId = Number(usuarioId);
+
+    if (
+        iniciandoConversaDireta ||
+        !Number.isInteger(destinatarioId) ||
+        destinatarioId <= 0
+    ) {
+        return;
+    }
+
+    iniciandoConversaDireta = true;
+
+    const conteudoOriginal = botao?.innerHTML;
+
+    if (botao) {
+        botao.disabled = true;
+
+        botao.innerHTML = `
+            <span class="resultado-conta-info">
+                <strong>Abrindo conversa...</strong>
+                <small>Aguarde um momento</small>
+            </span>
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        `;
+    }
+
+    try {
+        const dados = await requisitarApi(
+            "/iniciar-direta",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    destinatario_id: destinatarioId
+                })
+            }
+        );
+
+        const conversaId = Number(
+            dados.conversa_id
+        );
+
+        if (
+            !Number.isInteger(conversaId) ||
+            conversaId <= 0
+        ) {
+            throw new Error(
+                "O servidor não retornou a conversa criada."
+            );
+        }
+
+        fecharModalNovaConversa();
+
+        await carregarConversas(true);
+        await abrirConversa(conversaId);
+
+        exibirToast(
+            dados.conversa_criada
+                ? "Nova conversa iniciada."
+                : "Conversa aberta."
+        );
+
+        const url = new URL(window.location.href);
+
+        url.searchParams.set(
+            "conversa",
+            String(conversaId)
+        );
+
+        window.history.replaceState({}, "", url);
+    } catch (erro) {
+        console.error(
+            "Erro ao iniciar conversa:",
+            erro
+        );
+
+        exibirToast(
+            erro.message ||
+            "Erro ao iniciar a conversa.",
+            "erro"
+        );
+
+        if (botao && conteudoOriginal) {
+            botao.innerHTML = conteudoOriginal;
+            botao.disabled = false;
+        }
+    } finally {
+        iniciandoConversaDireta = false;
+    }
+}
+
+function inicializarBuscaContas() {
+    const modal = $("modalNovaConversa");
+    const input = $("inputBuscaUsuarios");
+    const lista = $("listaUsuariosBusca");
+
+    $("btnNovaConversa")?.addEventListener(
+        "click",
+        abrirModalNovaConversa
+    );
+
+    $("btnFecharNovaConversa")?.addEventListener(
+        "click",
+        fecharModalNovaConversa
+    );
+
+    modal?.addEventListener("click", (evento) => {
+        if (evento.target === modal) {
+            fecharModalNovaConversa();
+        }
+    });
+
+    input?.addEventListener("input", () => {
+        if (temporizadorBuscaUsuarios) {
+            clearTimeout(temporizadorBuscaUsuarios);
+        }
+
+        const termo = input.value;
+
+        if (termo.trim().length < 2) {
+            controleBuscaUsuarios?.abort();
+            estadoInicialBuscaContas();
+            return;
+        }
+
+        temporizadorBuscaUsuarios = setTimeout(
+            () => pesquisarUsuarios(termo),
+            TEMPO_ESPERA_BUSCA
+        );
+    });
+
+    lista?.addEventListener("click", (evento) => {
+        const botao = evento.target.closest(
+            ".resultado-conta[data-usuario-id]"
+        );
+
+        if (!botao) return;
+
+        iniciarConversaDireta(
+            botao.dataset.usuarioId,
+            botao
+        );
+    });
+
+    estadoInicialBuscaContas();
+}
+
+function inicializarEventosInterface() {
+    $("inputPesquisaConversa")?.addEventListener(
+        "input",
+        (evento) => {
+            termoBusca = evento.target.value;
+            aplicarFiltrosEBusca();
+        }
+    );
+
+    document
+        .querySelectorAll(".filtro")
+        .forEach((botao) => {
+            botao.addEventListener("click", () => {
+                document
+                    .querySelectorAll(".filtro")
+                    .forEach((item) => {
+                        item.classList.remove("ativo");
+                        item.setAttribute(
+                            "aria-selected",
+                            "false"
+                        );
+                    });
+
+                botao.classList.add("ativo");
+
+                botao.setAttribute(
+                    "aria-selected",
+                    "true"
+                );
+
+                filtroAtual =
+                    botao.dataset.filtro;
+
+                aplicarFiltrosEBusca();
+            });
+        });
+
+    $("conversasList")?.addEventListener(
+        "click",
+        (evento) => {
+            const item = evento.target.closest(
+                ".conversa-item"
+            );
+
+            if (item) {
+                abrirConversa(item.dataset.id);
+            }
+        }
+    );
+
+    $("conversasList")?.addEventListener(
+        "keydown",
+        (evento) => {
+            if (
+                evento.key !== "Enter" &&
+                evento.key !== " "
+            ) {
+                return;
+            }
+
+            const item = evento.target.closest(
+                ".conversa-item"
+            );
+
+            if (!item) return;
+
+            evento.preventDefault();
+            abrirConversa(item.dataset.id);
+        }
+    );
+
+    $("btnListaVoltar")?.addEventListener(
+        "click",
+        () => {
+            $("chatWrapper")?.classList.remove(
+                "em-conversa"
+            );
+        }
+    );
+
+    const container = $("chatMessagesScroll");
+
+    container?.addEventListener(
+        "scroll",
+        atualizarBotaoBaixoScroll
+    );
+
+    container?.addEventListener(
+        "click",
+        (evento) => {
+            const botao = evento.target.closest(
+                ".btn-opcoes-msg"
+            );
+
+            if (!botao) return;
+
+            abrirMenuExclusao(
+                Number(botao.dataset.mensagemId),
+                botao.dataset.minha === "true"
+            );
+        }
+    );
+
+    $("btnBaixo")?.addEventListener(
+        "click",
+        () => {
+            if (!container) return;
+
+            container.scrollTop =
+                container.scrollHeight;
+
+            novasMensagensAbaixoCount = 0;
+            atualizarBotaoBaixoScroll();
+        }
+    );
+
+    const input = $("inputMensagem");
+
+    if (input) {
+        input.maxLength =
+            MAX_CARACTERES_MENSAGEM;
+
+        input.disabled = true;
+
+        input.addEventListener("input", () => {
+            input.style.height = "auto";
+
+            input.style.height =
+                `${Math.min(
+                    input.scrollHeight,
+                    130
+                )}px`;
+
+            atualizarEstadoDoFormulario();
+        });
+
+        input.addEventListener(
+            "keydown",
+            (evento) => {
+                if (
+                    evento.key === "Enter" &&
+                    !evento.shiftKey
+                ) {
+                    evento.preventDefault();
+                    $("chatForm")?.requestSubmit();
+                }
+            }
+        );
+    }
+
+    $("chatForm")?.addEventListener(
+        "submit",
+        enviarMensagem
+    );
+
+    $("modalDeleteMsg")?.addEventListener(
+        "click",
+        (evento) => {
+            if (
+                evento.target ===
+                $("modalDeleteMsg")
+            ) {
+                fecharModalDelecao();
+            }
+        }
+    );
+
+    $("btnDeleteCancelar")?.addEventListener(
+        "click",
+        fecharModalDelecao
+    );
+
+    $("btnDeleteParaTodos")?.addEventListener(
+        "click",
+        async () => {
+            const id = mensagemSelecionadaId;
+
+            fecharModalDelecao();
+
+            if (id) {
+                await apagarMensagem(
+                    id,
+                    "para_todos"
+                );
+            }
+        }
+    );
+
+    $("btnDeleteParaMim")?.addEventListener(
+        "click",
+        async () => {
+            const id = mensagemSelecionadaId;
+
+            fecharModalDelecao();
+
+            if (id) {
+                await apagarMensagem(
+                    id,
+                    "para_mim"
+                );
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        (evento) => {
+            if (evento.key === "Escape") {
+                fecharModalDelecao();
+                fecharModalNovaConversa();
+            }
+        }
+    );
+}
+
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
-        const sessao =
-            obterSessao();
-
-        const token =
-            obterToken();
+        const sessao = obterSessao();
+        const token = obterToken();
 
         if (!sessao || !token) {
-            window.location.replace(
-                LOGIN_URL
-            );
-
+            window.location.replace(LOGIN_URL);
             return;
         }
 
@@ -1556,362 +2006,68 @@ document.addEventListener(
             sessao.usuario_id
         );
 
+        if (
+            !Number.isInteger(meuUsuarioId) ||
+            meuUsuarioId <= 0
+        ) {
+            window.location.replace(LOGIN_URL);
+            return;
+        }
+
         configurarNavegacao(sessao);
         inicializarPaineisAuxiliares();
-        inicializarSocketGlobal();
-
-        const btnGlobal =
-            $("btnChatGlobal");
-
-        if (btnGlobal) {
-            btnGlobal.addEventListener(
-                "click",
-                abrirChatGlobal
-            );
-        }
-
-        const pesquisa =
-            $("inputPesquisaConversa");
-
-        if (pesquisa) {
-            pesquisa.addEventListener(
-                "input",
-                (evento) => {
-                    termoBusca =
-                        evento.target.value;
-
-                    aplicarFiltrosEBusca();
-                }
-            );
-        }
-
-        document
-            .querySelectorAll(".filtro")
-            .forEach((botao) => {
-                botao.addEventListener(
-                    "click",
-                    () => {
-                        document
-                            .querySelectorAll(
-                                ".filtro"
-                            )
-                            .forEach(
-                                (item) => {
-                                    item.classList.remove(
-                                        "ativo"
-                                    );
-                                }
-                            );
-
-                        botao.classList.add(
-                            "ativo"
-                        );
-
-                        filtroAtual =
-                            botao.dataset.filtro;
-
-                        aplicarFiltrosEBusca();
-                    }
-                );
-            });
-
-        const lista =
-            $("conversasList");
-
-        if (lista) {
-            lista.addEventListener(
-                "click",
-                (evento) => {
-                    const item =
-                        evento.target.closest(
-                            ".conversa-item"
-                        );
-
-                    if (item) {
-                        abrirConversa(
-                            item.dataset.id
-                        );
-                    }
-                }
-            );
-
-            lista.addEventListener(
-                "keydown",
-                (evento) => {
-                    if (
-                        evento.key !== "Enter" &&
-                        evento.key !== " "
-                    ) {
-                        return;
-                    }
-
-                    const item =
-                        evento.target.closest(
-                            ".conversa-item"
-                        );
-
-                    if (item) {
-                        evento.preventDefault();
-
-                        abrirConversa(
-                            item.dataset.id
-                        );
-                    }
-                }
-            );
-        }
-
-        const btnListaVoltar =
-            $("btnListaVoltar");
-
-        if (btnListaVoltar) {
-            btnListaVoltar.addEventListener(
-                "click",
-                () => {
-                    const wrapper =
-                        $("chatWrapper");
-
-                    if (wrapper) {
-                        wrapper.classList.remove(
-                            "em-conversa"
-                        );
-                    }
-                }
-            );
-        }
-
-        const container =
-            $("chatMessagesScroll");
-
-        if (container) {
-            container.addEventListener(
-                "scroll",
-                atualizarBotaoBaixoScroll
-            );
-
-            container.addEventListener(
-                "click",
-                (evento) => {
-                    const botao =
-                        evento.target.closest(
-                            ".btn-opcoes-msg"
-                        );
-
-                    if (!botao) return;
-
-                    abrirMenuExclusao(
-                        Number(
-                            botao.dataset.mensagemId
-                        ),
-
-                        botao.dataset.minha ===
-                            "true"
-                    );
-                }
-            );
-        }
-
-        const btnBaixo =
-            $("btnBaixo");
-
-        if (btnBaixo) {
-            btnBaixo.addEventListener(
-                "click",
-                () => {
-                    if (!container) return;
-
-                    container.scrollTop =
-                        container.scrollHeight;
-
-                    novasMensagensAbaixoCount = 0;
-
-                    atualizarBotaoBaixoScroll();
-                }
-            );
-        }
-
-        const input =
-            $("inputMensagem");
-
-        if (input) {
-            input.addEventListener(
-                "input",
-                () => {
-                    input.style.height =
-                        "auto";
-
-                    input.style.height =
-                        `${Math.min(
-                            input.scrollHeight,
-                            130
-                        )}px`;
-
-                    atualizarEstadoDoFormulario();
-                }
-            );
-
-            input.addEventListener(
-                "keydown",
-                (evento) => {
-                    if (
-                        evento.key === "Enter" &&
-                        !evento.shiftKey
-                    ) {
-                        evento.preventDefault();
-
-                        const formulario =
-                            $("chatForm");
-
-                        if (formulario) {
-                            formulario.requestSubmit();
-                        }
-                    }
-                }
-            );
-        }
-
-        const formulario =
-            $("chatForm");
-
-        if (formulario) {
-            formulario.addEventListener(
-                "submit",
-                enviarMensagem
-            );
-        }
-
-        const modal =
-            $("modalDeleteMsg");
-
-        if (modal) {
-            modal.addEventListener(
-                "click",
-                (evento) => {
-                    if (
-                        evento.target === modal
-                    ) {
-                        fecharModalDelecao();
-                    }
-                }
-            );
-        }
-
-        const btnCancelar =
-            $("btnDeleteCancelar");
-
-        if (btnCancelar) {
-            btnCancelar.addEventListener(
-                "click",
-                fecharModalDelecao
-            );
-        }
-
-        const btnTodos =
-            $("btnDeleteParaTodos");
-
-        if (btnTodos) {
-            btnTodos.addEventListener(
-                "click",
-                async () => {
-                    const id =
-                        mensagemSelecionadaId;
-
-                    fecharModalDelecao();
-
-                    if (id) {
-                        await apagarMensagem(
-                            id,
-                            "para_todos"
-                        );
-                    }
-                }
-            );
-        }
-
-        const btnMim =
-            $("btnDeleteParaMim");
-
-        if (btnMim) {
-            btnMim.addEventListener(
-                "click",
-                async () => {
-                    const id =
-                        mensagemSelecionadaId;
-
-                    fecharModalDelecao();
-
-                    if (id) {
-                        await apagarMensagem(
-                            id,
-                            "para_mim"
-                        );
-                    }
-                }
-            );
-        }
-
-        document.addEventListener(
-            "keydown",
-            (evento) => {
-                if (
-                    evento.key === "Escape"
-                ) {
-                    fecharModalDelecao();
-                }
-            }
-        );
+        inicializarBuscaContas();
+        inicializarEventosInterface();
+        inicializarSocketPrivado();
 
         await carregarConversas();
 
-        const parametros =
-            new URLSearchParams(
-                window.location.search
-            );
+        const parametros = new URLSearchParams(
+            window.location.search
+        );
 
         const conversaUrlId =
             parametros.get("conversa");
 
-        if (
-            parametros.get("global") ===
-            "1"
-        ) {
-            abrirChatGlobal();
-        } else if (conversaUrlId) {
-            await abrirConversa(
-                conversaUrlId
-            );
+        if (conversaUrlId) {
+            await abrirConversa(conversaUrlId);
         } else if (
-            listaConversasGlobal.length > 0 &&
+            listaConversas.length > 0 &&
             window.innerWidth >= 768
         ) {
             await abrirConversa(
-                listaConversasGlobal[0].id
+                listaConversas[0].id
             );
-        } else {
-            abrirChatGlobal();
         }
-
-        intervaloPolling =
-            setInterval(
-                () => {
-                    carregarConversas(true);
-                },
-                4000
-            );
     }
 );
 
-window.addEventListener(
-    "beforeunload",
-    () => {
-        if (intervaloPolling) {
-            clearInterval(
-                intervaloPolling
-            );
-        }
-
-        if (socketGlobal) {
-            socketGlobal.disconnect();
-        }
+window.addEventListener("resize", () => {
+    if (temporizadorAjusteBaloes) {
+        clearTimeout(
+            temporizadorAjusteBaloes
+        );
     }
-);
+
+    temporizadorAjusteBaloes = setTimeout(
+        ajustarLarguraBaloes,
+        120
+    );
+});
+
+window.addEventListener("beforeunload", () => {
+    if (temporizadorAjusteBaloes) {
+        clearTimeout(
+            temporizadorAjusteBaloes
+        );
+    }
+
+    if (temporizadorBuscaUsuarios) {
+        clearTimeout(
+            temporizadorBuscaUsuarios
+        );
+    }
+
+    controleBuscaUsuarios?.abort();
+    socketPrivado?.disconnect();
+});

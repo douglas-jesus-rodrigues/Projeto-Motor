@@ -1,33 +1,56 @@
 # =========================================
 # SEGURANÇA
-# Arquivos privados e sensíveis
 # =========================================
 
-# Variáveis privadas:
-# senha do banco, api keys, secrets, portas
+# Variáveis privadas e credenciais
 .env
+.env.*
+!.env.example
 
-# Bibliotecas instaladas pelo npm:
-# pasta muito pesada que não deve subir
+# Dependências do Node.js
 node_modules/
 
-# Uploads enviados pelos usuários:
-# imagens, arquivos e mídias
-#public/uploads/
+# =========================================
+# UPLOADS DOS USUÁRIOS
+# =========================================
 
-# Sessões/autenticação:
-# dados temporários de login
+# As fotos que já estão registradas no Git
+# continuam sendo rastreadas normalmente.
+# Novas fotos não serão adicionadas automaticamente.
+public/uploads/
+
+# Sessões
 sessions/
 
-# Logs:
-# podem conter erros e informações sensíveis
+# Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Configurações locais do VS Code:
-# evita subir configurações pessoais
+# Bancos, dumps e backups
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+*.backup
+*.zip
+
+# Configurações dos editores
 .vscode/
+.idea/
 
-# Cache do npm:
-# arquivos temporários do npm
+# Cache
 .npm/
+.cache/
+
+# Arquivos temporários
+tmp/
+temp/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
