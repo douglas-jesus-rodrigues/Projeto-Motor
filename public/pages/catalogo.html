@@ -3,64 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorFlex — Portal &amp; Serviços Automotivos</title>
+    <meta name="description" content="Encontre, anuncie e financie seu próximo veículo na MotorFlex.">
+
+    <title>Catálogo | MotorFlex</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/catalogo.css">
-    <link rel="shortcut icon" href="/imagens/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link
+        rel="shortcut icon"
+        href="/imagens/favicon.ico"
+        type="image/x-icon"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/css/catalogo.css"
+    >
 </head>
+
 <body>
+    <div
+        id="liveRegion"
+        class="sr-only"
+        role="status"
+        aria-live="polite"
+    ></div>
 
-<div class="container">
+    <header class="site-header">
+        <div class="header-inner">
+            <a
+                href="/pages/index.html"
+                class="brand"
+                aria-label="MotorFlex - Página inicial"
+            >
+                <span>Motor</span><strong>Flex</strong>
+            </a>
 
-    <!-- Aviso simples para leitores de tela sobre trocas de aba -->
-    <div id="liveRegion" class="sr-only" role="status" aria-live="polite"></div>
+            <nav
+                class="main-nav"
+                aria-label="Navegação do catálogo"
+            >
+                <a
+                    href="#"
+                    class="nav-link active"
+                    data-tab="tab-catalogo"
+                    aria-current="page"
+                >
+                    Explorar
+                </a>
 
-    <!-- Menu de Navegação Superior -->
-    <nav class="navbar" aria-label="Navegação principal">
-        <!-- Botão voltar: vai DIRETO para o index.html -->
-        <a href="/pages/index.html" class="nav-back-btn" title="Voltar para a Página Inicial">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 12H5M12 19l-7-7 7-7"></path>
-            </svg>
-            <span>Início</span>
-        </a>
-        <a href="#" class="nav-link active" data-tab="tab-catalogo" aria-current="page">Catálogo</a>
-        <a href="#" class="nav-link" data-tab="tab-cadastrar">Anunciar Veículo</a>
-        <a href="#" class="nav-link" data-tab="tab-vender">Avaliação Profissional</a>
-        <a href="#" class="nav-link" data-tab="tab-financiamento">Financiamento</a>
-    </nav>
+                <a
+                    href="#"
+                    class="nav-link"
+                    data-tab="tab-cadastrar"
+                >
+                    Anunciar
+                </a>
 
-    <!-- ABA 1: CATÁLOGO DE VEÍCULOS -->
-    <div id="tab-catalogo" class="page-tab active">
-        <div class="catalog-layout">
+                <a
+                    href="#"
+                    class="nav-link"
+                    data-tab="tab-vender"
+                >
+                    Avaliar
+                </a>
 
-            <!-- COLUNA DA ESQUERDA: FILTROS -->
-            <aside class="sidebar-filter">
-                <h2 class="section-title">Filtrar veículos</h2>
-                <form id="formFiltro" class="filter-form">
-                    <div class="filter-vertical-grid">
-                        <div class="grupo">
-                            <label for="filtroBusca">Marca ou modelo</label>
-                            <input type="text" id="filtroBusca" placeholder="Ex: Honda Civic" autocomplete="off" maxlength="60">
+                <a
+                    href="#"
+                    class="nav-link"
+                    data-tab="tab-financiamento"
+                >
+                    Financiar
+                </a>
+            </nav>
+
+            <div class="header-actions">
+                <a
+                    href="/pages/index.html"
+                    class="header-link"
+                    aria-label="Voltar ao início"
+                >
+                    <i
+                        class="fa-solid fa-arrow-left"
+                        aria-hidden="true"
+                    ></i>
+
+                    <span>Início</span>
+                </a>
+
+                <a
+                    id="btnPainel"
+                    href="/pages/login.html"
+                    class="header-account"
+                >
+                    <i
+                        class="fa-regular fa-user"
+                        aria-hidden="true"
+                    ></i>
+
+                    <span>Minha conta</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- =====================================
+             CATÁLOGO
+        ====================================== -->
+        <section
+            id="tab-catalogo"
+            class="page-tab active"
+        >
+            <section class="catalog-hero">
+                <div
+                    class="hero-glow"
+                    aria-hidden="true"
+                ></div>
+
+                <div class="hero-content">
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-bolt"></i>
+                        Seu próximo carro está aqui
+                    </span>
+
+                    <h1>
+                        Escolha sem pressa.
+                        <br>
+                        <em>Dirija sem dúvida.</em>
+                    </h1>
+
+                    <p>
+                        Compare veículos, refine sua busca e encontre
+                        uma oferta que combina com sua garagem e seu
+                        orçamento.
+                    </p>
+
+                    <div
+                        class="hero-search"
+                        role="search"
+                    >
+                        <i
+                            class="fa-solid fa-magnifying-glass"
+                            aria-hidden="true"
+                        ></i>
+
+                        <label
+                            for="filtroBusca"
+                            class="sr-only"
+                        >
+                            Buscar veículo
+                        </label>
+
+                        <input
+                            type="search"
+                            id="filtroBusca"
+                            placeholder="Busque por marca, modelo, versão ou categoria"
+                            autocomplete="off"
+                            maxlength="80"
+                        >
+
+                        <button
+                            type="button"
+                            id="btnBuscaHero"
+                        >
+                            Buscar veículos
+                        </button>
+                    </div>
+
+                    <div
+                        class="quick-filters"
+                        aria-label="Buscas rápidas"
+                    >
+                        <span>Mais buscados:</span>
+
+                        <button
+                            type="button"
+                            data-busca-rapida="SUV"
+                        >
+                            SUV
+                        </button>
+
+                        <button
+                            type="button"
+                            data-busca-rapida="Hatch"
+                        >
+                            Hatch
+                        </button>
+
+                        <button
+                            type="button"
+                            data-busca-rapida="Automático"
+                        >
+                            Automático
+                        </button>
+
+                        <button
+                            type="button"
+                            data-busca-rapida="Elétrico"
+                        >
+                            Elétrico
+                        </button>
+                    </div>
+                </div>
+
+                <aside
+                    class="hero-feature"
+                    aria-label="Veículo em destaque"
+                >
+                    <div class="feature-topline">
+                        <span>
+                            <i class="fa-solid fa-star"></i>
+                            Seleção MotorFlex
+                        </span>
+
+                        <small>Atualizado hoje</small>
+                    </div>
+
+                    <div
+                        id="featuredCar"
+                        class="featured-car"
+                        aria-live="polite"
+                    ></div>
+                </aside>
+            </section>
+
+            <section
+                class="catalog-toolbar"
+                aria-label="Ferramentas do catálogo"
+            >
+                <div class="toolbar-summary">
+                    <button
+                        type="button"
+                        id="btnAbrirFiltros"
+                        class="filter-toggle"
+                        aria-expanded="false"
+                        aria-controls="painelFiltros"
+                    >
+                        <i class="fa-solid fa-sliders"></i>
+                        Filtros
+
+                        <span
+                            id="filterBadge"
+                            class="filter-badge"
+                            hidden
+                        >
+                            0
+                        </span>
+                    </button>
+
+                    <div>
+                        <strong id="resultCount">
+                            Carregando veículos...
+                        </strong>
+
+                        <span id="searchContext">
+                            Ofertas selecionadas para você
+                        </span>
+                    </div>
+                </div>
+
+                <div class="toolbar-controls">
+                    <label
+                        for="filtroOrdenacao"
+                        class="sr-only"
+                    >
+                        Ordenar resultados
+                    </label>
+
+                    <select
+                        id="filtroOrdenacao"
+                        class="sort-select"
+                    >
+                        <option value="recentes">
+                            Mais recentes
+                        </option>
+
+                        <option value="menor-preco">
+                            Menor preço
+                        </option>
+
+                        <option value="maior-preco">
+                            Maior preço
+                        </option>
+
+                        <option value="mais-novos">
+                            Ano mais novo
+                        </option>
+
+                        <option value="menor-km">
+                            Menor quilometragem
+                        </option>
+                    </select>
+
+                    <div
+                        class="view-switch"
+                        aria-label="Modo de visualização"
+                    >
+                        <button
+                            type="button"
+                            id="btnGrade"
+                            class="active"
+                            aria-label="Visualização em grade"
+                            aria-pressed="true"
+                        >
+                            <i class="fa-solid fa-grip"></i>
+                        </button>
+
+                        <button
+                            type="button"
+                            id="btnLista"
+                            aria-label="Visualização em lista"
+                            aria-pressed="false"
+                        >
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div
+                id="chipsFiltros"
+                class="active-filters"
+                aria-live="polite"
+            ></div>
+
+            <div class="catalog-shell">
+                <aside
+                    id="painelFiltros"
+                    class="filters-panel"
+                    aria-label="Filtros de veículos"
+                >
+                    <div class="filters-heading">
+                        <div>
+                            <span class="eyebrow-small">
+                                Refine sua busca
+                            </span>
+
+                            <h2>Filtros</h2>
                         </div>
 
-                        <div class="grupo">
-                            <label for="filtroPrecoMax">Preço máximo (R$)</label>
-                            <input type="number" id="filtroPrecoMax" placeholder="Ex: 100000" min="0" step="1000" inputmode="numeric">
+                        <button
+                            type="button"
+                            id="btnFecharFiltros"
+                            class="close-filters"
+                            aria-label="Fechar filtros"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <form id="formFiltro">
+                        <div class="filter-group">
+                            <span class="filter-label">
+                                Faixa de preço
+                            </span>
+
+                            <div class="dual-fields">
+                                <label>
+                                    De
+
+                                    <input
+                                        type="number"
+                                        id="filtroPrecoMin"
+                                        placeholder="R$ 0"
+                                        min="0"
+                                        step="1000"
+                                        inputmode="numeric"
+                                    >
+                                </label>
+
+                                <label>
+                                    Até
+
+                                    <input
+                                        type="number"
+                                        id="filtroPrecoMax"
+                                        placeholder="R$ 300 mil"
+                                        min="0"
+                                        step="1000"
+                                        inputmode="numeric"
+                                    >
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="grupo">
-                            <label for="filtroAnoMin">Ano mínimo</label>
-                            <input type="number" id="filtroAnoMin" placeholder="Ex: 2018" min="1950" max="2030" inputmode="numeric">
+                        <div class="filter-group">
+                            <span class="filter-label">
+                                Ano do veículo
+                            </span>
+
+                            <div class="dual-fields">
+                                <label>
+                                    De
+
+                                    <input
+                                        type="number"
+                                        id="filtroAnoMin"
+                                        placeholder="2015"
+                                        min="1950"
+                                        max="2035"
+                                        inputmode="numeric"
+                                    >
+                                </label>
+
+                                <label>
+                                    Até
+
+                                    <input
+                                        type="number"
+                                        id="filtroAnoMax"
+                                        placeholder="2026"
+                                        min="1950"
+                                        max="2035"
+                                        inputmode="numeric"
+                                    >
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="grupo">
-                            <label for="filtroCombustivel">Combustível</label>
+                        <div class="filter-group">
+                            <label
+                                class="filter-label"
+                                for="filtroCombustivel"
+                            >
+                                Combustível
+                            </label>
+
                             <select id="filtroCombustivel">
-                                <option value="">Todos os combustíveis</option>
+                                <option value="">Todos</option>
                                 <option value="Flex">Flex</option>
                                 <option value="Gasolina">Gasolina</option>
                                 <option value="Etanol">Etanol</option>
@@ -70,333 +452,772 @@
                             </select>
                         </div>
 
-                        <div class="grupo">
-                            <label for="filtroCambio">Câmbio</label>
+                        <div class="filter-group">
+                            <label
+                                class="filter-label"
+                                for="filtroCambio"
+                            >
+                                Câmbio
+                            </label>
+
                             <select id="filtroCambio">
-                                <option value="">Todos os câmbios</option>
+                                <option value="">Todos</option>
                                 <option value="Manual">Manual</option>
                                 <option value="Automático">Automático</option>
                                 <option value="CVT">CVT</option>
+                                <option value="Semi-automático">
+                                    Semi-automático
+                                </option>
                             </select>
                         </div>
 
-                        <div class="grupo">
-                            <label for="filtroCarroceria">Carroceria</label>
+                        <div class="filter-group">
+                            <label
+                                class="filter-label"
+                                for="filtroCarroceria"
+                            >
+                                Carroceria
+                            </label>
+
                             <select id="filtroCarroceria">
-                                <option value="">Todas as carrocerias</option>
+                                <option value="">Todas</option>
                                 <option value="Sedan">Sedan</option>
                                 <option value="SUV">SUV</option>
                                 <option value="Coupé">Coupé</option>
+                                <option value="Conversível">Conversível</option>
                                 <option value="Hatch">Hatch</option>
                                 <option value="Picape">Picape</option>
                             </select>
                         </div>
+
+                        <div class="filter-actions">
+                            <button
+                                type="submit"
+                                id="btnFiltrar"
+                                class="btn-primary"
+                            >
+                                <i class="fa-solid fa-check"></i>
+                                Aplicar filtros
+                            </button>
+
+                            <button
+                                type="reset"
+                                id="btnLimparFiltros"
+                                class="btn-ghost"
+                            >
+                                Limpar tudo
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="results-area">
+                    <div
+                        id="carsGrid"
+                        class="cars-grid"
+                        aria-live="polite"
+                        aria-busy="true"
+                    ></div>
+
+                    <button
+                        type="button"
+                        id="btnMostrarMais"
+                        class="load-more"
+                        hidden
+                    >
+                        Mostrar mais veículos
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+
+                    <section class="deals-section">
+                        <div class="section-heading">
+                            <div>
+                                <span class="eyebrow-small">
+                                    Boas oportunidades
+                                </span>
+
+                                <h2>Ofertas em destaque</h2>
+                            </div>
+
+                            <span>
+                                Menores preços do catálogo
+                            </span>
+                        </div>
+
+                        <div
+                            id="topDeals"
+                            class="top-deals"
+                        ></div>
+                    </section>
+                </section>
+            </div>
+
+            <div
+                id="filterOverlay"
+                class="filter-overlay"
+                hidden
+            ></div>
+        </section>
+
+        <!-- =====================================
+             CADASTRO DE VEÍCULO
+        ====================================== -->
+        <section
+            id="tab-cadastrar"
+            class="page-tab inner-page"
+        >
+            <div class="form-card">
+                <div class="form-intro">
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-plus"></i>
+                        Novo anúncio
+                    </span>
+
+                    <h1>
+                        Coloque seu veículo na vitrine.
+                    </h1>
+
+                    <p>
+                        Preencha os dados principais. Os campos
+                        marcados com * são obrigatórios.
+                    </p>
+                </div>
+
+                <form
+                    id="formAnuncio"
+                    enctype="multipart/form-data"
+                    novalidate
+                >
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="marca">Marca *</label>
+
+                            <input
+                                type="text"
+                                id="marca"
+                                name="marca"
+                                placeholder="Ex: Honda"
+                                maxlength="40"
+                                required
+                            >
+
+                            <small
+                                id="erroMarca"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="modelo">Modelo *</label>
+
+                            <input
+                                type="text"
+                                id="modelo"
+                                name="modelo"
+                                placeholder="Ex: Civic"
+                                maxlength="40"
+                                required
+                            >
+
+                            <small
+                                id="erroModelo"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="versao">Versão</label>
+
+                            <input
+                                type="text"
+                                id="versao"
+                                name="versao"
+                                placeholder="Ex: EXL 2.0"
+                                maxlength="40"
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="preco">Preço *</label>
+
+                            <div class="money-field">
+                                <span>R$</span>
+
+                                <input
+                                    type="text"
+                                    id="preco"
+                                    name="preco"
+                                    placeholder="0"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    required
+                                >
+                            </div>
+
+                            <small
+                                id="erroPreco"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="anoFabricacao">
+                                Ano de fabricação *
+                            </label>
+
+                            <input
+                                type="number"
+                                id="anoFabricacao"
+                                name="ano_fabricacao"
+                                placeholder="2022"
+                                min="1950"
+                                max="2035"
+                                required
+                            >
+
+                            <small
+                                id="erroAnoFabricacao"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="anoModelo">
+                                Ano do modelo *
+                            </label>
+
+                            <input
+                                type="number"
+                                id="anoModelo"
+                                name="ano_modelo"
+                                placeholder="2023"
+                                min="1950"
+                                max="2035"
+                                required
+                            >
+
+                            <small
+                                id="erroAnoModelo"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="quilometragem">
+                                Quilometragem
+                            </label>
+
+                            <input
+                                type="number"
+                                id="quilometragem"
+                                name="quilometragem"
+                                placeholder="45000"
+                                min="0"
+                                max="2000000"
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="combustivel">
+                                Combustível
+                            </label>
+
+                            <select
+                                id="combustivel"
+                                name="combustivel"
+                            >
+                                <option>Flex</option>
+                                <option>Gasolina</option>
+                                <option>Etanol</option>
+                                <option>Diesel</option>
+                                <option>Elétrico</option>
+                                <option>Híbrido</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="cambio">Câmbio</label>
+
+                            <select
+                                id="cambio"
+                                name="cambio"
+                            >
+                                <option>Manual</option>
+                                <option>Automático</option>
+                                <option>CVT</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="cor">Cor</label>
+
+                            <input
+                                type="text"
+                                id="cor"
+                                name="cor"
+                                placeholder="Ex: Preto"
+                                maxlength="25"
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="portas">Portas</label>
+
+                            <input
+                                type="number"
+                                id="portas"
+                                name="portas"
+                                placeholder="4"
+                                min="2"
+                                max="6"
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label for="carroceria">
+                                Carroceria
+                            </label>
+
+                            <select
+                                id="carroceria"
+                                name="carroceria"
+                            >
+                                <option>Sedan</option>
+                                <option>SUV</option>
+                                <option>Coupé</option>
+                                <option>Conversível</option>
+                                <option>Hatch</option>
+                                <option>Picape</option>
+                            </select>
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="descricao">
+                                Descrição
+                            </label>
+
+                            <textarea
+                                id="descricao"
+                                name="descricao"
+                                rows="4"
+                                maxlength="600"
+                                placeholder="Opcionais, revisões e detalhes do veículo"
+                            ></textarea>
+                        </div>
+
+                        <div class="field field-wide">
+                            <label id="labelFoto">
+                                Foto principal
+                            </label>
+
+                            <div class="upload-box">
+                                <label
+                                    for="imagem"
+                                    class="upload-trigger"
+                                >
+                                    <i class="fa-regular fa-image"></i>
+
+                                    <span id="nomeArquivoSelecionado">
+                                        Selecionar imagem
+                                    </span>
+
+                                    <input
+                                        type="file"
+                                        id="imagem"
+                                        name="imagem"
+                                        accept="image/png,image/jpeg,image/webp"
+                                        hidden
+                                    >
+                                </label>
+
+                                <img
+                                    id="miniaturaPreview"
+                                    src=""
+                                    alt=""
+                                    hidden
+                                >
+
+                                <button
+                                    type="button"
+                                    id="btnVerFoto"
+                                    class="preview-button"
+                                    disabled
+                                >
+                                    <i class="fa-regular fa-eye"></i>
+                                    Visualizar
+                                </button>
+                            </div>
+
+                            <small
+                                id="erroImagem"
+                                class="field-error"
+                            ></small>
+                        </div>
                     </div>
 
-                    <div class="filter-actions">
-                        <button type="submit" id="btnFiltrar" class="btn-primario">Aplicar filtros</button>
-                        <button type="reset" id="btnLimparFiltros" class="btn-secundario">Limpar filtros</button>
-                    </div>
+                    <button
+                        type="submit"
+                        id="btnAnunciar"
+                        class="btn-primary submit-button"
+                    >
+                        Publicar anúncio
+                    </button>
                 </form>
-            </aside>
+            </div>
+        </section>
 
-            <!-- COLUNA DA DIREITA: CONTEÚDO DO CATÁLOGO -->
-            <main class="catalog-content">
-                <section class="featured-banner">
-                    <h2 class="section-title">Destaque da semana</h2>
-                    <div id="featuredCar" class="featured-car" aria-live="polite"></div>
-                </section>
+        <!-- =====================================
+             AVALIAÇÃO
+        ====================================== -->
+        <section
+            id="tab-vender"
+            class="page-tab inner-page"
+        >
+            <div class="service-layout">
+                <div class="service-copy">
+                    <span class="eyebrow">
+                        Avaliação profissional
+                    </span>
 
-                <section class="catalog-section">
-                    <div class="section-header-row">
-                        <h2 class="section-title">Veículos disponíveis</h2>
-                        <span id="resultCount" class="result-count"></span>
+                    <h1>
+                        Descubra quanto seu carro vale.
+                    </h1>
+
+                    <p>
+                        Envie os dados e receba uma análise baseada
+                        na FIPE e no mercado.
+                    </p>
+                </div>
+
+                <form
+                    id="formAvaliacao"
+                    class="service-form"
+                    novalidate
+                >
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="avaNome">
+                                Nome completo *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="avaNome"
+                                maxlength="80"
+                                required
+                            >
+
+                            <small
+                                id="erroAvaNome"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="avaTelefone">
+                                WhatsApp *
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="avaTelefone"
+                                placeholder="(00) 00000-0000"
+                                maxlength="15"
+                                required
+                            >
+
+                            <small
+                                id="erroAvaTelefone"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="avaPlaca">Placa *</label>
+
+                            <input
+                                type="text"
+                                id="avaPlaca"
+                                placeholder="ABC1D23"
+                                maxlength="7"
+                                required
+                            >
+
+                            <small
+                                id="erroAvaPlaca"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="avaKm">
+                                Quilometragem *
+                            </label>
+
+                            <input
+                                type="number"
+                                id="avaKm"
+                                min="0"
+                                max="2000000"
+                                required
+                            >
+
+                            <small
+                                id="erroAvaKm"
+                                class="field-error"
+                            ></small>
+                        </div>
+
+                        <div class="field">
+                            <label for="avaEstado">
+                                Conservação
+                            </label>
+
+                            <select id="avaEstado">
+                                <option>Excelente</option>
+                                <option>Bom</option>
+                                <option>Regular</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="avaPretensao">
+                                Valor pretendido
+                            </label>
+
+                            <input
+                                type="number"
+                                id="avaPretensao"
+                                min="0"
+                                max="10000000"
+                            >
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="avaObservacoes">
+                                Observações
+                            </label>
+
+                            <textarea
+                                id="avaObservacoes"
+                                rows="4"
+                                maxlength="500"
+                            ></textarea>
+                        </div>
                     </div>
-                    <div id="carsGrid" class="cars-grid" aria-live="polite"></div>
-                </section>
 
-                <section class="top-deals-section">
-                    <h2 class="section-title">Principais ofertas</h2>
-                    <div id="topDeals" class="top-deals"></div>
-                </section>
-            </main>
+                    <button
+                        type="submit"
+                        class="btn-primary submit-button"
+                    >
+                        Solicitar avaliação
+                    </button>
+                </form>
+            </div>
+        </section>
 
+        <!-- =====================================
+             FINANCIAMENTO
+        ====================================== -->
+        <section
+            id="tab-financiamento"
+            class="page-tab inner-page"
+        >
+            <div class="service-layout finance-layout">
+                <div class="service-copy">
+                    <span class="eyebrow">
+                        Simulação inteligente
+                    </span>
+
+                    <h1>
+                        Planeje antes de acelerar.
+                    </h1>
+
+                    <p>
+                        Veja uma estimativa de parcelas e custo total.
+                        Valores sujeitos à análise de crédito.
+                    </p>
+                </div>
+
+                <div>
+                    <form
+                        id="formFinanciamento"
+                        class="service-form"
+                        novalidate
+                    >
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="finValor">
+                                    Valor do veículo *
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="finValor"
+                                    min="1"
+                                    max="10000000"
+                                    required
+                                >
+                            </div>
+
+                            <div class="field">
+                                <label for="finEntrada">
+                                    Entrada
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="finEntrada"
+                                    min="0"
+                                    max="10000000"
+                                >
+                            </div>
+
+                            <div class="field">
+                                <label for="finParcelas">
+                                    Prazo
+                                </label>
+
+                                <select id="finParcelas">
+                                    <option value="12">
+                                        12 parcelas
+                                    </option>
+
+                                    <option value="24">
+                                        24 parcelas
+                                    </option>
+
+                                    <option value="36">
+                                        36 parcelas
+                                    </option>
+
+                                    <option
+                                        value="48"
+                                        selected
+                                    >
+                                        48 parcelas
+                                    </option>
+
+                                    <option value="60">
+                                        60 parcelas
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="finScore">
+                                    Perfil de crédito
+                                </label>
+
+                                <select id="finScore">
+                                    <option value="excelente">
+                                        Excelente — 1,29% a.m.
+                                    </option>
+
+                                    <option
+                                        value="bom"
+                                        selected
+                                    >
+                                        Bom — 1,59% a.m.
+                                    </option>
+
+                                    <option value="regular">
+                                        Regular — 1,99% a.m.
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <small
+                            id="erroFinanciamento"
+                            class="field-error"
+                        ></small>
+
+                        <button
+                            type="button"
+                            id="btnSimular"
+                            class="btn-primary submit-button"
+                        >
+                            Calcular simulação
+                        </button>
+                    </form>
+
+                    <div
+                        id="resultadoSimulacao"
+                        class="finance-result"
+                        hidden
+                        aria-live="polite"
+                    >
+                        <div>
+                            <span>Financiado</span>
+                            <strong id="resFinanciado">
+                                R$ 0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Parcela estimada</span>
+                            <strong id="resParcela">
+                                R$ 0 /mês
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Custo total</span>
+                            <strong id="resTotal">
+                                R$ 0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>Taxa aplicada</span>
+                            <strong id="resTaxa">
+                                0% a.m.
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div
+        id="modalVisualizarFoto"
+        class="photo-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalFotoTitulo"
+        hidden
+    >
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalFotoTitulo">
+                    Pré-visualização
+                </h3>
+
+                <button
+                    type="button"
+                    id="btnFecharModal"
+                    aria-label="Fechar"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <img
+                id="imgPreviewModal"
+                src=""
+                alt="Foto selecionada"
+            >
         </div>
     </div>
 
-    <!-- ABA 2: CADASTRAR / ANUNCIAR VEÍCULO -->
-    <div id="tab-cadastrar" class="page-tab">
-        <section class="card-compacto">
-            <div class="topo-compacto">
-                <span class="badge-novo">Novo anúncio</span>
-                <h2>Cadastrar veículo</h2>
-                <p>Preencha os dados do veículo abaixo. Campos com * são obrigatórios.</p>
-            </div>
+    <div
+        id="toastContainer"
+        class="toast-container"
+        aria-live="assertive"
+    ></div>
 
-            <form id="formAnuncio" enctype="multipart/form-data" novalidate>
-                <div class="form-grid-compacta">
-                    <div class="grupo">
-                        <label for="marca">Marca *</label>
-                        <input type="text" id="marca" name="marca" placeholder="Ex: Honda" maxlength="40" required>
-                        <small id="erroMarca" class="erro-texto" role="alert"></small>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="modelo">Modelo *</label>
-                        <input type="text" id="modelo" name="modelo" placeholder="Ex: Civic" maxlength="40" required>
-                        <small id="erroModelo" class="erro-texto" role="alert"></small>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="versao">Versão</label>
-                        <input type="text" id="versao" name="versao" placeholder="Ex: EXL 2.0" maxlength="40">
-                    </div>
-
-                    <div class="grupo">
-                        <label for="preco">Preço (R$) *</label>
-                        <div class="input-money-wrapper">
-                            <span class="prefixo">R$</span>
-                            <input type="text" id="preco" name="preco" placeholder="0" inputmode="numeric" autocomplete="off" maxlength="10" required>
-                        </div>
-                        <small id="erroPreco" class="erro-texto" role="alert"></small>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="anoFabricacao">Ano fab. *</label>
-                        <input type="number" id="anoFabricacao" name="ano_fabricacao" placeholder="2021" min="1950" max="2030" required>
-                        <small id="erroAnoFabricacao" class="erro-texto" role="alert"></small>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="anoModelo">Ano mod. *</label>
-                        <input type="number" id="anoModelo" name="ano_modelo" placeholder="2022" min="1950" max="2030" required>
-                        <small id="erroAnoModelo" class="erro-texto" role="alert"></small>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="quilometragem">Quilometragem</label>
-                        <input type="number" id="quilometragem" name="quilometragem" placeholder="45000" min="0" max="2000000">
-                    </div>
-
-                    <div class="grupo">
-                        <label for="combustivel">Combustível</label>
-                        <select id="combustivel" name="combustivel">
-                            <option value="Flex">Flex</option>
-                            <option value="Gasolina">Gasolina</option>
-                            <option value="Etanol">Etanol</option>
-                            <option value="Diesel">Diesel</option>
-                            <option value="Elétrico">Elétrico</option>
-                            <option value="Híbrido">Híbrido</option>
-                        </select>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="cambio">Câmbio</label>
-                        <select id="cambio" name="cambio">
-                            <option value="Manual">Manual</option>
-                            <option value="Automático">Automático</option>
-                            <option value="CVT">CVT</option>
-                        </select>
-                    </div>
-
-                    <div class="grupo">
-                        <label for="cor">Cor</label>
-                        <input type="text" id="cor" name="cor" placeholder="Ex: Preto" maxlength="25">
-                    </div>
-
-                    <div class="grupo">
-                        <label for="portas">Portas</label>
-                        <input type="number" id="portas" name="portas" placeholder="4" min="2" max="6">
-                    </div>
-
-                    <div class="grupo">
-                        <label for="carroceria">Carroceria</label>
-                        <select id="carroceria" name="carroceria">
-                            <option value="Sedan">Sedan</option>
-                            <option value="SUV">SUV</option>
-                            <option value="Coupé">Coupé</option>
-                            <option value="Conversível">Conversível</option>
-                            <option value="Hatch">Hatch</option>
-                            <option value="Picape">Picape</option>
-                        </select>
-                    </div>
-
-                    <div class="grupo grupo-full">
-                        <label for="descricao">Descrição detalhada</label>
-                        <textarea id="descricao" name="descricao" rows="2" maxlength="600" placeholder="Opcionais, revisões, detalhes..."></textarea>
-                    </div>
-
-                    <!-- CAMPO DE FOTO COM MINIATURA E BOTÃO VER -->
-                    <div class="grupo grupo-full">
-                        <label id="labelFoto">Foto principal</label>
-                        <div class="upload-foto-container">
-                            <label for="imagem" class="dropzone-compacta-mini">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                <span id="nomeArquivoSelecionado">Selecionar foto</span>
-                                <input type="file" id="imagem" name="imagem" accept="image/png,image/jpeg,image/webp" aria-describedby="labelFoto erroImagem" style="display:none;">
-                            </label>
-
-                            <img id="miniaturaPreview" src="" alt="" style="display:none;">
-
-                            <button type="button" id="btnVerFoto" class="btn-ver-foto" disabled title="Selecione uma foto para visualizar">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                <span>Ver</span>
-                            </button>
-                        </div>
-                        <small id="erroImagem" class="erro-texto" role="alert"></small>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primario btn-compacto" id="btnAnunciar">Publicar anúncio</button>
-            </form>
-        </section>
-    </div>
-
-    <!-- ABA 3: AVALIAÇÃO VEICULAR PROFISSIONAL -->
-    <div id="tab-vender" class="page-tab">
-        <section class="card-anuncio">
-            <div class="topo">
-                <span class="badge-novo">Venda garantida</span>
-                <h2>Avaliação técnica &amp; compra rápida</h2>
-                <p>Nossa equipe realiza a precificação baseada na Tabela FIPE e análise de mercado.</p>
-            </div>
-
-            <form id="formAvaliacao" class="custom-form" novalidate>
-                <div class="form-grid">
-                    <div class="grupo">
-                        <label for="avaNome">Nome completo *</label>
-                        <input type="text" id="avaNome" placeholder="Seu nome completo" maxlength="80" required>
-                        <small id="erroAvaNome" class="erro-texto" role="alert"></small>
-                    </div>
-                    <div class="grupo">
-                        <label for="avaTelefone">Telefone / WhatsApp *</label>
-                        <input type="tel" id="avaTelefone" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" required>
-                        <small id="erroAvaTelefone" class="erro-texto" role="alert"></small>
-                    </div>
-                    <div class="grupo">
-                        <label for="avaPlaca">Placa do veículo *</label>
-                        <input type="text" id="avaPlaca" placeholder="ABC1D23" maxlength="7" required style="text-transform:uppercase;">
-                        <small id="erroAvaPlaca" class="erro-texto" role="alert"></small>
-                    </div>
-                    <div class="grupo">
-                        <label for="avaKm">Quilometragem atual *</label>
-                        <input type="number" id="avaKm" placeholder="Ex: 45000" min="0" max="2000000" required>
-                        <small id="erroAvaKm" class="erro-texto" role="alert"></small>
-                    </div>
-                    <div class="grupo">
-                        <label for="avaEstado">Estado de conservação</label>
-                        <select id="avaEstado">
-                            <option value="Excelente">Excelente (sem detalhes)</option>
-                            <option value="Bom">Bom (pequenos detalhes de uso)</option>
-                            <option value="Regular">Regular (necessita de reparos)</option>
-                        </select>
-                    </div>
-                    <div class="grupo">
-                        <label for="avaPretensao">Pretensão de valor (R$)</label>
-                        <input type="number" id="avaPretensao" placeholder="Ex: 85000" min="0" max="10000000">
-                    </div>
-                    <div class="grupo grupo-full">
-                        <label for="avaObservacoes">Observações ou opcionais</label>
-                        <textarea id="avaObservacoes" rows="3" maxlength="500" placeholder="Teto solar, bancos em couro, laudo aprovado..."></textarea>
-                    </div>
-                </div>
-                <button type="submit" class="btn-primario">Solicitar proposta de compra</button>
-            </form>
-        </section>
-    </div>
-
-    <!-- ABA 4: FINANCIAMENTO -->
-    <div id="tab-financiamento" class="page-tab">
-        <section class="card-anuncio">
-            <div class="topo">
-                <span class="badge-novo">Simulador</span>
-                <h2>Simulador de financiamento automotivo</h2>
-                <p>Calcule estimativas com taxas de juros indicativas. Valores sujeitos a análise de crédito.</p>
-            </div>
-
-            <div class="fin-layout">
-                <form id="formFinanciamento" class="fin-form" novalidate>
-                    <div class="form-grid">
-                        <div class="grupo">
-                            <label for="finValor">Valor do veículo (R$) *</label>
-                            <div class="input-money-wrapper">
-                                <span class="prefixo">R$</span>
-                                <input type="number" id="finValor" placeholder="100000" min="1" max="10000000" required>
-                            </div>
-                        </div>
-
-                        <div class="grupo">
-                            <label for="finEntrada">Valor de entrada (R$)</label>
-                            <div class="input-money-wrapper">
-                                <span class="prefixo">R$</span>
-                                <input type="number" id="finEntrada" placeholder="30000" min="0" max="10000000">
-                            </div>
-                        </div>
-
-                        <div class="grupo">
-                            <label for="finParcelas">Prazo de financiamento</label>
-                            <select id="finParcelas">
-                                <option value="12">12 parcelas</option>
-                                <option value="24">24 parcelas</option>
-                                <option value="36">36 parcelas</option>
-                                <option value="48" selected>48 parcelas</option>
-                                <option value="60">60 parcelas</option>
-                            </select>
-                        </div>
-
-                        <div class="grupo">
-                            <label for="finScore">Perfil de crédito (score estimado)</label>
-                            <select id="finScore">
-                                <option value="excelente">Excelente (acima de 800) — 1,29% a.m.</option>
-                                <option value="bom" selected>Bom (600 a 799) — 1,59% a.m.</option>
-                                <option value="regular">Regular (até 599) — 1,99% a.m.</option>
-                            </select>
-                        </div>
-                    </div>
-                    <small id="erroFinanciamento" class="erro-texto" role="alert"></small>
-                    <button type="button" id="btnSimular" class="btn-primario">Calcular simulação</button>
-                </form>
-
-                <div id="resultadoSimulacao" class="fin-result-card" style="display: none;" aria-live="polite">
-                    <h3>Resumo da simulação</h3>
-                    <div class="fin-summary-grid">
-                        <div class="fin-item">
-                            <span>Valor financiado</span>
-                            <strong id="resFinanciado">R$ 0,00</strong>
-                        </div>
-                        <div class="fin-item">
-                            <span>Valor das parcelas</span>
-                            <strong id="resParcela" class="highlight-price">R$ 0,00 /mês</strong>
-                        </div>
-                        <div class="fin-item">
-                            <span>Custo total estimado</span>
-                            <strong id="resTotal">R$ 0,00</strong>
-                        </div>
-                        <div class="fin-item">
-                            <span>Taxa aplicada</span>
-                            <strong id="resTaxa">0% a.m.</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-</div>
-
-<!-- MODAL DE PRÉ-VISUALIZAÇÃO DA FOTO -->
-<div id="modalVisualizarFoto" class="modal-foto" role="dialog" aria-modal="true" aria-labelledby="modalFotoTitulo">
-    <div class="modal-conteudo">
-        <h3 id="modalFotoTitulo">Pré-visualização do veículo</h3>
-        <img id="imgPreviewModal" src="" alt="Pré-visualização da foto selecionada">
-        <button type="button" class="btn-fechar-modal" id="btnFecharModal">Fechar</button>
-    </div>
-</div>
-
-<!-- Região de notificações -->
-<div id="toastContainer" class="toast-container" aria-live="assertive"></div>
-
-<!-- Scripts -->
-<script src="/js/catalogo.js"></script>
+    <script src="/js/catalogo.js"></script>
 </body>
 </html>

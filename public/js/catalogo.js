@@ -1,7 +1,21 @@
+"use strict";
+
 document.addEventListener("DOMContentLoaded", () => {
+    const $ = (id) => document.getElementById(id);
+
+    const FALLBACK_IMAGE =
+        "/imagens/sem-foto.jpg";
+
+    const PAGE_SIZE = 9;
+
+    let veiculos = [];
+    let resultados = [];
+    let limiteVisivel = PAGE_SIZE;
+    let modoLista = false;
+    let debounceBusca = null;
 
     // ==========================================
-    // 0. UTILITÁRIOS DE SEGURANÇA
+    // SEGURANÇA E UTILITÁRIOS
     // ==========================================
 
     function escapeHTML(valor) {
@@ -17,34 +31,77 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-    function sanitizarSrcImagem(src) {
-        if (typeof src !== "string") {
-            return "/imagens/sem-foto.jpg";
+    function normalizarTexto(valor) {
+        return String(valor ?? "")
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .toLowerCase()
+            .trim();
+    }
+
+    function imagemSegura(valor) {
+        const src =
+            String(valor || "").trim();
+
+        if (!src) {
+            return FALLBACK_IMAGE;
         }
 
-        if (
-            src.startsWith("/")
-            || src.startsWith("https://")
-        ) {
+        // Imagem local absoluta.
+        if (src.startsWith("/")) {
             return src;
         }
 
-        return "/imagens/sem-foto.jpg";
-    }
-
-    function lerLocalStorageSeguro(chave) {
-        try {
-            return JSON.parse(
-                localStorage.getItem(chave)
-            );
-        } catch {
-            return null;
+        // Cloudinary ou outro serviço HTTPS.
+        if (/^https:\/\//i.test(src)) {
+            return src;
         }
+
+        /*
+         * Compatibilidade com imagens antigas
+         * armazenadas apenas pelo nome.
+         */
+        if (
+            /^[\w().\-\s]+\.(jpe?g|png|webp)$/i.test(
+                src
+            )
+        ) {
+            return `/uploads/${
+                encodeURIComponent(src)
+                    .replace(/%2F/gi, "/")
+            }`;
+        }
+
+        return FALLBACK_IMAGE;
     }
 
-    function lerJSONSeguro(
+    function formatarMoeda(valor) {
+        return (
+            Number(valor) || 0
+        ).toLocaleString(
+            "pt-BR",
+            {
+                style: "currency",
+                currency: "BRL",
+                maximumFractionDigits: 0
+            }
+        );
+    }
+
+    function formatarKm(valor) {
+        return `${
+            (Number(valor) || 0)
+                .toLocaleString("pt-BR")
+        } km`;
+    }
+
+    function lerJSON(
         storage,
-        chave
+        chave,
+        padrao = null
     ) {
         try {
             const valor =
@@ -52,13 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             return valor
                 ? JSON.parse(valor)
-                : null;
+                : padrao;
         } catch {
-            return null;
+            return padrao;
         }
     }
 
-    function obterUsuarioSessao() {
+    function obterUsuario() {
         for (
             const storage
             of [localStorage, sessionStorage]
@@ -67,17 +124,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const chave
                 of ["usuario", "usuario_logado"]
             ) {
-                const dados =
-                    lerJSONSeguro(
-                        storage,
-                        chave
-                    );
+                const usuario =
+                    lerJSON(storage, chave);
 
                 if (
-                    dados
-                    && typeof dados === "object"
+                    usuario
+                    && typeof usuario === "object"
                 ) {
-                    return dados;
+                    return usuario;
                 }
             }
         }
@@ -86,15 +140,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function obterToken() {
-        return localStorage.getItem("token")
-            || sessionStorage.getItem("token");
+        return (
+            localStorage.getItem("token")
+            || sessionStorage.getItem("token")
+        );
     }
 
     function limparSessao() {
-        [
-            localStorage,
-            sessionStorage
-        ].forEach((storage) => {
+        for (
+            const storage
+            of [localStorage, sessionStorage]
+        ) {
             [
                 "usuario",
                 "usuario_logado",
@@ -102,29 +158,15 @@ document.addEventListener("DOMContentLoaded", () => {
             ].forEach((chave) => {
                 storage.removeItem(chave);
             });
-        });
+        }
     }
 
-    function possuiSessaoValida() {
-        const usuarioAtual =
-            obterUsuarioSessao();
-
-        return Boolean(
-            usuarioAtual?.id
-            && obterToken()
-        );
-    }
-
-    function obterRotaPainel(
-        usuarioAtual
-    ) {
-        if (!usuarioAtual) {
-            return "/pages/painel-cliente.html";
+    function rotaPainel(usuario) {
+        if (!usuario) {
+            return "/pages/login.html";
         }
 
-        if (
-            usuarioAtual.tipo === "empresa"
-        ) {
+        if (usuario.tipo === "empresa") {
             return "/pages/painel-empresa.html";
         }
 
@@ -132,10 +174,8 @@ document.addEventListener("DOMContentLoaded", () => {
             [
                 "admin",
                 "super_admin"
-            ].includes(
-                usuarioAtual.tipo
-            )
-            || usuarioAtual.cargo === "admin"
+            ].includes(usuario.tipo)
+            || usuario.cargo === "admin"
         ) {
             return "/pages/painel-admin.html";
         }
@@ -143,103 +183,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return "/pages/painel-cliente.html";
     }
 
-    const usuario =
-        obterUsuarioSessao();
+    const usuarioAtual =
+        obterUsuario();
 
-    const btnPainel =
-        document.getElementById(
-            "btnPainel"
-        );
-
-    if (
-        btnPainel
-        && usuario
-    ) {
-        btnPainel.href =
-            obterRotaPainel(usuario);
+    if ($("btnPainel")) {
+        $("btnPainel").href =
+            rotaPainel(usuarioAtual);
     }
-
-    // ==========================================
-    // MÁSCARA DE PREÇO
-    // ==========================================
-
-    const precoInput =
-        document.getElementById(
-            "preco"
-        );
-
-    if (precoInput) {
-        precoInput.type = "text";
-
-        precoInput.removeAttribute(
-            "min"
-        );
-
-        precoInput.removeAttribute(
-            "max"
-        );
-
-        precoInput.removeAttribute(
-            "step"
-        );
-
-        precoInput.setAttribute(
-            "inputmode",
-            "numeric"
-        );
-
-        precoInput.setAttribute(
-            "autocomplete",
-            "off"
-        );
-
-        precoInput.setAttribute(
-            "maxlength",
-            "10"
-        );
-
-        precoInput.placeholder = "0";
-
-        precoInput.addEventListener(
-            "input",
-            (evento) => {
-                const digitos =
-                    evento.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 8);
-
-                if (digitos === "") {
-                    evento.target.value = "";
-                    return;
-                }
-
-                evento.target.value =
-                    Number(
-                        digitos
-                    ).toLocaleString(
-                        "pt-BR"
-                    );
-            }
-        );
-    }
-
-    // ==========================================
-    // AVISOS
-    // ==========================================
-
-    const toastContainer =
-        document.getElementById(
-            "toastContainer"
-        );
 
     function mostrarToast(
         mensagem,
         tipo = "info"
     ) {
-        if (!toastContainer) {
-            console.log(mensagem);
-            return;
-        }
+        const container =
+            $("toastContainer");
+
+        if (!container) return;
 
         const toast =
             document.createElement("div");
@@ -250,181 +209,75 @@ document.addEventListener("DOMContentLoaded", () => {
         toast.textContent =
             mensagem;
 
-        toastContainer.appendChild(
-            toast
-        );
+        container.appendChild(toast);
 
-        setTimeout(() => {
+        window.setTimeout(() => {
             toast.remove();
-        }, 4500);
+        }, 4200);
     }
 
-    function mostrarAvisoRedirecionarLogin(
-        mensagem
-    ) {
-        const modalAntigo =
-            document.getElementById(
-                "modalAvisoLogin"
-            );
-
-        if (modalAntigo) {
-            modalAntigo.remove();
-        }
-
-        const overlay =
-            document.createElement("div");
-
-        overlay.id =
-            "modalAvisoLogin";
-
-        overlay.setAttribute(
-            "role",
-            "alertdialog"
+    function pedirLogin(mensagem) {
+        mostrarToast(
+            mensagem,
+            "erro"
         );
 
-        overlay.setAttribute(
-            "aria-modal",
-            "true"
-        );
-
-        overlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: rgba(4,5,6,0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 99999;
-            backdrop-filter: blur(4px);
-        `;
-
-        const caixa =
-            document.createElement("div");
-
-        caixa.style.cssText = `
-            background: #14181f;
-            border: 1px solid #c97a3c;
-            padding: 34px;
-            border-radius: 10px;
-            max-width: 420px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-        `;
-
-        const marca =
-            document.createElement("div");
-
-        marca.style.cssText = `
-            font-family: 'Oswald', sans-serif;
-            font-size: 26px;
-            color: #e08f4d;
-            margin-bottom: 15px;
-            font-weight: 600;
-            letter-spacing: 2px;
-        `;
-
-        marca.textContent =
-            "MOTORFLEX";
-
-        const titulo =
-            document.createElement("h3");
-
-        titulo.style.cssText = `
-            color: #fff;
-            font-size: 18px;
-            margin-bottom: 12px;
-            font-weight: 600;
-        `;
-
-        titulo.textContent =
-            "Autenticação necessária";
-
-        const paragrafo =
-            document.createElement("p");
-
-        paragrafo.style.cssText = `
-            color: #8b93a1;
-            font-size: 13.5px;
-            line-height: 1.6;
-            margin-bottom: 22px;
-        `;
-
-        paragrafo.textContent =
-            mensagem;
-
-        const rodape =
-            document.createElement("div");
-
-        rodape.style.cssText = `
-            color: #5b6270;
-            font-size: 11px;
-            letter-spacing: 1px;
-        `;
-
-        rodape.textContent =
-            "Redirecionando para o login...";
-
-        caixa.append(
-            marca,
-            titulo,
-            paragrafo,
-            rodape
-        );
-
-        overlay.appendChild(
-            caixa
-        );
-
-        document.body.appendChild(
-            overlay
-        );
-
-        setTimeout(() => {
+        window.setTimeout(() => {
             window.location.href =
                 "/pages/login.html";
-        }, 2200);
+        }, 1600);
     }
 
     // ==========================================
-    // 1. NAVEGAÇÃO ENTRE ABAS
+    // NAVEGAÇÃO
     // ==========================================
 
-    const navLinks =
-        document.querySelectorAll(
+    const navLinks = [
+        ...document.querySelectorAll(
             ".nav-link"
-        );
+        )
+    ];
 
-    const pageTabs =
-        document.querySelectorAll(
+    const paginas = [
+        ...document.querySelectorAll(
             ".page-tab"
-        );
+        )
+    ];
 
-    const liveRegion =
-        document.getElementById(
-            "liveRegion"
-        );
-
-    function ativarAbaPorId(tabId) {
-        const alvo =
-            document.getElementById(
-                tabId
+    function ativarAba(id) {
+        if (
+            id === "tab-cadastrar"
+            && (
+                !obterUsuario()?.id
+                || !obterToken()
+            )
+        ) {
+            pedirLogin(
+                "Entre na sua conta para publicar um veículo."
             );
 
-        if (!alvo) return;
+            return;
+        }
+
+        if (!$(id)) return;
+
+        paginas.forEach((pagina) => {
+            pagina.classList.toggle(
+                "active",
+                pagina.id === id
+            );
+        });
 
         navLinks.forEach((link) => {
-            const ehAtiva =
-                link.getAttribute(
-                    "data-tab"
-                ) === tabId;
+            const ativa =
+                link.dataset.tab === id;
 
             link.classList.toggle(
                 "active",
-                ehAtiva
+                ativa
             );
 
-            if (ehAtiva) {
+            if (ativa) {
                 link.setAttribute(
                     "aria-current",
                     "page"
@@ -436,29 +289,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        pageTabs.forEach((pagina) => {
-            pagina.classList.toggle(
-                "active",
-                pagina.id === tabId
-            );
-        });
-
-        if (liveRegion) {
-            liveRegion.textContent =
-                `Seção ${
-                    alvo.querySelector(
-                        "h2"
-                    )?.textContent
-                    || tabId
-                } exibida.`;
+        if ($("liveRegion")) {
+            $("liveRegion").textContent =
+                "Seção alterada.";
         }
-    }
 
-    function exigeLogin(tabId) {
-        return (
-            tabId === "tab-cadastrar"
-            || tabId === "cadastrar"
-        );
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
     }
 
     navLinks.forEach((link) => {
@@ -467,157 +306,34 @@ document.addEventListener("DOMContentLoaded", () => {
             (evento) => {
                 evento.preventDefault();
 
-                const targetTab =
-                    link.getAttribute(
-                        "data-tab"
-                    );
-
-                if (
-                    exigeLogin(targetTab)
-                    && !possuiSessaoValida()
-                ) {
-                    mostrarAvisoRedirecionarLogin(
-                        "Para publicar anúncios de veículos, é necessário acessar uma conta ativa."
-                    );
-
-                    return;
-                }
-
-                ativarAbaPorId(
-                    targetTab
+                ativarAba(
+                    link.dataset.tab
                 );
             }
         );
     });
 
-    const urlParams =
+    const abaUrl =
         new URLSearchParams(
             window.location.search
-        );
-
-    const abaDaUrl =
-        urlParams.get("tab");
+        ).get("tab");
 
     if (
-        abaDaUrl
-        && /^[a-z-]+$/i.test(
-            abaDaUrl
-        )
+        abaUrl
+        && /^[a-z-]+$/i.test(abaUrl)
     ) {
-        const idAba =
-            abaDaUrl.startsWith("tab-")
-                ? abaDaUrl
-                : `tab-${abaDaUrl}`;
-
-        if (
-            exigeLogin(abaDaUrl)
-            && !possuiSessaoValida()
-        ) {
-            mostrarAvisoRedirecionarLogin(
-                "Para publicar anúncios de veículos, é necessário acessar uma conta ativa."
-            );
-        } else {
-            ativarAbaPorId(
-                idAba
-            );
-        }
-    }
-
-    function irParaCatalogo() {
-        ativarAbaPorId(
-            "tab-catalogo"
+        ativarAba(
+            abaUrl.startsWith("tab-")
+                ? abaUrl
+                : `tab-${abaUrl}`
         );
     }
 
     // ==========================================
-    // 2. CATÁLOGO
+    // NORMALIZAÇÃO DOS VEÍCULOS
     // ==========================================
 
-    let bancoDeDadosVeiculos = [];
-
-    const featuredCarContainer =
-        document.getElementById(
-            "featuredCar"
-        );
-
-    const carsGrid =
-        document.getElementById(
-            "carsGrid"
-        );
-
-    const topDealsContainer =
-        document.getElementById(
-            "topDeals"
-        );
-
-    const resultCount =
-        document.getElementById(
-            "resultCount"
-        );
-
-    const inputBusca =
-        document.getElementById(
-            "filtroBusca"
-        );
-
-    const inputPrecoMax =
-        document.getElementById(
-            "filtroPrecoMax"
-        );
-
-    const inputAnoMin =
-        document.getElementById(
-            "filtroAnoMin"
-        );
-
-    const selectCombustivel =
-        document.getElementById(
-            "filtroCombustivel"
-        );
-
-    const selectCambio =
-        document.getElementById(
-            "filtroCambio"
-        );
-
-    const selectCarroceria =
-        document.getElementById(
-            "filtroCarroceria"
-        );
-
-    const formFiltro =
-        document.getElementById(
-            "formFiltro"
-        );
-
-    const btnLimpar =
-        document.getElementById(
-            "btnLimparFiltros"
-        );
-
-    function formatarMoeda(valor) {
-        const numero =
-            Number(valor) || 0;
-
-        const temCentavos =
-            Math.round(
-                numero * 100
-            ) % 100 !== 0;
-
-        return numero.toLocaleString(
-            "pt-BR",
-            {
-                style: "currency",
-                currency: "BRL",
-                minimumFractionDigits:
-                    temCentavos ? 2 : 0,
-                maximumFractionDigits:
-                    temCentavos ? 2 : 0
-            }
-        );
-    }
-
-    const NOMES_COMBUSTIVEL = {
+    const COMBUSTIVEIS = {
         1: "Gasolina",
         2: "Etanol",
         3: "Flex",
@@ -626,623 +342,413 @@ document.addEventListener("DOMContentLoaded", () => {
         6: "Híbrido"
     };
 
-    const NOMES_CAMBIO = {
+    const CAMBIOS = {
         1: "Manual",
         2: "Automático",
         3: "Semi-automático"
     };
 
-    function textoOuNulo(valor) {
+    function textoValido(valor) {
+        const texto =
+            String(valor ?? "").trim();
+
         return (
-            typeof valor === "string"
-            && valor.trim()
-            && !/^\d+$/.test(
-                valor.trim()
-            )
+            texto
+            && !/^\d+$/.test(texto)
         )
-            ? valor.trim()
-            : null;
+            ? texto
+            : "";
     }
 
-    async function carregarVeiculosDoBanco() {
+    function normalizarVeiculo(
+        item,
+        indice
+    ) {
+        const marca =
+            textoValido(item.marca_nome)
+            || textoValido(item.marca)
+            || "Marca";
+
+        const modelo =
+            textoValido(item.modelo_nome)
+            || textoValido(item.modelo)
+            || "Modelo";
+
+        const combustivel =
+            textoValido(
+                item.combustivel_nome
+            )
+            || textoValido(
+                item.combustivel
+            )
+            || COMBUSTIVEIS[
+                item.tipo_combustivel_id
+            ]
+            || "Não informado";
+
+        const cambio =
+            textoValido(
+                item.cambio_nome
+            )
+            || textoValido(
+                item.cambio
+            )
+            || textoValido(
+                item.transmissao
+            )
+            || CAMBIOS[
+                item.tipo_transmissao_id
+            ]
+            || "Não informado";
+
+        return {
+            id:
+                Number(item.id)
+                || indice + 1,
+
+            marca,
+            modelo,
+
+            nome:
+                `${marca} ${modelo}`.trim(),
+
+            versao:
+                textoValido(item.versao),
+
+            ano:
+                Number(item.ano_modelo)
+                || Number(item.ano)
+                || 0,
+
+            anoFabricacao:
+                Number(
+                    item.ano_fabricacao
+                )
+                || Number(item.ano_modelo)
+                || 0,
+
+            preco:
+                Number(item.preco)
+                || 0,
+
+            quilometragem:
+                Number(
+                    item.quilometragem
+                )
+                || 0,
+
+            combustivel,
+            cambio,
+
+            carroceria:
+                textoValido(
+                    item.carroceria
+                )
+                || textoValido(
+                    item.categoria
+                )
+                || "Outro",
+
+            cor:
+                textoValido(item.cor),
+
+            imagem:
+                imagemSegura(
+                    item.imagem
+                ),
+
+            destaque:
+                Boolean(
+                    item.destaque_principal
+                ),
+
+            original: item
+        };
+    }
+
+    // ==========================================
+    // CARREGAMENTO DO CATÁLOGO
+    // ==========================================
+
+    async function carregarCatalogo() {
+        const grid =
+            $("carsGrid");
+
+        if (!grid) return;
+
+        grid.setAttribute(
+            "aria-busy",
+            "true"
+        );
+
+        grid.innerHTML = `
+            <div class="loading-state">
+                <div>
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    Carregando oportunidades...
+                </div>
+            </div>
+        `;
+
         try {
-            const resposta =
-                await fetch(
-                    "/api/veiculos"
-                );
+            const resposta = await fetch(
+                "/api/veiculos?pagina=1&limite=50",
+                {
+                    headers: {
+                        Accept:
+                            "application/json"
+                    }
+                }
+            );
 
-            const dados =
-                await resposta
-                    .json()
-                    .catch(() => ({}));
-
-            if (!resposta.ok) {
-                throw new Error(
-                    dados.mensagem
-                    || `Falha HTTP ${resposta.status}`
-                );
-            }
+            const dados = await resposta
+                .json()
+                .catch(() => ({}));
 
             if (
-                dados.sucesso
-                && Array.isArray(
+                !resposta.ok
+                || dados.sucesso === false
+            ) {
+                throw new Error(
+                    dados.mensagem
+                    || `Erro HTTP ${resposta.status}`
+                );
+            }
+
+            veiculos =
+                Array.isArray(
                     dados.veiculos
                 )
-            ) {
-                bancoDeDadosVeiculos =
-                    dados.veiculos.map(
-                        (veiculo) => ({
-                            id:
-                                Number(
-                                    veiculo.id
-                                ) || 0,
+                    ? dados.veiculos.map(
+                        normalizarVeiculo
+                    )
+                    : [];
 
-                            marca:
-                                String(
-                                    veiculo.marca_nome
-                                    || veiculo.marca
-                                    || "Outra"
-                                ),
-
-                            modelo_nome:
-                                String(
-                                    veiculo.modelo_nome
-                                    || veiculo.modelo
-                                    || ""
-                                ),
-
-                            marca_nome:
-                                String(
-                                    veiculo.marca_nome
-                                    || veiculo.marca
-                                    || ""
-                                ),
-
-                            versao:
-                                String(
-                                    veiculo.versao
-                                    || ""
-                                ),
-
-                            categoria:
-                                String(
-                                    veiculo.carroceria
-                                    || "Outro"
-                                ),
-
-                            transmissao:
-                                textoOuNulo(
-                                    veiculo.cambio_nome
-                                )
-                                || textoOuNulo(
-                                    veiculo.cambio
-                                )
-                                || NOMES_CAMBIO[
-                                    veiculo.tipo_transmissao_id
-                                ]
-                                || "Não informado",
-
-                            combustivel:
-                                textoOuNulo(
-                                    veiculo.combustivel_nome
-                                )
-                                || textoOuNulo(
-                                    veiculo.combustivel
-                                )
-                                || NOMES_COMBUSTIVEL[
-                                    veiculo.tipo_combustivel_id
-                                ]
-                                || "Não informado",
-
-                            ano:
-                                Number(
-                                    veiculo.ano_modelo
-                                ) || 2020,
-
-                            ano_fabricacao:
-                                Number(
-                                    veiculo.ano_fabricacao
-                                ) || 2020,
-
-                            condicao:
-                                "Seminovo",
-
-                            quilometragem:
-                                Number(
-                                    veiculo.quilometragem
-                                ) || 0,
-
-                            preco:
-                                Number(
-                                    veiculo.preco
-                                ) || 0,
-
-                            destaquePrincipal:
-                                Boolean(
-                                    veiculo.destaque_principal
-                                ),
-
-                            imagem:
-                                sanitizarSrcImagem(
-                                    veiculo.imagem
-                                        ? `/uploads/${veiculo.imagem}`
-                                        : "/imagens/sem-foto.jpg"
-                                )
-                        })
-                    );
-            }
+            aplicarFiltros({
+                resetarLimite: true
+            });
         } catch (erro) {
             console.error(
-                "Erro ao carregar veículos:",
+                "Erro ao carregar catálogo:",
                 erro
             );
 
+            veiculos = [];
+            resultados = [];
+
+            renderizarResultados();
+
             mostrarToast(
-                "Não foi possível carregar o catálogo agora.",
+                "Não foi possível carregar os veículos agora.",
                 "erro"
             );
-        }
-
-        renderizarDestaque();
-
-        renderizarCardsCatalogo(
-            bancoDeDadosVeiculos
-        );
-
-        renderizarTopDeals();
-    }
-
-    function renderizarDestaque() {
-        if (!featuredCarContainer) {
-            return;
-        }
-
-        if (
-            bancoDeDadosVeiculos.length
-            === 0
-        ) {
-            featuredCarContainer.innerHTML =
-                "";
-
-            return;
-        }
-
-        const principal =
-            bancoDeDadosVeiculos.find(
-                (veiculo) => {
-                    return veiculo
-                        .destaquePrincipal;
-                }
-            )
-            || bancoDeDadosVeiculos[0];
-
-        const nomeCompleto =
-            `${principal.marca_nome} ${principal.modelo_nome}`
-                .trim();
-
-        featuredCarContainer.innerHTML = `
-            <img
-                src="${sanitizarSrcImagem(principal.imagem)}"
-                alt="${escapeHTML(nomeCompleto)}"
-            >
-
-            <div class="featured-info">
-                <span>
-                    ${escapeHTML(String(principal.ano))}
-                    ·
-                    ${escapeHTML(nomeCompleto)}
-                </span>
-
-                <span class="price">
-                    ${formatarMoeda(principal.preco)}
-                </span>
-            </div>
-        `;
-    }
-
-    function renderizarCardsCatalogo(
-        lista
-    ) {
-        if (!carsGrid) return;
-
-        carsGrid.innerHTML = "";
-
-        if (resultCount) {
-            resultCount.textContent =
-                `${lista.length} veículo${
-                    lista.length === 1
-                        ? ""
-                        : "s"
-                } encontrado${
-                    lista.length === 1
-                        ? ""
-                        : "s"
-                }`;
-        }
-
-        if (lista.length === 0) {
-            const vazio =
-                document.createElement("p");
-
-            vazio.className =
-                "empty-state";
-
-            vazio.textContent =
-                "Nenhum veículo encontrado com os filtros selecionados.";
-
-            carsGrid.appendChild(
-                vazio
+        } finally {
+            grid.setAttribute(
+                "aria-busy",
+                "false"
             );
-
-            return;
         }
-
-        const usuarioLogado =
-            obterUsuarioSessao();
-
-        const temLoginValido =
-            Boolean(
-                usuarioLogado?.id
-            );
-
-        const favoritosIds =
-            lerLocalStorageSeguro(
-                "favoritos_veiculos"
-            ) || [];
-
-        lista.forEach((veiculo) => {
-            const isFavorito =
-                temLoginValido
-                && Array.isArray(
-                    favoritosIds
-                )
-                && favoritosIds.includes(
-                    veiculo.id
-                );
-
-            const nomeCompleto =
-                `${veiculo.marca_nome} ${veiculo.modelo_nome}`
-                    .trim();
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-            card.className =
-                "card-item-catalogo";
-
-            const iconeClasse =
-                isFavorito
-                    ? "fa-solid fa-heart"
-                    : "fa-regular fa-heart";
-
-            const corIcone =
-                isFavorito
-                    ? "color: #ff0000;"
-                    : "color: #ffffff;";
-
-            card.innerHTML = `
-                <div class="card-img-wrapper">
-                    <img
-                        src="${sanitizarSrcImagem(veiculo.imagem)}"
-                        alt="${escapeHTML(nomeCompleto)}"
-                        loading="lazy"
-                    >
-
-                    <button
-                        type="button"
-                        class="btn-favoritar"
-                        data-id="${veiculo.id}"
-                        title="${
-                            isFavorito
-                                ? "Remover dos favoritos"
-                                : "Favoritar veículo"
-                        }"
-                        aria-pressed="${isFavorito}"
-                    >
-                        <i
-                            class="${iconeClasse}"
-                            style="${corIcone}"
-                        ></i>
-                    </button>
-                </div>
-
-                <div class="card-corpo">
-                    <h3>
-                        ${escapeHTML(nomeCompleto)}
-                    </h3>
-
-                    <p class="card-versao">
-                        ${escapeHTML(veiculo.versao)}
-                    </p>
-
-                    <p class="card-detalhes">
-                        Ano
-                        ${escapeHTML(String(veiculo.ano_fabricacao))}
-                        /
-                        ${escapeHTML(String(veiculo.ano))}
-                        ·
-                        ${escapeHTML(
-                            veiculo.quilometragem
-                                .toLocaleString("pt-BR")
-                        )}
-                        km
-                    </p>
-
-                    <div class="card-footer">
-                        <div>
-                            <span class="rotulo-preco">
-                                Valor total
-                            </span>
-
-                            <span class="card-preco">
-                                ${formatarMoeda(veiculo.preco)}
-                            </span>
-                        </div>
-
-                        <a
-                            href="/pages/detalhes-veiculo.html?id=${
-                                encodeURIComponent(
-                                    veiculo.id
-                                )
-                            }"
-                            class="btn-detalhes"
-                        >
-                            Ver detalhes
-                        </a>
-                    </div>
-                </div>
-            `;
-
-            const btnFav =
-                card.querySelector(
-                    ".btn-favoritar"
-                );
-
-            btnFav?.addEventListener(
-                "click",
-                (evento) => {
-                    evento.preventDefault();
-                    evento.stopPropagation();
-
-                    const usuarioAtual =
-                        obterUsuarioSessao();
-
-                    if (
-                        !usuarioAtual?.id
-                    ) {
-                        mostrarAvisoRedirecionarLogin(
-                            "Para favoritar veículos, é necessário acessar sua conta."
-                        );
-
-                        return;
-                    }
-
-                    let favoritosAtuais =
-                        lerLocalStorageSeguro(
-                            "favoritos_veiculos"
-                        ) || [];
-
-                    if (
-                        !Array.isArray(
-                            favoritosAtuais
-                        )
-                    ) {
-                        favoritosAtuais = [];
-                    }
-
-                    const jaFavoritado =
-                        favoritosAtuais.includes(
-                            veiculo.id
-                        );
-
-                    favoritosAtuais =
-                        jaFavoritado
-                            ? favoritosAtuais.filter(
-                                (id) => {
-                                    return id
-                                        !== veiculo.id;
-                                }
-                            )
-                            : [
-                                ...favoritosAtuais,
-                                veiculo.id
-                            ];
-
-                    const icone =
-                        btnFav.querySelector(
-                            "i"
-                        );
-
-                    if (icone) {
-                        icone.className =
-                            jaFavoritado
-                                ? "fa-regular fa-heart"
-                                : "fa-solid fa-heart";
-
-                        icone.style.color =
-                            jaFavoritado
-                                ? "#ffffff"
-                                : "#ff0000";
-                    }
-
-                    btnFav.setAttribute(
-                        "aria-pressed",
-                        String(
-                            !jaFavoritado
-                        )
-                    );
-
-                    btnFav.title =
-                        jaFavoritado
-                            ? "Favoritar veículo"
-                            : "Remover dos favoritos";
-
-                    localStorage.setItem(
-                        "favoritos_veiculos",
-                        JSON.stringify(
-                            favoritosAtuais
-                        )
-                    );
-                }
-            );
-
-            carsGrid.appendChild(
-                card
-            );
-        });
-    }
-
-    function renderizarTopDeals() {
-        if (!topDealsContainer) {
-            return;
-        }
-
-        topDealsContainer.innerHTML = "";
-
-        bancoDeDadosVeiculos
-            .slice(0, 4)
-            .forEach((carro) => {
-                const nomeCompleto =
-                    `${carro.marca_nome} ${carro.modelo_nome}`
-                        .trim();
-
-                const item =
-                    document.createElement(
-                        "div"
-                    );
-
-                item.className =
-                    "deal-item";
-
-                item.innerHTML = `
-                    <img
-                        src="${sanitizarSrcImagem(carro.imagem)}"
-                        alt="${escapeHTML(nomeCompleto)}"
-                        loading="lazy"
-                    >
-
-                    <div class="deal-info">
-                        <div class="deal-title">
-                            ${escapeHTML(nomeCompleto)}
-                        </div>
-
-                        <div
-                            style="
-                                color: var(--text-faint);
-                                font-size: 0.72rem;
-                            "
-                        >
-                            ${escapeHTML(String(carro.ano))}
-                            ·
-                            ${escapeHTML(carro.condicao)}
-                        </div>
-
-                        <div class="deal-price">
-                            ${formatarMoeda(carro.preco)}
-                        </div>
-                    </div>
-                `;
-
-                topDealsContainer.appendChild(
-                    item
-                );
-            });
     }
 
     // ==========================================
-    // FILTROS
+    // CAMPOS DOS FILTROS
     // ==========================================
 
-    function executarBusca() {
-        const termo =
-            inputBusca
-                ? inputBusca.value
-                    .trim()
-                    .toLowerCase()
-                    .slice(0, 60)
-                : "";
+    const camposFiltro = {
+        busca:
+            $("filtroBusca"),
 
-        const precoMax =
-            inputPrecoMax
-            && inputPrecoMax.value !== ""
-                ? Number(
-                    inputPrecoMax.value
-                )
-                : null;
+        precoMin:
+            $("filtroPrecoMin"),
 
-        const anoMin =
-            inputAnoMin
-            && inputAnoMin.value !== ""
-                ? Number(
-                    inputAnoMin.value
-                )
-                : null;
+        precoMax:
+            $("filtroPrecoMax"),
 
-        const combustivel =
-            selectCombustivel
-                ? selectCombustivel.value
-                : "";
+        anoMin:
+            $("filtroAnoMin"),
 
-        const cambio =
-            selectCambio
-                ? selectCambio.value
-                : "";
+        anoMax:
+            $("filtroAnoMax"),
 
-        const carroceria =
-            selectCarroceria
-                ? selectCarroceria.value
-                : "";
+        combustivel:
+            $("filtroCombustivel"),
 
-        const filtrados =
-            bancoDeDadosVeiculos.filter(
+        cambio:
+            $("filtroCambio"),
+
+        carroceria:
+            $("filtroCarroceria"),
+
+        ordenacao:
+            $("filtroOrdenacao")
+    };
+
+    function numeroCampo(campo) {
+        const valor =
+            String(
+                campo?.value || ""
+            ).trim();
+
+        if (!valor) {
+            return null;
+        }
+
+        const numero =
+            Number(valor);
+
+        return Number.isFinite(numero)
+            ? numero
+            : null;
+    }
+
+    function estadoFiltros() {
+        return {
+            busca:
+                normalizarTexto(
+                    camposFiltro
+                        .busca
+                        ?.value
+                ),
+
+            precoMin:
+                numeroCampo(
+                    camposFiltro.precoMin
+                ),
+
+            precoMax:
+                numeroCampo(
+                    camposFiltro.precoMax
+                ),
+
+            anoMin:
+                numeroCampo(
+                    camposFiltro.anoMin
+                ),
+
+            anoMax:
+                numeroCampo(
+                    camposFiltro.anoMax
+                ),
+
+            combustivel:
+                normalizarTexto(
+                    camposFiltro
+                        .combustivel
+                        ?.value
+                ),
+
+            cambio:
+                normalizarTexto(
+                    camposFiltro
+                        .cambio
+                        ?.value
+                ),
+
+            carroceria:
+                normalizarTexto(
+                    camposFiltro
+                        .carroceria
+                        ?.value
+                ),
+
+            ordenacao:
+                camposFiltro
+                    .ordenacao
+                    ?.value
+                || "recentes"
+        };
+    }
+
+    // ==========================================
+    // APLICAR FILTROS
+    // ==========================================
+
+    function aplicarFiltros({
+        resetarLimite = false
+    } = {}) {
+        const filtros =
+            estadoFiltros();
+
+        if (resetarLimite) {
+            limiteVisivel =
+                PAGE_SIZE;
+        }
+
+        resultados =
+            veiculos.filter(
                 (veiculo) => {
-                    const nomeCompleto =
-                        `${veiculo.marca_nome} ${veiculo.modelo_nome} ${veiculo.versao}`
-                            .toLowerCase();
+                    const indiceBusca =
+                        normalizarTexto([
+                            veiculo.marca,
+                            veiculo.modelo,
+                            veiculo.versao,
+                            veiculo.carroceria,
+                            veiculo.combustivel,
+                            veiculo.cambio,
+                            veiculo.cor,
+                            veiculo.ano
+                        ].join(" "));
 
-                    const bateTexto =
-                        termo === ""
-                        || nomeCompleto.includes(
-                            termo
+                    const bateBusca =
+                        !filtros.busca
+                        || indiceBusca.includes(
+                            filtros.busca
                         );
 
-                    const batePreco =
-                        precoMax === null
-                        || Number.isNaN(
-                            precoMax
-                        )
+                    const batePrecoMin =
+                        filtros.precoMin
+                            === null
                         || veiculo.preco
-                            <= precoMax;
+                            >= filtros.precoMin;
 
-                    const bateAno =
-                        anoMin === null
-                        || Number.isNaN(
-                            anoMin
-                        )
+                    const batePrecoMax =
+                        filtros.precoMax
+                            === null
+                        || veiculo.preco
+                            <= filtros.precoMax;
+
+                    const bateAnoMin =
+                        filtros.anoMin
+                            === null
                         || veiculo.ano
-                            >= anoMin;
+                            >= filtros.anoMin;
+
+                    const bateAnoMax =
+                        filtros.anoMax
+                            === null
+                        || veiculo.ano
+                            <= filtros.anoMax;
 
                     const bateCombustivel =
-                        combustivel === ""
-                        || veiculo.combustivel
-                            === combustivel;
+                        !filtros.combustivel
+                        || normalizarTexto(
+                            veiculo.combustivel
+                        )
+                            === filtros
+                                .combustivel;
 
                     const bateCambio =
-                        cambio === ""
-                        || veiculo.transmissao
-                            === cambio;
+                        !filtros.cambio
+                        || normalizarTexto(
+                            veiculo.cambio
+                        ).includes(
+                            filtros.cambio
+                        );
 
                     const bateCarroceria =
-                        carroceria === ""
-                        || veiculo.categoria
-                            === carroceria;
+                        !filtros.carroceria
+                        || normalizarTexto(
+                            veiculo.carroceria
+                        )
+                            === filtros
+                                .carroceria;
 
                     return (
-                        bateTexto
-                        && batePreco
-                        && bateAno
+                        bateBusca
+                        && batePrecoMin
+                        && batePrecoMax
+                        && bateAnoMin
+                        && bateAnoMax
                         && bateCombustivel
                         && bateCambio
                         && bateCarroceria
@@ -1250,708 +756,1655 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             );
 
-        renderizarCardsCatalogo(
-            filtrados
+        const ordenacoes = {
+            recentes: (a, b) =>
+                b.id - a.id,
+
+            "menor-preco": (a, b) =>
+                a.preco - b.preco,
+
+            "maior-preco": (a, b) =>
+                b.preco - a.preco,
+
+            "mais-novos": (a, b) =>
+                b.ano - a.ano
+                || b.id - a.id,
+
+            "menor-km": (a, b) =>
+                a.quilometragem
+                - b.quilometragem
+        };
+
+        resultados.sort(
+            ordenacoes[
+                filtros.ordenacao
+            ]
+            || ordenacoes.recentes
         );
+
+        renderizarResultados();
+        renderizarChips();
+
+        renderizarDestaque(
+            resultados[0]
+            || veiculos[0]
+        );
+
+        renderizarOfertas();
     }
 
-    formFiltro?.addEventListener(
-        "submit",
-        (evento) => {
-            evento.preventDefault();
-            executarBusca();
-        }
-    );
+    function agendarBusca() {
+        window.clearTimeout(
+            debounceBusca
+        );
 
-    btnLimpar?.addEventListener(
-        "click",
-        () => {
-            setTimeout(
-                executarBusca,
-                0
+        debounceBusca =
+            window.setTimeout(
+                () => {
+                    aplicarFiltros({
+                        resetarLimite: true
+                    });
+                },
+                220
             );
-        }
-    );
+    }
 
-    if (inputBusca) {
-        let debounce;
+    // ==========================================
+    // EVENTOS DOS FILTROS
+    // ==========================================
 
-        inputBusca.addEventListener(
-            "input",
+    $("formFiltro")
+        ?.addEventListener(
+            "submit",
+            (evento) => {
+                evento.preventDefault();
+
+                aplicarFiltros({
+                    resetarLimite: true
+                });
+
+                fecharFiltrosMobile();
+            }
+        );
+
+    $("formFiltro")
+        ?.addEventListener(
+            "reset",
             () => {
-                clearTimeout(debounce);
-
-                debounce = setTimeout(
-                    executarBusca,
-                    250
+                window.setTimeout(
+                    () => {
+                        aplicarFiltros({
+                            resetarLimite:
+                                true
+                        });
+                    },
+                    0
                 );
             }
         );
-    }
 
-    // ==========================================
-    // 3. UPLOAD E PRÉ-VISUALIZAÇÃO
-    // ==========================================
-
-    const inputImagem =
-        document.getElementById(
-            "imagem"
+    camposFiltro
+        .busca
+        ?.addEventListener(
+            "input",
+            agendarBusca
         );
 
-    const btnVerFoto =
-        document.getElementById(
-            "btnVerFoto"
+    [
+        camposFiltro.precoMin,
+        camposFiltro.precoMax,
+        camposFiltro.anoMin,
+        camposFiltro.anoMax
+    ].forEach((campo) => {
+        campo?.addEventListener(
+            "input",
+            agendarBusca
         );
+    });
 
-    const nomeArquivo =
-        document.getElementById(
-            "nomeArquivoSelecionado"
-        );
-
-    const modal =
-        document.getElementById(
-            "modalVisualizarFoto"
-        );
-
-    const imgPreviewModal =
-        document.getElementById(
-            "imgPreviewModal"
-        );
-
-    const miniaturaPreview =
-        document.getElementById(
-            "miniaturaPreview"
-        );
-
-    const erroImagem =
-        document.getElementById(
-            "erroImagem"
-        );
-
-    const TIPOS_IMAGEM_ACEITOS = [
-        "image/png",
-        "image/jpeg",
-        "image/webp"
-    ];
-
-    const TAMANHO_MAXIMO_MB = 5;
-
-    function limparSelecaoImagem() {
-        if (nomeArquivo) {
-            nomeArquivo.textContent =
-                "Selecionar foto";
-        }
-
-        if (btnVerFoto) {
-            btnVerFoto.disabled = true;
-        }
-
-        if (imgPreviewModal) {
-            imgPreviewModal.src = "";
-        }
-
-        if (miniaturaPreview) {
-            miniaturaPreview.src = "";
-
-            miniaturaPreview.style.display =
-                "none";
-        }
-
-        if (inputImagem) {
-            inputImagem.value = "";
-        }
-    }
-
-    inputImagem?.addEventListener(
-        "change",
-        (evento) => {
-            const arquivo =
-                evento.target.files?.[0];
-
-            if (erroImagem) {
-                erroImagem.textContent = "";
+    [
+        camposFiltro.combustivel,
+        camposFiltro.cambio,
+        camposFiltro.carroceria,
+        camposFiltro.ordenacao
+    ].forEach((campo) => {
+        campo?.addEventListener(
+            "change",
+            () => {
+                aplicarFiltros({
+                    resetarLimite: true
+                });
             }
-
-            if (!arquivo) {
-                limparSelecaoImagem();
-                return;
-            }
-
-            if (
-                !TIPOS_IMAGEM_ACEITOS.includes(
-                    arquivo.type
-                )
-            ) {
-                if (erroImagem) {
-                    erroImagem.textContent =
-                        "Envie uma imagem PNG, JPEG ou WebP.";
-                }
-
-                limparSelecaoImagem();
-                return;
-            }
-
-            if (
-                arquivo.size
-                > TAMANHO_MAXIMO_MB
-                    * 1024
-                    * 1024
-            ) {
-                if (erroImagem) {
-                    erroImagem.textContent =
-                        `A imagem deve ter até ${TAMANHO_MAXIMO_MB} MB.`;
-                }
-
-                limparSelecaoImagem();
-                return;
-            }
-
-            if (nomeArquivo) {
-                nomeArquivo.textContent =
-                    arquivo.name.slice(0, 40);
-            }
-
-            if (btnVerFoto) {
-                btnVerFoto.disabled = false;
-            }
-
-            const reader =
-                new FileReader();
-
-            reader.onload =
-                (eventoLeitura) => {
-                    const urlResultado =
-                        eventoLeitura
-                            .target
-                            .result;
-
-                    if (imgPreviewModal) {
-                        imgPreviewModal.src =
-                            urlResultado;
-                    }
-
-                    if (miniaturaPreview) {
-                        miniaturaPreview.src =
-                            urlResultado;
-
-                        miniaturaPreview.style.display =
-                            "block";
-                    }
-                };
-
-            reader.onerror = () => {
-                if (erroImagem) {
-                    erroImagem.textContent =
-                        "Não foi possível ler a imagem.";
-                }
-
-                limparSelecaoImagem();
-            };
-
-            reader.readAsDataURL(
-                arquivo
-            );
-        }
-    );
-
-    function abrirModalFoto() {
-        if (
-            modal
-            && imgPreviewModal
-            && imgPreviewModal.src
-        ) {
-            modal.classList.add(
-                "ativo"
-            );
-
-            document
-                .getElementById(
-                    "btnFecharModal"
-                )
-                ?.focus();
-        }
-    }
-
-    function fecharModalFoto() {
-        modal?.classList.remove(
-            "ativo"
         );
-    }
+    });
 
-    btnVerFoto?.addEventListener(
-        "click",
-        abrirModalFoto
-    );
-
-    document
-        .getElementById(
-            "btnFecharModal"
-        )
+    $("btnBuscaHero")
         ?.addEventListener(
             "click",
-            fecharModalFoto
-        );
+            () => {
+                aplicarFiltros({
+                    resetarLimite: true
+                });
 
-    modal?.addEventListener(
-        "click",
-        (evento) => {
-            if (evento.target === modal) {
-                fecharModalFoto();
+                $("carsGrid")
+                    ?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
             }
-        }
-    );
-
-    document.addEventListener(
-        "keydown",
-        (evento) => {
-            if (evento.key === "Escape") {
-                fecharModalFoto();
-            }
-        }
-    );
-
-    // ==========================================
-    // 4. VALIDAÇÃO E ENVIO DO ANÚNCIO
-    // ==========================================
-
-    const formAnuncio =
-        document.getElementById(
-            "formAnuncio"
         );
 
-    const btnAnunciar =
-        document.getElementById(
-            "btnAnunciar"
-        );
+    document
+        .querySelectorAll(
+            "[data-busca-rapida]"
+        )
+        .forEach((botao) => {
+            botao.addEventListener(
+                "click",
+                () => {
+                    camposFiltro
+                        .busca
+                        .value =
+                        botao.dataset
+                            .buscaRapida
+                        || "";
 
-    const PRECO_MAXIMO =
-        10000000;
+                    aplicarFiltros({
+                        resetarLimite: true
+                    });
 
-    function definirErro(
-        campo,
-        elementoErro,
-        mensagem
-    ) {
-        if (elementoErro) {
-            elementoErro.textContent =
-                mensagem;
-        }
-
-        if (campo) {
-            campo.setAttribute(
-                "aria-invalid",
-                mensagem
-                    ? "true"
-                    : "false"
+                    $("carsGrid")
+                        ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                }
             );
-        }
-    }
+        });
 
-    function limparPrecoParaBanco(
-        valorBruto
-    ) {
-        if (
-            typeof valorBruto
-            === "number"
+    // ==========================================
+    // CHIPS DOS FILTROS ATIVOS
+    // ==========================================
+
+    function filtrosAtivos() {
+        const itens = [];
+
+        function adicionar(
+            id,
+            rotulo,
+            valor
         ) {
-            return valorBruto;
+            if (
+                valor !== null
+                && valor !== ""
+            ) {
+                itens.push({
+                    id,
+                    rotulo,
+                    valor
+                });
+            }
         }
 
-        if (!valorBruto) {
-            return 0;
-        }
+        adicionar(
+            "filtroBusca",
+            "Busca",
+            camposFiltro
+                .busca
+                ?.value
+                .trim()
+        );
 
-        const limpo =
-            String(valorBruto)
-                .replace(/\D/g, "");
+        adicionar(
+            "filtroPrecoMin",
+            "Preço desde",
+            numeroCampo(
+                camposFiltro.precoMin
+            ) === null
+                ? ""
+                : formatarMoeda(
+                    numeroCampo(
+                        camposFiltro
+                            .precoMin
+                    )
+                )
+        );
 
-        return Number(limpo) || 0;
+        adicionar(
+            "filtroPrecoMax",
+            "Preço até",
+            numeroCampo(
+                camposFiltro.precoMax
+            ) === null
+                ? ""
+                : formatarMoeda(
+                    numeroCampo(
+                        camposFiltro
+                            .precoMax
+                    )
+                )
+        );
+
+        adicionar(
+            "filtroAnoMin",
+            "Ano desde",
+            camposFiltro
+                .anoMin
+                ?.value
+        );
+
+        adicionar(
+            "filtroAnoMax",
+            "Ano até",
+            camposFiltro
+                .anoMax
+                ?.value
+        );
+
+        adicionar(
+            "filtroCombustivel",
+            "Combustível",
+            camposFiltro
+                .combustivel
+                ?.value
+        );
+
+        adicionar(
+            "filtroCambio",
+            "Câmbio",
+            camposFiltro
+                .cambio
+                ?.value
+        );
+
+        adicionar(
+            "filtroCarroceria",
+            "Carroceria",
+            camposFiltro
+                .carroceria
+                ?.value
+        );
+
+        return itens;
     }
 
-    formAnuncio?.addEventListener(
-        "submit",
-        async (evento) => {
-            evento.preventDefault();
+    function renderizarChips() {
+        const container =
+            $("chipsFiltros");
 
-            const usuarioLogado =
-                obterUsuarioSessao();
+        const ativos =
+            filtrosAtivos();
 
-            const token =
-                obterToken();
+        if (!container) return;
 
-            if (
-                !usuarioLogado?.id
-                || !token
-            ) {
-                mostrarAvisoRedirecionarLogin(
-                    "Para publicar anúncios, é necessário acessar uma conta ativa."
-                );
+        container.innerHTML =
+            ativos.map((item) => `
+                <span class="filter-chip">
+                    ${escapeHTML(
+                        item.rotulo
+                    )}:
+                    ${escapeHTML(
+                        item.valor
+                    )}
 
-                return;
+                    <button
+                        type="button"
+                        data-remover-filtro="${escapeHTML(
+                            item.id
+                        )}"
+                        aria-label="Remover filtro ${escapeHTML(
+                            item.rotulo
+                        )}"
+                    >
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </span>
+            `).join("");
+
+        const badge =
+            $("filterBadge");
+
+        if (badge) {
+            badge.textContent =
+                String(ativos.length);
+
+            badge.hidden =
+                ativos.length === 0;
+        }
+    }
+
+    $("chipsFiltros")
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                const botao =
+                    evento.target.closest(
+                        "[data-remover-filtro]"
+                    );
+
+                if (!botao) return;
+
+                const campo =
+                    $(
+                        botao.dataset
+                            .removerFiltro
+                    );
+
+                if (campo) {
+                    campo.value = "";
+                }
+
+                aplicarFiltros({
+                    resetarLimite: true
+                });
             }
+        );
 
-            const marcaEl =
-                document.getElementById(
-                    "marca"
-                );
+    // ==========================================
+    // FAVORITOS
+    // ==========================================
 
-            const modeloEl =
-                document.getElementById(
-                    "modelo"
-                );
-
-            const versaoEl =
-                document.getElementById(
-                    "versao"
-                );
-
-            const precoEl =
-                document.getElementById(
-                    "preco"
-                );
-
-            const anoFabEl =
-                document.getElementById(
-                    "anoFabricacao"
-                );
-
-            const anoModEl =
-                document.getElementById(
-                    "anoModelo"
-                );
-
-            const kmEl =
-                document.getElementById(
-                    "quilometragem"
-                );
-
-            const combustivelEl =
-                document.getElementById(
-                    "combustivel"
-                );
-
-            const cambioEl =
-                document.getElementById(
-                    "cambio"
-                );
-
-            const corEl =
-                document.getElementById(
-                    "cor"
-                );
-
-            const portasEl =
-                document.getElementById(
-                    "portas"
-                );
-
-            const carroceriaEl =
-                document.getElementById(
-                    "carroceria"
-                );
-
-            const descricaoEl =
-                document.getElementById(
-                    "descricao"
-                );
-
-            const anoAtual =
-                new Date().getFullYear();
-
-            let valido = true;
-
-            definirErro(
-                marcaEl,
-                document.getElementById(
-                    "erroMarca"
-                ),
-                ""
+    function favoritosAtuais() {
+        const favoritos =
+            lerJSON(
+                localStorage,
+                "favoritos_veiculos",
+                []
             );
 
-            definirErro(
-                modeloEl,
-                document.getElementById(
-                    "erroModelo"
-                ),
-                ""
+        return Array.isArray(favoritos)
+            ? favoritos.map(Number)
+            : [];
+    }
+
+    // ==========================================
+    // TEMPLATE DOS CARDS
+    // ==========================================
+
+    function templateCard(
+        veiculo,
+        favoritos
+    ) {
+        const favorito =
+            favoritos.includes(
+                veiculo.id
             );
 
-            definirErro(
-                anoFabEl,
-                document.getElementById(
-                    "erroAnoFabricacao"
-                ),
-                ""
-            );
+        return `
+            <article
+                class="vehicle-card"
+                data-id="${veiculo.id}"
+            >
+                <div class="vehicle-media">
+                    <img
+                        src="${escapeHTML(
+                            veiculo.imagem
+                        )}"
+                        alt="${escapeHTML(
+                            veiculo.nome
+                        )}"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'"
+                    >
 
-            definirErro(
-                anoModEl,
-                document.getElementById(
-                    "erroAnoModelo"
-                ),
-                ""
-            );
+                    <span class="vehicle-year">
+                        ${escapeHTML(
+                            veiculo.ano
+                            || "Ano n/i"
+                        )}
+                    </span>
 
-            definirErro(
-                precoEl,
-                document.getElementById(
-                    "erroPreco"
-                ),
-                ""
-            );
+                    <button
+                        type="button"
+                        class="favorite-button ${
+                            favorito
+                                ? "is-favorite"
+                                : ""
+                        }"
+                        data-favorito="${veiculo.id}"
+                        aria-pressed="${favorito}"
+                        aria-label="${
+                            favorito
+                                ? "Remover dos favoritos"
+                                : "Adicionar aos favoritos"
+                        }"
+                    >
+                        <i
+                            class="${
+                                favorito
+                                    ? "fa-solid"
+                                    : "fa-regular"
+                            } fa-heart"
+                        ></i>
+                    </button>
+                </div>
 
-            if (!marcaEl.value.trim()) {
-                definirErro(
-                    marcaEl,
-                    document.getElementById(
-                        "erroMarca"
-                    ),
-                    "Digite a marca."
-                );
+                <div class="vehicle-body">
+                    <span class="vehicle-category">
+                        ${escapeHTML(
+                            veiculo.carroceria
+                        )}
+                    </span>
 
-                valido = false;
-            }
+                    <h3>
+                        ${escapeHTML(
+                            veiculo.nome
+                        )}
+                    </h3>
 
-            if (!modeloEl.value.trim()) {
-                definirErro(
-                    modeloEl,
-                    document.getElementById(
-                        "erroModelo"
-                    ),
-                    "Digite o modelo."
-                );
+                    <p class="vehicle-version">
+                        ${escapeHTML(
+                            veiculo.versao
+                            || "Versão não informada"
+                        )}
+                    </p>
 
-                valido = false;
-            }
+                    <div class="vehicle-specs">
+                        <span>
+                            <i class="fa-solid fa-road"></i>
+                            ${escapeHTML(
+                                formatarKm(
+                                    veiculo
+                                        .quilometragem
+                                )
+                            )}
+                        </span>
 
-            const anoFab =
-                Number(
-                    anoFabEl.value
-                );
+                        <span>
+                            <i class="fa-solid fa-gas-pump"></i>
+                            ${escapeHTML(
+                                veiculo.combustivel
+                            )}
+                        </span>
 
-            if (
-                !anoFabEl.value
-                || anoFab < 1950
-                || anoFab > anoAtual + 1
-            ) {
-                definirErro(
-                    anoFabEl,
-                    document.getElementById(
-                        "erroAnoFabricacao"
-                    ),
-                    `Informe um ano entre 1950 e ${anoAtual + 1}.`
-                );
+                        <span>
+                            <i class="fa-solid fa-gears"></i>
+                            ${escapeHTML(
+                                veiculo.cambio
+                            )}
+                        </span>
+                    </div>
 
-                valido = false;
-            }
+                    <div class="vehicle-footer">
+                        <div class="vehicle-price">
+                            <small>
+                                A partir de
+                            </small>
 
-            const anoMod =
-                Number(
-                    anoModEl.value
-                );
+                            <strong>
+                                ${formatarMoeda(
+                                    veiculo.preco
+                                )}
+                            </strong>
+                        </div>
 
-            if (
-                !anoModEl.value
-                || anoMod < 1950
-                || anoMod > anoAtual + 1
-            ) {
-                definirErro(
-                    anoModEl,
-                    document.getElementById(
-                        "erroAnoModelo"
-                    ),
-                    `Informe um ano entre 1950 e ${anoAtual + 1}.`
-                );
+                        <a
+                            class="details-link"
+                            href="/pages/detalhes-veiculo.html?id=${
+                                encodeURIComponent(
+                                    veiculo.id
+                                )
+                            }"
+                            aria-label="Ver detalhes de ${escapeHTML(
+                                veiculo.nome
+                            )}"
+                        >
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
 
-                valido = false;
-            }
+    // ==========================================
+    // RENDERIZAR RESULTADOS
+    // ==========================================
 
-            const preco =
-                limparPrecoParaBanco(
-                    precoEl.value
-                );
+    function renderizarResultados() {
+        const grid =
+            $("carsGrid");
 
-            if (
-                !precoEl.value
-                || preco <= 0
-            ) {
-                definirErro(
-                    precoEl,
-                    document.getElementById(
-                        "erroPreco"
-                    ),
-                    "Informe um preço válido, maior que zero."
-                );
+        if (!grid) return;
 
-                valido = false;
-            } else if (
-                preco > PRECO_MAXIMO
-            ) {
-                definirErro(
-                    precoEl,
-                    document.getElementById(
-                        "erroPreco"
-                    ),
-                    "O preço máximo é R$ 10.000.000,00."
-                );
+        const quantidade =
+            resultados.length;
 
-                valido = false;
-            }
+        if ($("resultCount")) {
+            $("resultCount").textContent =
+                `${quantidade} veículo${
+                    quantidade === 1
+                        ? ""
+                        : "s"
+                } encontrado${
+                    quantidade === 1
+                        ? ""
+                        : "s"
+                }`;
+        }
 
-            if (!valido) {
-                mostrarToast(
-                    "Revise os campos destacados antes de publicar.",
-                    "erro"
-                );
+        if ($("searchContext")) {
+            $("searchContext").textContent =
+                quantidade
+                    ? "Compare e encontre sua melhor opção"
+                    : "Tente alterar ou remover algum filtro";
+        }
 
-                return;
-            }
+        grid.classList.toggle(
+            "list-view",
+            modoLista
+        );
 
-            const formData =
-                new FormData();
+        if (!quantidade) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div>
+                        <i class="fa-solid fa-car-side"></i>
 
-            /*
-             * usuario_id não é enviado.
-             * O backend obtém o proprietário
-             * pelo token JWT.
-             */
-            formData.append(
-                "marca",
-                marcaEl.value.trim()
-            );
+                        <h3>
+                            Nenhum veículo por aqui
+                        </h3>
 
-            formData.append(
-                "modelo",
-                modeloEl.value.trim()
-            );
+                        <p>
+                            Altere os filtros para encontrar
+                            outras oportunidades.
+                        </p>
 
-            formData.append(
-                "versao",
-                versaoEl.value.trim()
-            );
+                        <button
+                            type="button"
+                            class="btn-ghost"
+                            data-limpar-tudo
+                        >
+                            Limpar filtros
+                        </button>
+                    </div>
+                </div>
+            `;
 
-            formData.append(
-                "preco",
-                String(preco)
-            );
-
-            formData.append(
-                "ano_fabricacao",
-                String(anoFab)
-            );
-
-            formData.append(
-                "ano_modelo",
-                String(anoMod)
-            );
-
-            formData.append(
-                "quilometragem",
-                kmEl.value
-                    ? String(
-                        Number(kmEl.value)
-                    )
-                    : "0"
-            );
-
-            formData.append(
-                "combustivel",
-                combustivelEl.value
-            );
-
-            formData.append(
-                "cambio",
-                cambioEl.value
-            );
-
-            formData.append(
-                "cor",
-                corEl.value.trim()
-            );
-
-            formData.append(
-                "portas",
-                portasEl.value
-                    ? String(
-                        Number(portasEl.value)
-                    )
-                    : "2"
-            );
-
-            formData.append(
-                "carroceria",
-                carroceriaEl.value
-            );
-
-            formData.append(
-                "descricao",
-                descricaoEl.value.trim()
-            );
-
-            if (
-                inputImagem?.files?.[0]
-            ) {
-                formData.append(
-                    "imagem",
-                    inputImagem.files[0]
-                );
-            }
-
-            if (btnAnunciar) {
-                btnAnunciar.textContent =
-                    "Publicando...";
-
-                btnAnunciar.disabled =
+            if ($("btnMostrarMais")) {
+                $("btnMostrarMais").hidden =
                     true;
             }
 
-            try {
-                const resposta =
-                    await fetch(
-                        "/api/veiculos",
-                        {
-                            method: "POST",
+            return;
+        }
 
-                            /*
-                             * Não definir Content-Type.
-                             * O navegador gera o
-                             * multipart/form-data.
-                             */
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`
-                            },
+        const favoritos =
+            obterUsuario()?.id
+                ? favoritosAtuais()
+                : [];
 
-                            body: formData
-                        }
+        grid.innerHTML =
+            resultados
+                .slice(0, limiteVisivel)
+                .map((veiculo) => {
+                    return templateCard(
+                        veiculo,
+                        favoritos
+                    );
+                })
+                .join("");
+
+        if ($("btnMostrarMais")) {
+            $("btnMostrarMais").hidden =
+                limiteVisivel
+                >= resultados.length;
+        }
+    }
+
+    $("carsGrid")
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target.closest(
+                        "[data-limpar-tudo]"
+                    )
+                ) {
+                    $("formFiltro")
+                        ?.reset();
+
+                    if (
+                        camposFiltro.busca
+                    ) {
+                        camposFiltro
+                            .busca
+                            .value = "";
+                    }
+
+                    aplicarFiltros({
+                        resetarLimite: true
+                    });
+
+                    return;
+                }
+
+                const botao =
+                    evento.target.closest(
+                        "[data-favorito]"
                     );
 
-                const resultado =
-                    await resposta
-                        .json()
-                        .catch(() => ({}));
+                if (!botao) return;
 
-                if (
-                    resposta.status === 401
-                ) {
-                    limparSessao();
-
-                    mostrarAvisoRedirecionarLogin(
-                        "Sua sessão expirou. Entre novamente para publicar o anúncio."
+                if (!obterUsuario()?.id) {
+                    pedirLogin(
+                        "Entre na sua conta para favoritar veículos."
                     );
 
                     return;
                 }
 
+                const id =
+                    Number(
+                        botao.dataset
+                            .favorito
+                    );
+
+                let favoritos =
+                    favoritosAtuais();
+
+                const remover =
+                    favoritos.includes(id);
+
+                favoritos =
+                    remover
+                        ? favoritos.filter(
+                            (item) => {
+                                return item
+                                    !== id;
+                            }
+                        )
+                        : [
+                            ...favoritos,
+                            id
+                        ];
+
+                localStorage.setItem(
+                    "favoritos_veiculos",
+                    JSON.stringify(
+                        favoritos
+                    )
+                );
+
+                botao.classList.toggle(
+                    "is-favorite",
+                    !remover
+                );
+
+                botao.setAttribute(
+                    "aria-pressed",
+                    String(!remover)
+                );
+
+                botao.setAttribute(
+                    "aria-label",
+                    remover
+                        ? "Adicionar aos favoritos"
+                        : "Remover dos favoritos"
+                );
+
+                const icone =
+                    botao.querySelector("i");
+
+                if (icone) {
+                    icone.className =
+                        `${
+                            remover
+                                ? "fa-regular"
+                                : "fa-solid"
+                        } fa-heart`;
+                }
+            }
+        );
+
+    $("btnMostrarMais")
+        ?.addEventListener(
+            "click",
+            () => {
+                limiteVisivel +=
+                    PAGE_SIZE;
+
+                renderizarResultados();
+            }
+        );
+
+    // ==========================================
+    // DESTAQUE
+    // ==========================================
+
+    function renderizarDestaque(
+        veiculo
+    ) {
+        const container =
+            $("featuredCar");
+
+        if (!container) return;
+
+        if (!veiculo) {
+            container.innerHTML = `
+                <div class="featured-placeholder">
+                    Nenhum destaque disponível.
+                </div>
+            `;
+
+            container.onclick = null;
+            container.style.cursor =
+                "default";
+
+            return;
+        }
+
+        container.innerHTML = `
+            <img
+                src="${escapeHTML(
+                    veiculo.imagem
+                )}"
+                alt="${escapeHTML(
+                    veiculo.nome
+                )}"
+                onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'"
+            >
+
+            <div class="featured-info">
+                <div>
+                    <span class="featured-kicker">
+                        ${escapeHTML(
+                            veiculo.ano
+                        )}
+                        ·
+                        ${escapeHTML(
+                            veiculo.carroceria
+                        )}
+                    </span>
+
+                    <strong class="featured-name">
+                        ${escapeHTML(
+                            veiculo.nome
+                        )}
+                    </strong>
+                </div>
+
+                <span class="price">
+                    ${formatarMoeda(
+                        veiculo.preco
+                    )}
+                </span>
+            </div>
+        `;
+
+        container.onclick = () => {
+            window.location.href =
+                `/pages/detalhes-veiculo.html?id=${
+                    encodeURIComponent(
+                        veiculo.id
+                    )
+                }`;
+        };
+
+        container.style.cursor =
+            "pointer";
+    }
+
+    // ==========================================
+    // OFERTAS
+    // ==========================================
+
+    function renderizarOfertas() {
+        const container =
+            $("topDeals");
+
+        if (!container) return;
+
+        const ofertas = [
+            ...veiculos
+        ]
+            .filter((item) => {
+                return item.preco > 0;
+            })
+            .sort((a, b) => {
+                return a.preco
+                    - b.preco;
+            })
+            .slice(0, 4);
+
+        if (!ofertas.length) {
+            container.innerHTML = "";
+            return;
+        }
+
+        container.innerHTML =
+            ofertas.map((item) => `
+                <a
+                    class="deal-item"
+                    href="/pages/detalhes-veiculo.html?id=${
+                        encodeURIComponent(
+                            item.id
+                        )
+                    }"
+                >
+                    <img
+                        src="${escapeHTML(
+                            item.imagem
+                        )}"
+                        alt="${escapeHTML(
+                            item.nome
+                        )}"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'"
+                    >
+
+                    <div>
+                        <div class="deal-title">
+                            ${escapeHTML(
+                                item.nome
+                            )}
+                        </div>
+
+                        <div class="deal-meta">
+                            ${escapeHTML(
+                                item.ano
+                            )}
+                            ·
+                            ${escapeHTML(
+                                item.carroceria
+                            )}
+                        </div>
+
+                        <div class="deal-price">
+                            ${formatarMoeda(
+                                item.preco
+                            )}
+                        </div>
+                    </div>
+                </a>
+            `).join("");
+    }
+
+    // ==========================================
+    // VISUALIZAÇÃO GRADE / LISTA
+    // ==========================================
+
+    $("btnGrade")
+        ?.addEventListener(
+            "click",
+            () => {
+                alterarVisualizacao(
+                    false
+                );
+            }
+        );
+
+    $("btnLista")
+        ?.addEventListener(
+            "click",
+            () => {
+                alterarVisualizacao(
+                    true
+                );
+            }
+        );
+
+    function alterarVisualizacao(
+        lista
+    ) {
+        modoLista = lista;
+
+        $("btnGrade")
+            ?.classList.toggle(
+                "active",
+                !lista
+            );
+
+        $("btnLista")
+            ?.classList.toggle(
+                "active",
+                lista
+            );
+
+        $("btnGrade")
+            ?.setAttribute(
+                "aria-pressed",
+                String(!lista)
+            );
+
+        $("btnLista")
+            ?.setAttribute(
+                "aria-pressed",
+                String(lista)
+            );
+
+        renderizarResultados();
+    }
+
+    // ==========================================
+    // FILTROS NO CELULAR
+    // ==========================================
+
+    function abrirFiltrosMobile() {
+        $("painelFiltros")
+            ?.classList.add("open");
+
+        if ($("filterOverlay")) {
+            $("filterOverlay").hidden =
+                false;
+        }
+
+        $("btnAbrirFiltros")
+            ?.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        document.body
+            .classList.add(
+                "filters-open"
+            );
+    }
+
+    function fecharFiltrosMobile() {
+        $("painelFiltros")
+            ?.classList.remove("open");
+
+        if ($("filterOverlay")) {
+            $("filterOverlay").hidden =
+                true;
+        }
+
+        $("btnAbrirFiltros")
+            ?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        document.body
+            .classList.remove(
+                "filters-open"
+            );
+    }
+
+    $("btnAbrirFiltros")
+        ?.addEventListener(
+            "click",
+            abrirFiltrosMobile
+        );
+
+    $("btnFecharFiltros")
+        ?.addEventListener(
+            "click",
+            fecharFiltrosMobile
+        );
+
+    $("filterOverlay")
+        ?.addEventListener(
+            "click",
+            fecharFiltrosMobile
+        );
+
+    // ==========================================
+    // IMAGEM DO ANÚNCIO
+    // ==========================================
+
+    const inputImagem =
+        $("imagem");
+
+    let previewObjectUrl = null;
+
+    function limparImagem() {
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(
+                previewObjectUrl
+            );
+        }
+
+        previewObjectUrl = null;
+
+        if (inputImagem) {
+            inputImagem.value = "";
+        }
+
+        if ($("nomeArquivoSelecionado")) {
+            $("nomeArquivoSelecionado")
+                .textContent =
+                "Selecionar imagem";
+        }
+
+        if ($("miniaturaPreview")) {
+            $("miniaturaPreview").src =
+                "";
+
+            $("miniaturaPreview").hidden =
+                true;
+        }
+
+        if ($("imgPreviewModal")) {
+            $("imgPreviewModal").src =
+                "";
+        }
+
+        if ($("btnVerFoto")) {
+            $("btnVerFoto").disabled =
+                true;
+        }
+
+        if ($("erroImagem")) {
+            $("erroImagem").textContent =
+                "";
+        }
+    }
+
+    inputImagem
+        ?.addEventListener(
+            "change",
+            () => {
+                const arquivo =
+                    inputImagem
+                        .files?.[0];
+
+                if (!arquivo) {
+                    limparImagem();
+                    return;
+                }
+
                 if (
-                    !resposta.ok
-                    || resultado.sucesso
-                        === false
+                    ![
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ].includes(
+                        arquivo.type
+                    )
+                ) {
+                    limparImagem();
+
+                    $("erroImagem")
+                        .textContent =
+                        "Use uma imagem JPG, PNG ou WebP.";
+
+                    return;
+                }
+
+                if (
+                    arquivo.size
+                    > 5 * 1024 * 1024
+                ) {
+                    limparImagem();
+
+                    $("erroImagem")
+                        .textContent =
+                        "A imagem deve ter no máximo 5 MB.";
+
+                    return;
+                }
+
+                if (previewObjectUrl) {
+                    URL.revokeObjectURL(
+                        previewObjectUrl
+                    );
+                }
+
+                previewObjectUrl =
+                    URL.createObjectURL(
+                        arquivo
+                    );
+
+                $("nomeArquivoSelecionado")
+                    .textContent =
+                    arquivo.name.slice(
+                        0,
+                        42
+                    );
+
+                $("miniaturaPreview").src =
+                    previewObjectUrl;
+
+                $("miniaturaPreview").hidden =
+                    false;
+
+                $("imgPreviewModal").src =
+                    previewObjectUrl;
+
+                $("btnVerFoto").disabled =
+                    false;
+
+                $("erroImagem").textContent =
+                    "";
+            }
+        );
+
+    $("btnVerFoto")
+        ?.addEventListener(
+            "click",
+            () => {
+                if (
+                    !$("imgPreviewModal")
+                        ?.src
+                ) {
+                    return;
+                }
+
+                $("modalVisualizarFoto")
+                    .hidden = false;
+
+                $("btnFecharModal")
+                    ?.focus();
+            }
+        );
+
+    function fecharModal() {
+        if (
+            $("modalVisualizarFoto")
+        ) {
+            $("modalVisualizarFoto")
+                .hidden = true;
+        }
+    }
+
+    $("btnFecharModal")
+        ?.addEventListener(
+            "click",
+            fecharModal
+        );
+
+    $("modalVisualizarFoto")
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target
+                    === $("modalVisualizarFoto")
+                ) {
+                    fecharModal();
+                }
+            }
+        );
+
+    document.addEventListener(
+        "keydown",
+        (evento) => {
+            if (
+                evento.key
+                === "Escape"
+            ) {
+                fecharModal();
+                fecharFiltrosMobile();
+            }
+        }
+    );
+
+    // ==========================================
+    // MÁSCARA DO PREÇO
+    // ==========================================
+
+    const precoInput =
+        $("preco");
+
+    precoInput
+        ?.addEventListener(
+            "input",
+            () => {
+                const digitos =
+                    precoInput.value
+                        .replace(/\D/g, "")
+                        .slice(0, 8);
+
+                precoInput.value =
+                    digitos
+                        ? Number(
+                            digitos
+                        ).toLocaleString(
+                            "pt-BR"
+                        )
+                        : "";
+            }
+        );
+
+    function definirErro(
+        campo,
+        erroId,
+        mensagem
+    ) {
+        const elementoErro =
+            $(erroId);
+
+        if (elementoErro) {
+            elementoErro.textContent =
+                mensagem;
+        }
+
+        campo?.setAttribute(
+            "aria-invalid",
+            mensagem
+                ? "true"
+                : "false"
+        );
+    }
+
+    // ==========================================
+    // CADASTRAR VEÍCULO
+    // ==========================================
+
+    $("formAnuncio")
+        ?.addEventListener(
+            "submit",
+            async (evento) => {
+                evento.preventDefault();
+
+                const usuario =
+                    obterUsuario();
+
+                const token =
+                    obterToken();
+
+                if (
+                    !usuario?.id
+                    || !token
+                ) {
+                    pedirLogin(
+                        "Entre na sua conta para publicar um veículo."
+                    );
+
+                    return;
+                }
+
+                const marca =
+                    $("marca");
+
+                const modelo =
+                    $("modelo");
+
+                const anoFab =
+                    $("anoFabricacao");
+
+                const anoModelo =
+                    $("anoModelo");
+
+                const preco =
+                    Number(
+                        precoInput.value
+                            .replace(
+                                /\D/g,
+                                ""
+                            )
+                    );
+
+                const anoAtual =
+                    new Date()
+                        .getFullYear()
+                    + 1;
+
+                let valido = true;
+
+                definirErro(
+                    marca,
+                    "erroMarca",
+                    marca.value.trim()
+                        ? ""
+                        : "Digite a marca."
+                );
+
+                definirErro(
+                    modelo,
+                    "erroModelo",
+                    modelo.value.trim()
+                        ? ""
+                        : "Digite o modelo."
+                );
+
+                definirErro(
+                    anoFab,
+                    "erroAnoFabricacao",
+                    Number(
+                        anoFab.value
+                    ) >= 1950
+                    && Number(
+                        anoFab.value
+                    ) <= anoAtual
+                        ? ""
+                        : `Use um ano entre 1950 e ${anoAtual}.`
+                );
+
+                definirErro(
+                    anoModelo,
+                    "erroAnoModelo",
+                    Number(
+                        anoModelo.value
+                    ) >= 1950
+                    && Number(
+                        anoModelo.value
+                    ) <= anoAtual
+                        ? ""
+                        : `Use um ano entre 1950 e ${anoAtual}.`
+                );
+
+                definirErro(
+                    precoInput,
+                    "erroPreco",
+                    preco > 0
+                    && preco <= 10000000
+                        ? ""
+                        : "Informe um preço válido de até R$ 10 milhões."
+                );
+
+                [
+                    "erroMarca",
+                    "erroModelo",
+                    "erroAnoFabricacao",
+                    "erroAnoModelo",
+                    "erroPreco"
+                ].forEach((id) => {
+                    if (
+                        $(id)?.textContent
+                    ) {
+                        valido = false;
+                    }
+                });
+
+                if (!valido) {
+                    mostrarToast(
+                        "Revise os campos destacados.",
+                        "erro"
+                    );
+
+                    return;
+                }
+
+                const formData =
+                    new FormData();
+
+                const valores = {
+                    marca:
+                        marca.value.trim(),
+
+                    modelo:
+                        modelo.value.trim(),
+
+                    versao:
+                        $("versao")
+                            .value
+                            .trim(),
+
+                    preco,
+
+                    ano_fabricacao:
+                        Number(
+                            anoFab.value
+                        ),
+
+                    ano_modelo:
+                        Number(
+                            anoModelo.value
+                        ),
+
+                    quilometragem:
+                        Number(
+                            $("quilometragem")
+                                .value
+                        ) || 0,
+
+                    combustivel:
+                        $("combustivel")
+                            .value,
+
+                    cambio:
+                        $("cambio")
+                            .value,
+
+                    cor:
+                        $("cor")
+                            .value
+                            .trim(),
+
+                    portas:
+                        Number(
+                            $("portas")
+                                .value
+                        ) || 2,
+
+                    carroceria:
+                        $("carroceria")
+                            .value,
+
+                    descricao:
+                        $("descricao")
+                            .value
+                            .trim()
+                };
+
+                Object.entries(
+                    valores
+                ).forEach(
+                    ([chave, valor]) => {
+                        formData.append(
+                            chave,
+                            String(valor)
+                        );
+                    }
+                );
+
+                if (
+                    inputImagem
+                        ?.files?.[0]
+                ) {
+                    formData.append(
+                        "imagem",
+                        inputImagem
+                            .files[0]
+                    );
+                }
+
+                const botao =
+                    $("btnAnunciar");
+
+                botao.disabled = true;
+                botao.textContent =
+                    "Publicando...";
+
+                try {
+                    const resposta =
+                        await fetch(
+                            "/api/veiculos",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                },
+
+                                body:
+                                    formData
+                            }
+                        );
+
+                    const dados =
+                        await resposta
+                            .json()
+                            .catch(
+                                () => ({})
+                            );
+
+                    if (
+                        resposta.status
+                        === 401
+                    ) {
+                        limparSessao();
+
+                        pedirLogin(
+                            "Sua sessão expirou. Entre novamente."
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        !resposta.ok
+                        || dados.sucesso
+                            === false
+                    ) {
+                        throw new Error(
+                            dados.mensagem
+                            || dados.erro
+                            || "Não foi possível publicar."
+                        );
+                    }
+
+                    mostrarToast(
+                        dados.mensagem
+                        || "Veículo publicado com sucesso!",
+                        "sucesso"
+                    );
+
+                    $("formAnuncio")
+                        .reset();
+
+                    limparImagem();
+
+                    await carregarCatalogo();
+
+                    ativarAba(
+                        "tab-catalogo"
+                    );
+                } catch (erro) {
+                    console.error(erro);
+
+                    mostrarToast(
+                        erro.message
+                        || "Erro ao publicar o anúncio.",
+                        "erro"
+                    );
+                } finally {
+                    botao.disabled = false;
+
+                    botao.textContent =
+                        "Publicar anúncio";
+                }
+            }
+        );
+
+    // ==========================================
+    // AVALIAÇÃO
+    // ==========================================
+
+    $("avaPlaca")
+        ?.addEventListener(
+            "input",
+            () => {
+                $("avaPlaca").value =
+                    $("avaPlaca")
+                        .value
+                        .toUpperCase()
+                        .replace(
+                            /[^A-Z0-9]/g,
+                            ""
+                        )
+                        .slice(0, 7);
+            }
+        );
+
+    $("avaTelefone")
+        ?.addEventListener(
+            "input",
+            () => {
+                const numeros =
+                    $("avaTelefone")
+                        .value
+                        .replace(
+                            /\D/g,
+                            ""
+                        )
+                        .slice(0, 11);
+
+                $("avaTelefone").value =
+                    numeros.length > 6
+                        ? `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`
+                        : numeros.length > 2
+                            ? `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`
+                            : numeros;
+            }
+        );
+
+    $("formAvaliacao")
+        ?.addEventListener(
+            "submit",
+            (evento) => {
+                evento.preventDefault();
+
+                const nome =
+                    $("avaNome");
+
+                const telefone =
+                    $("avaTelefone");
+
+                const placa =
+                    $("avaPlaca");
+
+                const km =
+                    $("avaKm");
+
+                definirErro(
+                    nome,
+                    "erroAvaNome",
+                    nome.value
+                        .trim()
+                        .length >= 3
+                        ? ""
+                        : "Digite seu nome completo."
+                );
+
+                definirErro(
+                    telefone,
+                    "erroAvaTelefone",
+                    telefone.value
+                        .replace(
+                            /\D/g,
+                            ""
+                        )
+                        .length >= 10
+                        ? ""
+                        : "Informe um telefone com DDD."
+                );
+
+                definirErro(
+                    placa,
+                    "erroAvaPlaca",
+                    /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/
+                        .test(
+                            placa.value
+                        )
+                        ? ""
+                        : "Informe uma placa válida."
+                );
+
+                definirErro(
+                    km,
+                    "erroAvaKm",
+                    km.value !== ""
+                    && Number(
+                        km.value
+                    ) >= 0
+                        ? ""
+                        : "Informe a quilometragem."
+                );
+
+                const idsErros = [
+                    "erroAvaNome",
+                    "erroAvaTelefone",
+                    "erroAvaPlaca",
+                    "erroAvaKm"
+                ];
+
+                if (
+                    idsErros.some(
+                        (id) => {
+                            return Boolean(
+                                $(id)
+                                    ?.textContent
+                            );
+                        }
+                    )
                 ) {
                     mostrarToast(
-                        resultado.mensagem
-                        || resultado.erro
-                        || "Não foi possível publicar o anúncio.",
+                        "Revise os dados da avaliação.",
                         "erro"
                     );
 
@@ -1959,416 +2412,148 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 mostrarToast(
-                    resultado.mensagem
-                    || "Anúncio publicado com sucesso!",
+                    "Solicitação enviada! Entraremos em contato em breve.",
                     "sucesso"
                 );
 
-                formAnuncio.reset();
-
-                limparSelecaoImagem();
-
-                await carregarVeiculosDoBanco();
-
-                irParaCatalogo();
-
-                if (
-                    usuarioLogado.tipo
-                    === "empresa"
-                ) {
-                    window.location.href =
-                        "/pages/painel-empresa.html";
-                } else if (
-                    usuarioLogado.tipo
-                    === "cliente"
-                    || usuarioLogado.tipo
-                        === "individual"
-                ) {
-                    window.location.href =
-                        "/pages/painel-cliente.html";
-                }
-            } catch (erro) {
-                console.error(
-                    "Erro no cadastro do veículo:",
-                    erro
-                );
-
-                mostrarToast(
-                    "Erro de conexão com o servidor ao enviar o anúncio.",
-                    "erro"
-                );
-            } finally {
-                if (btnAnunciar) {
-                    btnAnunciar.textContent =
-                        "Publicar anúncio";
-
-                    btnAnunciar.disabled =
-                        false;
-                }
+                evento
+                    .currentTarget
+                    .reset();
             }
-        }
-    );
-
-    // ==========================================
-    // 5. AVALIAÇÃO PROFISSIONAL
-    // ==========================================
-
-    const formAvaliacao =
-        document.getElementById(
-            "formAvaliacao"
         );
 
-    const avaPlacaEl =
-        document.getElementById(
-            "avaPlaca"
-        );
-
-    avaPlacaEl?.addEventListener(
-        "input",
-        () => {
-            avaPlacaEl.value =
-                avaPlacaEl.value
-                    .toUpperCase()
-                    .replace(
-                        /[^A-Z0-9]/g,
-                        ""
-                    )
-                    .slice(0, 7);
-        }
-    );
-
-    const avaTelefoneEl =
-        document.getElementById(
-            "avaTelefone"
-        );
-
-    avaTelefoneEl?.addEventListener(
-        "input",
-        () => {
-            const digitos =
-                avaTelefoneEl.value
-                    .replace(/\D/g, "")
-                    .slice(0, 11);
-
-            let formatado =
-                digitos;
-
-            if (digitos.length > 6) {
-                formatado =
-                    `(${digitos.slice(0, 2)}) ${
-                        digitos.slice(2, 7)
-                    }-${
-                        digitos.slice(7)
-                    }`;
-            } else if (
-                digitos.length > 2
-            ) {
-                formatado =
-                    `(${digitos.slice(0, 2)}) ${
-                        digitos.slice(2)
-                    }`;
-            }
-
-            avaTelefoneEl.value =
-                formatado;
-        }
-    );
-
-    formAvaliacao?.addEventListener(
-        "submit",
-        (evento) => {
-            evento.preventDefault();
-
-            const nomeEl =
-                document.getElementById(
-                    "avaNome"
-                );
-
-            const kmEl =
-                document.getElementById(
-                    "avaKm"
-                );
-
-            let valido = true;
-
-            definirErro(
-                nomeEl,
-                document.getElementById(
-                    "erroAvaNome"
-                ),
-                ""
-            );
-
-            definirErro(
-                avaTelefoneEl,
-                document.getElementById(
-                    "erroAvaTelefone"
-                ),
-                ""
-            );
-
-            definirErro(
-                avaPlacaEl,
-                document.getElementById(
-                    "erroAvaPlaca"
-                ),
-                ""
-            );
-
-            definirErro(
-                kmEl,
-                document.getElementById(
-                    "erroAvaKm"
-                ),
-                ""
-            );
-
-            if (
-                !nomeEl.value.trim()
-                || nomeEl.value
-                    .trim()
-                    .length < 3
-            ) {
-                definirErro(
-                    nomeEl,
-                    document.getElementById(
-                        "erroAvaNome"
-                    ),
-                    "Digite seu nome completo."
-                );
-
-                valido = false;
-            }
-
-            const digitosTelefone =
-                avaTelefoneEl.value
-                    .replace(/\D/g, "");
-
-            if (
-                digitosTelefone.length < 10
-            ) {
-                definirErro(
-                    avaTelefoneEl,
-                    document.getElementById(
-                        "erroAvaTelefone"
-                    ),
-                    "Informe um telefone válido com DDD."
-                );
-
-                valido = false;
-            }
-
-            const padraoPlaca =
-                /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
-
-            if (
-                !padraoPlaca.test(
-                    avaPlacaEl.value
-                )
-            ) {
-                definirErro(
-                    avaPlacaEl,
-                    document.getElementById(
-                        "erroAvaPlaca"
-                    ),
-                    "Informe uma placa válida (exemplo: ABC1D23)."
-                );
-
-                valido = false;
-            }
-
-            if (
-                !kmEl.value
-                || Number(kmEl.value) < 0
-            ) {
-                definirErro(
-                    kmEl,
-                    document.getElementById(
-                        "erroAvaKm"
-                    ),
-                    "Informe a quilometragem atual."
-                );
-
-                valido = false;
-            }
-
-            if (!valido) {
-                mostrarToast(
-                    "Revise os campos destacados no formulário.",
-                    "erro"
-                );
-
-                return;
-            }
-
-            mostrarToast(
-                "Solicitação enviada! Nossa equipe entrará em contato em breve.",
-                "sucesso"
-            );
-
-            formAvaliacao.reset();
-        }
-    );
-
     // ==========================================
-    // 6. SIMULADOR DE FINANCIAMENTO
+    // FINANCIAMENTO
     // ==========================================
 
-    const btnSimular =
-        document.getElementById(
-            "btnSimular"
-        );
-
-    const TAXAS_JUROS = {
+    const TAXAS = {
         excelente: 0.0129,
         bom: 0.0159,
         regular: 0.0199
     };
 
-    btnSimular?.addEventListener(
-        "click",
-        () => {
-            const finValorEl =
-                document.getElementById(
-                    "finValor"
-                );
+    $("btnSimular")
+        ?.addEventListener(
+            "click",
+            () => {
+                const valor =
+                    Number(
+                        $("finValor")
+                            .value
+                    );
 
-            const finEntradaEl =
-                document.getElementById(
-                    "finEntrada"
-                );
+                const entrada =
+                    Number(
+                        $("finEntrada")
+                            .value
+                    ) || 0;
 
-            const finParcelasEl =
-                document.getElementById(
-                    "finParcelas"
-                );
+                const parcelas =
+                    Number(
+                        $("finParcelas")
+                            .value
+                    );
 
-            const finScoreEl =
-                document.getElementById(
-                    "finScore"
-                );
+                const taxa =
+                    TAXAS[
+                        $("finScore")
+                            .value
+                    ]
+                    || TAXAS.bom;
 
-            const erroFin =
-                document.getElementById(
-                    "erroFinanciamento"
-                );
+                const erro =
+                    $("erroFinanciamento");
 
-            const resultado =
-                document.getElementById(
-                    "resultadoSimulacao"
-                );
+                const resultado =
+                    $("resultadoSimulacao");
 
-            if (erroFin) {
-                erroFin.textContent = "";
-            }
+                erro.textContent = "";
 
-            const valorVeiculo =
-                Number(
-                    finValorEl.value
-                );
+                if (
+                    !valor
+                    || valor <= 0
+                ) {
+                    erro.textContent =
+                        "Informe o valor do veículo.";
 
-            const entrada =
-                Number(
-                    finEntradaEl.value
-                ) || 0;
+                    resultado.hidden =
+                        true;
 
-            const parcelas =
-                Number(
-                    finParcelasEl.value
-                );
-
-            const taxa =
-                TAXAS_JUROS[
-                    finScoreEl.value
-                ]
-                ?? TAXAS_JUROS.bom;
-
-            if (
-                !valorVeiculo
-                || valorVeiculo <= 0
-            ) {
-                if (erroFin) {
-                    erroFin.textContent =
-                        "Informe o valor do veículo para simular.";
+                    return;
                 }
 
-                resultado.style.display =
-                    "none";
-
-                return;
-            }
-
-            if (
-                entrada < 0
-                || entrada >= valorVeiculo
-            ) {
-                if (erroFin) {
-                    erroFin.textContent =
+                if (
+                    entrada < 0
+                    || entrada >= valor
+                ) {
+                    erro.textContent =
                         "A entrada deve ser menor que o valor do veículo.";
+
+                    resultado.hidden =
+                        true;
+
+                    return;
                 }
 
-                resultado.style.display =
-                    "none";
+                const financiado =
+                    valor - entrada;
 
-                return;
-            }
-
-            const valorFinanciado =
-                valorVeiculo - entrada;
-
-            const parcelaMensal =
-                (
-                    valorFinanciado
-                    * taxa
-                )
-                / (
-                    1
-                    - Math.pow(
-                        1 + taxa,
-                        -parcelas
+                const parcela =
+                    (
+                        financiado
+                        * taxa
                     )
-                );
+                    / (
+                        1
+                        - Math.pow(
+                            1 + taxa,
+                            -parcelas
+                        )
+                    );
 
-            const custoTotal =
-                parcelaMensal
-                * parcelas
-                + entrada;
+                const total =
+                    parcela
+                    * parcelas
+                    + entrada;
 
-            document.getElementById(
-                "resFinanciado"
-            ).textContent =
-                formatarMoeda(
-                    valorFinanciado
-                );
+                $("resFinanciado")
+                    .textContent =
+                    formatarMoeda(
+                        financiado
+                    );
 
-            document.getElementById(
-                "resParcela"
-            ).textContent =
-                `${formatarMoeda(parcelaMensal)} /mês`;
+                $("resParcela")
+                    .textContent =
+                    `${
+                        formatarMoeda(
+                            parcela
+                        )
+                    } /mês`;
 
-            document.getElementById(
-                "resTotal"
-            ).textContent =
-                formatarMoeda(
-                    custoTotal
-                );
+                $("resTotal")
+                    .textContent =
+                    formatarMoeda(
+                        total
+                    );
 
-            document.getElementById(
-                "resTaxa"
-            ).textContent =
-                `${
-                    (taxa * 100)
-                        .toFixed(2)
-                        .replace(".", ",")
-                }% a.m.`;
+                $("resTaxa")
+                    .textContent =
+                    `${
+                        (taxa * 100)
+                            .toFixed(2)
+                            .replace(
+                                ".",
+                                ","
+                            )
+                    }% a.m.`;
 
-            resultado.style.display =
-                "block";
-        }
-    );
+                resultado.hidden =
+                    false;
+            }
+        );
 
     // ==========================================
-    // 7. SINCRONIZAÇÃO DE FAVORITOS
+    // SINCRONIZAR FAVORITOS ENTRE ABAS
     // ==========================================
 
     window.addEventListener(
@@ -2376,81 +2561,16 @@ document.addEventListener("DOMContentLoaded", () => {
         (evento) => {
             if (
                 evento.key
-                !== "favoritos_veiculos"
+                === "favoritos_veiculos"
             ) {
-                return;
+                renderizarResultados();
             }
-
-            let novosFavoritos = [];
-
-            try {
-                novosFavoritos =
-                    JSON.parse(
-                        evento.newValue
-                    ) || [];
-            } catch {
-                novosFavoritos = [];
-            }
-
-            const usuarioAtual =
-                obterUsuarioSessao();
-
-            const temLoginAtual =
-                Boolean(
-                    usuarioAtual?.id
-                );
-
-            document
-                .querySelectorAll(
-                    ".btn-favoritar"
-                )
-                .forEach((botao) => {
-                    const idVeiculo =
-                        Number(
-                            botao.getAttribute(
-                                "data-id"
-                            )
-                        );
-
-                    const ehFavorito =
-                        temLoginAtual
-                        && novosFavoritos.includes(
-                            idVeiculo
-                        );
-
-                    const icone =
-                        botao.querySelector(
-                            "i"
-                        );
-
-                    if (icone) {
-                        icone.className =
-                            ehFavorito
-                                ? "fa-solid fa-heart"
-                                : "fa-regular fa-heart";
-
-                        icone.style.color =
-                            ehFavorito
-                                ? "#ff0000"
-                                : "#ffffff";
-                    }
-
-                    botao.setAttribute(
-                        "aria-pressed",
-                        String(ehFavorito)
-                    );
-
-                    botao.title =
-                        ehFavorito
-                            ? "Remover dos favoritos"
-                            : "Favoritar veículo";
-                });
         }
     );
 
     // ==========================================
-    // 8. INICIALIZAÇÃO
+    // INICIALIZAÇÃO
     // ==========================================
 
-    carregarVeiculosDoBanco();
+    carregarCatalogo();
 });
