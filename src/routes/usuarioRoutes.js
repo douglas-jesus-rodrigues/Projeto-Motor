@@ -1,3 +1,5 @@
+"use strict";
+
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -8,23 +10,19 @@ const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
-const usuarioController = require(
-    "../controllers/usuarioController"
-);
-
-const authAdmin = require(
-    "../middlewares/authAdmin"
-);
-
-const authUser = require(
-    "../middlewares/authMiddleware"
-);
-
+const usuarioController = require("../controllers/usuarioController");
+const authAdmin = require("../middlewares/authAdmin");
+const authUser = require("../middlewares/authMiddleware");
 const db = require("../config/db");
 
 const {
     enviarEmailRecuperacao
 } = require("../config/emailService");
+
+const {
+    enviarImagem,
+    removerImagem
+} = require("../services/cloudinaryService");
 
 const TIPOS_VALIDOS = [
     "individual",
@@ -40,104 +38,51 @@ const PASTA_UPLOADS = path.join(
     "../../public/uploads"
 );
 
-const TAMANHO_MAXIMO_FOTO =
-    5 * 1024 * 1024;
-
-const JANELA_RECUPERACAO_MS =
-    15 * 60 * 1000;
-
+const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
+const JANELA_RECUPERACAO_MS = 15 * 60 * 1000;
 const MAX_RECUPERACOES_POR_IP = 5;
 
-const tentativasRecuperacao =
-    new Map();
+const tentativasRecuperacao = new Map();
 
-// Garante que a pasta de uploads exista.
-fs.mkdirSync(
-    PASTA_UPLOADS,
-    {
-        recursive: true
-    }
-);
+// Mantém compatibilidade com fotos locais antigas.
+fs.mkdirSync(PASTA_UPLOADS, {
+    recursive: true
+});
 
 // ==========================================
-// CONFIGURAÇÃO SEGURA DO UPLOAD
+// CONFIGURAÇÃO DO UPLOAD
 // ==========================================
+
 const EXTENSOES_POR_MIME = {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp"
 };
 
-const storage = multer.diskStorage({
-    destination: (
-        req,
-        file,
-        callback
-    ) => {
-        callback(
-            null,
-            PASTA_UPLOADS
-        );
-    },
-
-    filename: (
-        req,
-        file,
-        callback
-    ) => {
-        const extensao =
-            EXTENSOES_POR_MIME[
-                file.mimetype
-            ];
-
-        const nomeSeguro =
-            `${crypto.randomUUID()}${extensao}`;
-
-        callback(
-            null,
-            nomeSeguro
-        );
-    }
-});
-
 const upload = multer({
-    storage,
+    // A imagem fica temporariamente na memória
+    // até ser enviada para o Cloudinary.
+    storage: multer.memoryStorage(),
 
     limits: {
         fileSize: TAMANHO_MAXIMO_FOTO,
         files: 1
     },
 
-    fileFilter: (
-        req,
-        file,
-        callback
-    ) => {
-        const extensao =
-            EXTENSOES_POR_MIME[
-                file.mimetype
-            ];
+    fileFilter: (req, file, callback) => {
+        const extensao = EXTENSOES_POR_MIME[file.mimetype];
 
         if (extensao) {
-            return callback(
-                null,
-                true
-            );
+            return callback(null, true);
         }
 
         return callback(
-            new Error(
-                "Envie uma imagem JPG, PNG ou WebP."
-            )
+            new Error("Envie uma imagem JPG, PNG ou WebP.")
         );
     }
 });
 
-function processarFotoPerfil(
-    req,
-    res,
-    next
-) {
+function processarFotoPerfil(req, res, next) {
     upload.single("fotoPerfil")(
         req,
         res,
@@ -150,57 +95,42 @@ function processarFotoPerfil(
                 erro instanceof multer.MulterError
                 && erro.code === "LIMIT_FILE_SIZE"
             ) {
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "A imagem pode ter no máximo 5 MB."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: "A imagem pode ter no máximo 5 MB."
+                });
             }
 
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        erro.message
-                        || "Não foi possível processar a imagem."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro:
+                    erro.message
+                    || "Não foi possível processar a imagem."
+            });
         }
     );
 }
 
-async function apagarArquivoLocal(
-    caminho
-) {
+// ==========================================
+// COMPATIBILIDADE COM FOTOS LOCAIS ANTIGAS
+// ==========================================
+
+async function apagarArquivoLocal(caminho) {
     if (!caminho) return;
 
     try {
-        await fs.promises.unlink(
-            caminho
-        );
+        await fs.promises.unlink(caminho);
     } catch (erro) {
         if (erro.code !== "ENOENT") {
             console.error(
-                "[upload] Não foi possível remover o arquivo:",
+                "[upload] Não foi possível remover o arquivo local:",
                 erro.code || erro.message
             );
         }
     }
 }
 
-/*
- * Transforma uma URL como:
- *
- * /uploads/arquivo.png
- *
- * em um caminho seguro dentro de public/uploads.
- * URLs externas não são apagadas.
- */
-function obterCaminhoLocalDaFoto(
-    fotoUrl
-) {
+function obterCaminhoLocalDaFoto(fotoUrl) {
     if (
         typeof fotoUrl !== "string"
         || !fotoUrl.startsWith("/uploads/")
@@ -241,9 +171,41 @@ function obterCaminhoLocalDaFoto(
     return caminhoResolvido;
 }
 
+function fotoEstaNoCloudinary(fotoUrl) {
+    return (
+        typeof fotoUrl === "string"
+        && fotoUrl.includes("res.cloudinary.com")
+    );
+}
+
+async function removerFotoAnterior(fotoUrl) {
+    if (!fotoUrl) return;
+
+    if (fotoEstaNoCloudinary(fotoUrl)) {
+        try {
+            await removerImagem(fotoUrl);
+        } catch (erro) {
+            console.warn(
+                "[upload] Não foi possível remover a imagem do Cloudinary:",
+                erro.message
+            );
+        }
+
+        return;
+    }
+
+    const caminhoLocal =
+        obterCaminhoLocalDaFoto(fotoUrl);
+
+    if (caminhoLocal) {
+        await apagarArquivoLocal(caminhoLocal);
+    }
+}
+
 // ==========================================
 // SESSÃO E JWT DO LOGIN
 // ==========================================
+
 function extrairUsuario(corpo) {
     const usuario =
         corpo?.usuario
@@ -277,11 +239,7 @@ function extrairUsuario(corpo) {
     };
 }
 
-async function prepararSessao(
-    req,
-    res,
-    corpo
-) {
+async function prepararSessao(req, res, corpo) {
     if (
         res.statusCode >= 400
         || !corpo
@@ -291,29 +249,24 @@ async function prepararSessao(
         return;
     }
 
-    const usuario =
-        extrairUsuario(corpo);
+    const usuario = extrairUsuario(corpo);
 
     if (!usuario) return;
 
-    if (
-        !usuario.id
-        && usuario.email
-    ) {
-        const [linhas] =
-            await db.query(
-                `
-                    SELECT
-                        id,
-                        tipo,
-                        cargo
-                    FROM usuarios
-                    WHERE email = ?
-                      AND deleted_at IS NULL
-                    LIMIT 1
-                `,
-                [usuario.email]
-            );
+    if (!usuario.id && usuario.email) {
+        const [linhas] = await db.query(
+            `
+                SELECT
+                    id,
+                    tipo,
+                    cargo
+                FROM usuarios
+                WHERE email = ?
+                  AND deleted_at IS NULL
+                LIMIT 1
+            `,
+            [usuario.email]
+        );
 
         if (linhas.length) {
             Object.assign(
@@ -332,21 +285,15 @@ async function prepararSessao(
             cargo: usuario.cargo
         };
 
-        await new Promise(
-            (resolve, reject) => {
-                req.session.save(
-                    (erro) => {
-                        if (erro) {
-                            return reject(
-                                erro
-                            );
-                        }
+        await new Promise((resolve, reject) => {
+            req.session.save((erro) => {
+                if (erro) {
+                    return reject(erro);
+                }
 
-                        return resolve();
-                    }
-                );
-            }
-        );
+                return resolve();
+            });
+        });
     }
 
     if (!corpo.token) {
@@ -361,9 +308,7 @@ async function prepararSessao(
                 id: usuario.id,
                 tipo: usuario.tipo
             },
-
             process.env.JWT_SECRET,
-
             {
                 expiresIn: "1d"
             }
@@ -372,11 +317,7 @@ async function prepararSessao(
 }
 
 function comSessao(handler) {
-    return (
-        req,
-        res,
-        next
-    ) => {
+    return (req, res, next) => {
         const jsonOriginal =
             res.json.bind(res);
 
@@ -407,11 +348,8 @@ function comSessao(handler) {
 // ==========================================
 // LIMITE DA RECUPERAÇÃO DE SENHA
 // ==========================================
-function limitarRecuperacao(
-    req,
-    res,
-    next
-) {
+
+function limitarRecuperacao(req, res, next) {
     const agora = Date.now();
 
     const chave =
@@ -420,9 +358,7 @@ function limitarRecuperacao(
         || "desconhecido";
 
     const registro =
-        tentativasRecuperacao.get(
-            chave
-        );
+        tentativasRecuperacao.get(chave);
 
     if (
         !registro
@@ -444,13 +380,11 @@ function limitarRecuperacao(
         registro.total
         >= MAX_RECUPERACOES_POR_IP
     ) {
-        return res
-            .status(429)
-            .json({
-                sucesso: false,
-                erro:
-                    "Muitas tentativas. Aguarde alguns minutos e tente novamente."
-            });
+        return res.status(429).json({
+            sucesso: false,
+            erro:
+                "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+        });
     }
 
     registro.total += 1;
@@ -459,8 +393,9 @@ function limitarRecuperacao(
 }
 
 // ==========================================
-// TOKEN DE RECUPERAÇÃO
+// TOKEN E SENHA
 // ==========================================
+
 function hashToken(token) {
     return crypto
         .createHash("sha256")
@@ -479,6 +414,7 @@ function senhaValida(senha) {
 // ==========================================
 // CADASTRO, LOGIN E VERIFICAÇÃO
 // ==========================================
+
 router.post(
     "/cadastro",
     usuarioController.cadastrarUsuario
@@ -499,6 +435,7 @@ router.get(
 // ==========================================
 // SOLICITAR RECUPERAÇÃO DE SENHA
 // ==========================================
+
 router.post(
     "/esqueci-senha",
     limitarRecuperacao,
@@ -510,33 +447,28 @@ router.post(
             .toLowerCase();
 
         if (!email) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "O e-mail é obrigatório."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro: "O e-mail é obrigatório."
+            });
         }
 
         try {
-            const [usuarios] =
-                await db.query(
-                    `
-                        SELECT
-                            id,
-                            email
-                        FROM usuarios
-                        WHERE email = ?
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [email]
-                );
+            const [usuarios] = await db.query(
+                `
+                    SELECT
+                        id,
+                        email
+                    FROM usuarios
+                    WHERE email = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [email]
+            );
 
             if (usuarios.length > 0) {
-                const usuario =
-                    usuarios[0];
+                const usuario = usuarios[0];
 
                 const tokenOriginal =
                     crypto
@@ -544,9 +476,7 @@ router.post(
                         .toString("hex");
 
                 const tokenHash =
-                    hashToken(
-                        tokenOriginal
-                    );
+                    hashToken(tokenOriginal);
 
                 const expiracao =
                     new Date(
@@ -597,26 +527,21 @@ router.post(
                 }
             }
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        RESPOSTA_RECUPERACAO
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: RESPOSTA_RECUPERACAO
+            });
         } catch (erro) {
             console.error(
                 "[recuperação] Erro interno:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao processar a recuperação de senha."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro interno ao processar a recuperação de senha."
+            });
         }
     }
 );
@@ -624,6 +549,7 @@ router.post(
 // ==========================================
 // REDEFINIR SENHA
 // ==========================================
+
 router.post(
     "/redefinir-senha",
     async (req, res) => {
@@ -634,61 +560,47 @@ router.post(
         const novaSenha =
             req.body?.novaSenha;
 
-        if (
-            !/^[a-f0-9]{64}$/i.test(
-                token
-            )
-        ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Token inválido ou expirado."
-                });
+        if (!/^[a-f0-9]{64}$/i.test(token)) {
+            return res.status(400).json({
+                sucesso: false,
+                erro: "Token inválido ou expirado."
+            });
         }
 
         if (!senhaValida(novaSenha)) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "A nova senha deve possuir entre 8 e 72 caracteres."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro:
+                    "A nova senha deve possuir entre 8 e 72 caracteres."
+            });
         }
 
         try {
             const tokenHash =
                 hashToken(token);
 
-            const [usuarios] =
-                await db.query(
-                    `
-                        SELECT
-                            id,
-                            senha
-                        FROM usuarios
-                        WHERE token_recuperacao = ?
-                          AND token_expiracao > NOW()
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [tokenHash]
-                );
+            const [usuarios] = await db.query(
+                `
+                    SELECT
+                        id,
+                        senha
+                    FROM usuarios
+                    WHERE token_recuperacao = ?
+                      AND token_expiracao > NOW()
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [tokenHash]
+            );
 
             if (usuarios.length === 0) {
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Token inválido ou expirado."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    erro: "Token inválido ou expirado."
+                });
             }
 
-            const usuario =
-                usuarios[0];
+            const usuario = usuarios[0];
 
             const senhaRepetida =
                 await bcrypt.compare(
@@ -697,13 +609,11 @@ router.post(
                 );
 
             if (senhaRepetida) {
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "A nova senha não pode ser igual à senha atual."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    erro:
+                        "A nova senha não pode ser igual à senha atual."
+                });
             }
 
             const hash =
@@ -729,33 +639,30 @@ router.post(
                 ]
             );
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Senha redefinida com sucesso!"
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Senha redefinida com sucesso!"
+            });
         } catch (erro) {
             console.error(
                 "[recuperação] Erro ao redefinir senha:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao redefinir a senha."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro interno ao redefinir a senha."
+            });
         }
     }
 );
 
 // ==========================================
-// FOTO DE PERFIL AUTENTICADA
+// ENVIAR FOTO DE PERFIL PARA O CLOUDINARY
 // ==========================================
+
 router.post(
     "/upload-foto",
     authUser,
@@ -767,155 +674,149 @@ router.post(
             req.usuario?.id
         );
 
+        let novaFoto = null;
+        let fotoSalvaNoBanco = false;
+
         if (!arquivo) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Nenhum arquivo enviado."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro: "Nenhum arquivo enviado."
+            });
         }
 
         if (
             !Number.isInteger(usuarioId)
             || usuarioId <= 0
         ) {
-            await apagarArquivoLocal(
-                arquivo.path
-            );
-
-            return res
-                .status(401)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Usuário não autenticado."
-                });
+            return res.status(401).json({
+                sucesso: false,
+                erro: "Usuário não autenticado."
+            });
         }
 
         try {
-            /*
-             * Busca a foto anterior para removê-la
-             * depois que a nova foto for salva.
-             */
-            const [usuarios] =
-                await db.query(
-                    `
-                        SELECT foto_perfil
-                        FROM usuarios
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [usuarioId]
-                );
+            const [usuarios] = await db.query(
+                `
+                    SELECT foto_perfil
+                    FROM usuarios
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [usuarioId]
+            );
 
             if (usuarios.length === 0) {
-                await apagarArquivoLocal(
-                    arquivo.path
-                );
-
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Usuário não encontrado."
-                    });
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
             }
 
             const fotoAnterior =
                 usuarios[0].foto_perfil;
 
-            const fotoUrl =
-                `/uploads/${arquivo.filename}`;
-
-            const [resultado] =
-                await db.query(
-                    `
-                        UPDATE usuarios
-                        SET foto_perfil = ?
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                    `,
-                    [
-                        fotoUrl,
-                        usuarioId
-                    ]
-                );
-
-            if (
-                resultado.affectedRows === 0
-            ) {
-                await apagarArquivoLocal(
-                    arquivo.path
-                );
-
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Usuário não encontrado."
-                    });
-            }
-
-            /*
-             * A nova foto já está salva no banco.
-             * Agora remove a foto anterior, caso ela
-             * seja um arquivo local seguro.
-             */
-            const caminhoFotoAnterior =
-                obterCaminhoLocalDaFoto(
-                    fotoAnterior
-                );
-
-            if (
-                caminhoFotoAnterior
-                && caminhoFotoAnterior
-                    !== arquivo.path
-            ) {
-                await apagarArquivoLocal(
-                    caminhoFotoAnterior
-                );
-            }
-
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Foto de perfil atualizada com sucesso!",
-                    fotoUrl
-                });
-        } catch (erro) {
-            await apagarArquivoLocal(
-                arquivo.path
+            novaFoto = await enviarImagem(
+                arquivo.buffer,
+                {
+                    pasta:
+                        `motorflex/perfis/${usuarioId}`
+                }
             );
+
+            const fotoUrl =
+                novaFoto.url;
+
+            const [resultado] = await db.query(
+                `
+                    UPDATE usuarios
+                    SET foto_perfil = ?
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                `,
+                [
+                    fotoUrl,
+                    usuarioId
+                ]
+            );
+
+            if (resultado.affectedRows === 0) {
+                try {
+                    await removerImagem(
+                        novaFoto.publicId
+                    );
+                    novaFoto = null;
+                } catch (erroRemocao) {
+                    console.warn(
+                        "[upload] Não foi possível limpar a imagem não utilizada:",
+                        erroRemocao.message
+                    );
+                }
+
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
+            }
+
+            fotoSalvaNoBanco = true;
+
+            await removerFotoAnterior(
+                fotoAnterior
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Foto de perfil atualizada com sucesso!",
+                fotoUrl
+            });
+        } catch (erro) {
+            /*
+             * Se a imagem chegou ao Cloudinary, mas não foi
+             * salva no banco, remove a imagem órfã.
+             */
+            if (
+                novaFoto?.publicId
+                && !fotoSalvaNoBanco
+            ) {
+                try {
+                    await removerImagem(
+                        novaFoto.publicId
+                    );
+                } catch (erroRemocao) {
+                    console.warn(
+                        "[upload] Não foi possível limpar a nova imagem:",
+                        erroRemocao.message
+                    );
+                }
+            }
 
             console.error(
                 "[upload] Erro ao salvar foto:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao salvar a foto."
-                });
+            const cloudinaryNaoConfigurado =
+                erro.codigo
+                === "CLOUDINARY_NAO_CONFIGURADO";
+
+            return res.status(500).json({
+                sucesso: false,
+                erro: cloudinaryNaoConfigurado
+                    ? "O armazenamento de imagens não está configurado."
+                    : "Erro interno ao salvar a foto."
+            });
         }
     }
 );
 
 // ==========================================
-// REMOVER FOTO DE PERFIL AUTENTICADA
+// REMOVER FOTO DE PERFIL
 //
-// IMPORTANTE:
-// Esta rota precisa ficar antes de DELETE /:id.
+// Esta rota deve ficar antes de DELETE /:id.
 // ==========================================
+
 router.delete(
     "/remover-foto",
     authUser,
@@ -928,42 +829,35 @@ router.delete(
             !Number.isInteger(usuarioId)
             || usuarioId <= 0
         ) {
-            return res
-                .status(401)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Usuário não autenticado."
-                });
+            return res.status(401).json({
+                sucesso: false,
+                erro: "Usuário não autenticado."
+            });
         }
 
         try {
-            const [usuarios] =
-                await db.query(
-                    `
-                        SELECT foto_perfil
-                        FROM usuarios
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [usuarioId]
-                );
+            const [usuarios] = await db.query(
+                `
+                    SELECT foto_perfil
+                    FROM usuarios
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [usuarioId]
+            );
 
             if (usuarios.length === 0) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Usuário não encontrado."
-                    });
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
             }
 
             const fotoAnterior =
                 usuarios[0].foto_perfil;
 
-            await db.query(
+            const [resultado] = await db.query(
                 `
                     UPDATE usuarios
                     SET foto_perfil = NULL
@@ -973,38 +867,39 @@ router.delete(
                 [usuarioId]
             );
 
-            const caminhoFoto =
-                obterCaminhoLocalDaFoto(
-                    fotoAnterior
-                );
-
-            if (caminhoFoto) {
-                await apagarArquivoLocal(
-                    caminhoFoto
-                );
+            if (resultado.affectedRows === 0) {
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
             }
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Foto de perfil removida com sucesso!",
-                    fotoUrl: null
-                });
+            /*
+             * A foto é retirada primeiro do banco.
+             * Se o Cloudinary estiver momentaneamente indisponível,
+             * isso não desconecta o usuário nem desfaz a remoção.
+             */
+            await removerFotoAnterior(
+                fotoAnterior
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Foto de perfil removida com sucesso!",
+                fotoUrl: null
+            });
         } catch (erro) {
             console.error(
                 "[upload] Erro ao remover foto:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao remover a foto."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro interno ao remover a foto."
+            });
         }
     }
 );
@@ -1012,6 +907,7 @@ router.delete(
 // ==========================================
 // PAINEL ADMINISTRATIVO
 // ==========================================
+
 router.get(
     "/",
     authAdmin,
@@ -1030,10 +926,6 @@ router.get(
     usuarioController.obterCadastrosPorMes
 );
 
-/*
- * Esta rota dinâmica precisa ficar depois
- * de /remover-foto.
- */
 router.delete(
     "/:id",
     authAdmin,
@@ -1054,73 +946,54 @@ router.put(
             !Number.isInteger(id)
             || id <= 0
         ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "ID inválido."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro: "ID inválido."
+            });
         }
 
-        if (
-            !TIPOS_VALIDOS.includes(
-                tipo
-            )
-        ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        `Tipo inválido. Use: ${TIPOS_VALIDOS.join(", ")}.`
-                });
+        if (!TIPOS_VALIDOS.includes(tipo)) {
+            return res.status(400).json({
+                sucesso: false,
+                erro:
+                    `Tipo inválido. Use: ${TIPOS_VALIDOS.join(", ")}.`
+            });
         }
 
         try {
-            const [resultado] =
-                await db.query(
-                    `
-                        UPDATE usuarios
-                        SET tipo = ?
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                    `,
-                    [tipo, id]
-                );
+            const [resultado] = await db.query(
+                `
+                    UPDATE usuarios
+                    SET tipo = ?
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                `,
+                [tipo, id]
+            );
 
-            if (
-                resultado.affectedRows === 0
-            ) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Usuário não encontrado."
-                    });
+            if (resultado.affectedRows === 0) {
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
             }
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        `Tipo de acesso alterado para ${tipo} com sucesso!`
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    `Tipo de acesso alterado para ${tipo} com sucesso!`
+            });
         } catch (erro) {
             console.error(
                 "[admin] Erro ao alterar tipo:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao alterar o tipo de acesso."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro interno ao alterar o tipo de acesso."
+            });
         }
     }
 );
@@ -1128,6 +1001,7 @@ router.put(
 // ==========================================
 // VERIFICAR SENHA DO USUÁRIO AUTENTICADO
 // ==========================================
+
 router.post(
     "/verificar-senha",
     authUser,
@@ -1144,46 +1018,36 @@ router.post(
             !Number.isInteger(usuarioId)
             || usuarioId <= 0
         ) {
-            return res
-                .status(401)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Usuário não autenticado."
-                });
+            return res.status(401).json({
+                sucesso: false,
+                erro: "Usuário não autenticado."
+            });
         }
 
         if (!senha) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "A senha é obrigatória."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                erro: "A senha é obrigatória."
+            });
         }
 
         try {
-            const [usuarios] =
-                await db.query(
-                    `
-                        SELECT senha
-                        FROM usuarios
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [usuarioId]
-                );
+            const [usuarios] = await db.query(
+                `
+                    SELECT senha
+                    FROM usuarios
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [usuarioId]
+            );
 
             if (usuarios.length === 0) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        erro:
-                            "Usuário não encontrado."
-                    });
+                return res.status(404).json({
+                    sucesso: false,
+                    erro: "Usuário não encontrado."
+                });
             }
 
             const correta =
@@ -1192,34 +1056,30 @@ router.post(
                     usuarios[0].senha
                 );
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: correta,
+            return res.status(200).json({
+                sucesso: correta,
 
-                    ...(correta
-                        ? {
-                            mensagem:
-                                "Senha verificada com sucesso!"
-                        }
-                        : {
-                            erro:
-                                "Senha incorreta."
-                        })
-                });
+                ...(correta
+                    ? {
+                        mensagem:
+                            "Senha verificada com sucesso!"
+                    }
+                    : {
+                        erro:
+                            "Senha incorreta."
+                    })
+            });
         } catch (erro) {
             console.error(
                 "[senha] Erro ao verificar senha:",
                 erro.code || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    erro:
-                        "Erro interno ao verificar a senha."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro interno ao verificar a senha."
+            });
         }
     }
 );

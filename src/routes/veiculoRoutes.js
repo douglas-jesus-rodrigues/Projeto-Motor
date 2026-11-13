@@ -1,87 +1,53 @@
+"use strict";
+
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-const crypto = require("crypto");
 const multer = require("multer");
 
 const router = express.Router();
 
 const db = require("../config/db");
+const authUser = require("../middlewares/authMiddleware");
 
-const authUser = require(
-    "../middlewares/authMiddleware"
-);
+const {
+    enviarImagem,
+    removerImagem
+} = require("../services/cloudinaryService");
 
 // ==========================================
 // CONFIGURAÇÃO DOS UPLOADS
 // ==========================================
+
 const UPLOAD_DIR = path.join(
     __dirname,
     "../../public/uploads"
 );
 
-const TAMANHO_MAXIMO =
-    5 * 1024 * 1024;
+const TAMANHO_MAXIMO = 5 * 1024 * 1024;
 
-const EXTENSOES = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp"
-};
+const EXTENSOES_PERMITIDAS = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+]);
 
-fs.mkdirSync(
-    UPLOAD_DIR,
-    { recursive: true }
-);
-
-const storage = multer.diskStorage({
-    destination: (
-        req,
-        file,
-        callback
-    ) => {
-        callback(
-            null,
-            UPLOAD_DIR
-        );
-    },
-
-    filename: (
-        req,
-        file,
-        callback
-    ) => {
-        const extensao =
-            EXTENSOES[file.mimetype];
-
-        const nomeSeguro =
-            `${crypto.randomUUID()}${extensao}`;
-
-        callback(
-            null,
-            nomeSeguro
-        );
-    }
+// Mantém compatibilidade com imagens locais antigas.
+fs.mkdirSync(UPLOAD_DIR, {
+    recursive: true
 });
 
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
 
     limits: {
         fileSize: TAMANHO_MAXIMO,
         files: 1
     },
 
-    fileFilter: (
-        req,
-        file,
-        callback
-    ) => {
-        if (EXTENSOES[file.mimetype]) {
-            return callback(
-                null,
-                true
-            );
+    fileFilter: (req, file, callback) => {
+        if (EXTENSOES_PERMITIDAS.has(file.mimetype)) {
+            return callback(null, true);
         }
 
         return callback(
@@ -92,11 +58,7 @@ const upload = multer({
     }
 });
 
-function uploadImagem(
-    req,
-    res,
-    next
-) {
+function uploadImagem(req, res, next) {
     upload.single("imagem")(
         req,
         res,
@@ -112,20 +74,19 @@ function uploadImagem(
                     : erro.message
                         || "Não foi possível processar a imagem.";
 
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    mensagem
-                });
+            return res.status(400).json({
+                sucesso: false,
+                mensagem
+            });
         }
     );
 }
 
 // ==========================================
-// FUNÇÕES AUXILIARES
+// FUNÇÕES DE IMAGENS
 // ==========================================
-async function apagarImagem(nome) {
+
+async function apagarImagemLocal(nome) {
     if (
         typeof nome !== "string"
         || !nome
@@ -150,12 +111,39 @@ async function apagarImagem(nome) {
     } catch (erro) {
         if (erro.code !== "ENOENT") {
             console.error(
-                "❌ Erro ao apagar imagem:",
+                "❌ Erro ao apagar imagem local:",
                 erro.code || erro.message
             );
         }
     }
 }
+
+async function apagarImagemArmazenada(imagem) {
+    if (!imagem) return;
+
+    if (
+        typeof imagem === "string"
+        && imagem.includes("res.cloudinary.com")
+    ) {
+        try {
+            await removerImagem(imagem);
+        } catch (erro) {
+            console.warn(
+                "⚠️ Não foi possível remover a imagem do Cloudinary:",
+                erro.message
+            );
+        }
+
+        return;
+    }
+
+    // Compatibilidade com anúncios antigos.
+    await apagarImagemLocal(imagem);
+}
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
 
 function usuarioAutenticadoId(req) {
     const id = Number(
@@ -185,28 +173,26 @@ async function resolverMarcaModelo(
 ) {
     let marcaId;
 
-    const [marcas] =
-        await db.query(
-            `
-                SELECT id
-                FROM marca
-                WHERE LOWER(nome) = LOWER(?)
-                LIMIT 1
-            `,
-            [marca]
-        );
+    const [marcas] = await db.query(
+        `
+            SELECT id
+            FROM marca
+            WHERE LOWER(nome) = LOWER(?)
+            LIMIT 1
+        `,
+        [marca]
+    );
 
     if (marcas.length) {
         marcaId = marcas[0].id;
     } else {
-        const [resultadoMarca] =
-            await db.query(
-                `
-                    INSERT INTO marca (nome)
-                    VALUES (?)
-                `,
-                [marca]
-            );
+        const [resultadoMarca] = await db.query(
+            `
+                INSERT INTO marca (nome)
+                VALUES (?)
+            `,
+            [marca]
+        );
 
         marcaId =
             resultadoMarca.insertId;
@@ -214,40 +200,38 @@ async function resolverMarcaModelo(
 
     let modeloId;
 
-    const [modelos] =
-        await db.query(
+    const [modelos] = await db.query(
+        `
+            SELECT id
+            FROM modelo
+            WHERE marca_id = ?
+              AND LOWER(nome) = LOWER(?)
+            LIMIT 1
+        `,
+        [
+            marcaId,
+            modelo
+        ]
+    );
+
+    if (modelos.length) {
+        modeloId =
+            modelos[0].id;
+    } else {
+        const [resultadoModelo] = await db.query(
             `
-                SELECT id
-                FROM modelo
-                WHERE marca_id = ?
-                  AND LOWER(nome) = LOWER(?)
-                LIMIT 1
+                INSERT INTO modelo
+                (
+                    marca_id,
+                    nome
+                )
+                VALUES (?, ?)
             `,
             [
                 marcaId,
                 modelo
             ]
         );
-
-    if (modelos.length) {
-        modeloId =
-            modelos[0].id;
-    } else {
-        const [resultadoModelo] =
-            await db.query(
-                `
-                    INSERT INTO modelo
-                    (
-                        marca_id,
-                        nome
-                    )
-                    VALUES (?, ?)
-                `,
-                [
-                    marcaId,
-                    modelo
-                ]
-            );
 
         modeloId =
             resultadoModelo.insertId;
@@ -272,42 +256,32 @@ async function resolverAuxiliar(
         return padrao;
     }
 
-    if (
-        !Number.isNaN(
-            Number(valor)
-        )
-    ) {
+    if (!Number.isNaN(Number(valor))) {
         return Number(valor);
     }
 
-    const tabelasPermitidas =
-        new Set([
-            "tipo_combustivel",
-            "tipo_transmissao"
-        ]);
+    const tabelasPermitidas = new Set([
+        "tipo_combustivel",
+        "tipo_transmissao"
+    ]);
 
-    if (
-        !tabelasPermitidas.has(
-            tabela
-        )
-    ) {
+    if (!tabelasPermitidas.has(tabela)) {
         throw new Error(
             "Tabela auxiliar inválida."
         );
     }
 
-    const [linhas] =
-        await db.query(
-            `
-                SELECT id
-                FROM ${tabela}
-                WHERE LOWER(nome) = LOWER(?)
-                LIMIT 1
-            `,
-            [
-                String(valor).trim()
-            ]
-        );
+    const [linhas] = await db.query(
+        `
+            SELECT id
+            FROM ${tabela}
+            WHERE LOWER(nome) = LOWER(?)
+            LIMIT 1
+        `,
+        [
+            String(valor).trim()
+        ]
+    );
 
     return linhas.length
         ? linhas[0].id
@@ -317,6 +291,7 @@ async function resolverAuxiliar(
 // ==========================================
 // AUTORIZAÇÃO DO PROPRIETÁRIO OU ADMIN
 // ==========================================
+
 async function autorizarGerenciamento(
     req,
     res,
@@ -329,78 +304,66 @@ async function autorizarGerenciamento(
         Number(req.params.id);
 
     if (!usuarioId) {
-        return res
-            .status(401)
-            .json({
-                sucesso: false,
-                mensagem:
-                    "Usuário não autenticado."
-            });
+        return res.status(401).json({
+            sucesso: false,
+            mensagem:
+                "Usuário não autenticado."
+        });
     }
 
     if (
         !Number.isInteger(veiculoId)
         || veiculoId <= 0
     ) {
-        return res
-            .status(400)
-            .json({
-                sucesso: false,
-                mensagem:
-                    "ID do veículo inválido."
-            });
+        return res.status(400).json({
+            sucesso: false,
+            mensagem:
+                "ID do veículo inválido."
+        });
     }
 
     try {
-        const [[veiculo]] =
-            await db.query(
-                `
-                    SELECT
-                        id,
-                        usuario_id
-                    FROM veiculos
-                    WHERE id = ?
-                    LIMIT 1
-                `,
-                [veiculoId]
-            );
+        const [[veiculo]] = await db.query(
+            `
+                SELECT
+                    id,
+                    usuario_id
+                FROM veiculos
+                WHERE id = ?
+                LIMIT 1
+            `,
+            [veiculoId]
+        );
 
         if (!veiculo) {
-            return res
-                .status(404)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Veículo não encontrado."
-                });
+            return res.status(404).json({
+                sucesso: false,
+                mensagem:
+                    "Veículo não encontrado."
+            });
         }
 
-        const [[usuario]] =
-            await db.query(
-                `
-                    SELECT tipo
-                    FROM usuarios
-                    WHERE id = ?
-                      AND deleted_at IS NULL
-                    LIMIT 1
-                `,
-                [usuarioId]
-            );
+        const [[usuario]] = await db.query(
+            `
+                SELECT tipo
+                FROM usuarios
+                WHERE id = ?
+                  AND deleted_at IS NULL
+                LIMIT 1
+            `,
+            [usuarioId]
+        );
 
         const permitido =
-            Number(
-                veiculo.usuario_id
-            ) === usuarioId
+            Number(veiculo.usuario_id) === usuarioId
             || usuario?.tipo === "admin";
 
         if (!permitido) {
-            return res
-                .status(403)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Você não tem permissão para gerenciar este anúncio."
-                });
+            return res.status(403).json({
+                sucesso: false,
+                mensagem:
+                    "Você não tem permissão para gerenciar este anúncio."
+            });
         }
 
         req.veiculoAutorizado =
@@ -410,17 +373,14 @@ async function autorizarGerenciamento(
     } catch (erro) {
         console.error(
             "❌ Erro ao autorizar anúncio:",
-            erro.sqlMessage
-            || erro.message
+            erro.sqlMessage || erro.message
         );
 
-        return res
-            .status(500)
-            .json({
-                sucesso: false,
-                mensagem:
-                    "Erro interno ao validar o anúncio."
-            });
+        return res.status(500).json({
+            sucesso: false,
+            mensagem:
+                "Erro interno ao validar o anúncio."
+        });
     }
 }
 
@@ -428,6 +388,7 @@ async function autorizarGerenciamento(
 // POST /api/veiculos
 // CADASTRAR VEÍCULO
 // ==========================================
+
 router.post(
     "/",
     authUser,
@@ -436,25 +397,35 @@ router.post(
         const usuarioId =
             usuarioAutenticadoId(req);
 
-        const descartarUpload =
-            async () => {
-                if (req.file) {
-                    await apagarImagem(
-                        req.file.filename
-                    );
-                }
-            };
+        let imagemEnviada = null;
+        let imagemUrl = null;
+        let veiculoCriadoId = null;
+
+        async function descartarImagemEnviada() {
+            if (!imagemEnviada?.publicId) {
+                return;
+            }
+
+            try {
+                await removerImagem(
+                    imagemEnviada.publicId
+                );
+
+                imagemEnviada = null;
+            } catch (erro) {
+                console.warn(
+                    "⚠️ Não foi possível limpar a imagem enviada:",
+                    erro.message
+                );
+            }
+        }
 
         if (!usuarioId) {
-            await descartarUpload();
-
-            return res
-                .status(401)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Usuário não autenticado."
-                });
+            return res.status(401).json({
+                sucesso: false,
+                mensagem:
+                    "Usuário não autenticado."
+            });
         }
 
         try {
@@ -481,15 +452,11 @@ router.post(
                 || !ano_modelo
                 || !preco
             ) {
-                await descartarUpload();
-
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Preencha marca, modelo, anos e preço."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem:
+                        "Preencha marca, modelo, anos e preço."
+                });
             }
 
             const precoNumerico =
@@ -502,39 +469,25 @@ router.post(
                 Number(ano_modelo);
 
             if (
-                !Number.isFinite(
-                    precoNumerico
-                )
+                !Number.isFinite(precoNumerico)
                 || precoNumerico <= 0
             ) {
-                await descartarUpload();
-
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "O preço informado é inválido."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem:
+                        "O preço informado é inválido."
+                });
             }
 
             if (
-                !Number.isInteger(
-                    anoFabricacao
-                )
-                || !Number.isInteger(
-                    anoModelo
-                )
+                !Number.isInteger(anoFabricacao)
+                || !Number.isInteger(anoModelo)
             ) {
-                await descartarUpload();
-
-                return res
-                    .status(400)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Os anos informados são inválidos."
-                    });
+                return res.status(400).json({
+                    sucesso: false,
+                    mensagem:
+                        "Os anos informados são inválidos."
+                });
             }
 
             const precoFinal =
@@ -565,65 +518,70 @@ router.post(
                     1
                 );
 
-            const [resultado] =
-                await db.query(
-                    `
-                        INSERT INTO veiculos
-                        (
-                            usuario_id,
-                            marca_id,
-                            modelo_id,
-                            versao,
-                            ano_fabricacao,
-                            ano_modelo,
-                            preco,
-                            quilometragem,
-                            tipo_combustivel_id,
-                            tipo_transmissao_id,
-                            cor,
-                            portas,
-                            carroceria,
-                            descricao,
-                            status_anuncio_id
-                        )
-                        VALUES (
-                            ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?, ?, ?, ?,
-                            ?, ?, 1
-                        )
-                    `,
-                    [
-                        usuarioId,
-                        marcaId,
-                        modeloId,
-                        versao?.trim() || null,
-                        anoFabricacao,
-                        anoModelo,
-                        precoFinal,
+            const [resultado] = await db.query(
+                `
+                    INSERT INTO veiculos
+                    (
+                        usuario_id,
+                        marca_id,
+                        modelo_id,
+                        versao,
+                        ano_fabricacao,
+                        ano_modelo,
+                        preco,
+                        quilometragem,
+                        tipo_combustivel_id,
+                        tipo_transmissao_id,
+                        cor,
+                        portas,
+                        carroceria,
+                        descricao,
+                        status_anuncio_id
+                    )
+                    VALUES (
+                        ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?,
+                        ?, ?, 1
+                    )
+                `,
+                [
+                    usuarioId,
+                    marcaId,
+                    modeloId,
+                    versao?.trim() || null,
+                    anoFabricacao,
+                    anoModelo,
+                    precoFinal,
 
-                        quilometragem
-                            ? Number(
-                                quilometragem
-                            )
-                            : 0,
+                    quilometragem
+                        ? Number(quilometragem)
+                        : 0,
 
-                        combustivelId,
-                        transmissaoId,
-                        cor?.trim() || null,
+                    combustivelId,
+                    transmissaoId,
+                    cor?.trim() || null,
 
-                        portas
-                            ? Number(portas)
-                            : null,
+                    portas
+                        ? Number(portas)
+                        : null,
 
-                        carroceria?.trim()
-                            || null,
+                    carroceria?.trim() || null,
+                    descricao?.trim() || null
+                ]
+            );
 
-                        descricao?.trim()
-                            || null
-                    ]
-                );
+            veiculoCriadoId =
+                resultado.insertId;
 
             if (req.file) {
+                imagemEnviada = await enviarImagem(
+                    req.file.buffer,
+                    {
+                        pasta:
+                            `motorflex/veiculos/${veiculoCriadoId}`
+                    }
+                );
+
                 await db.query(
                     `
                         INSERT INTO fotos_veiculos
@@ -640,41 +598,72 @@ router.post(
                         )
                     `,
                     [
-                        resultado.insertId,
-                        req.file.filename,
+                        veiculoCriadoId,
+                        imagemEnviada.url,
                         req.file.originalname,
                         req.file.mimetype,
-                        req.file.size
+                        imagemEnviada.tamanho
+                            || req.file.size
                     ]
                 );
+
+                imagemUrl =
+                    imagemEnviada.url;
+
+                // A imagem está salva no banco.
+                imagemEnviada = null;
             }
 
-            return res
-                .status(201)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Veículo publicado com sucesso!",
-                    veiculoId:
-                        resultado.insertId,
-                    precoFinal
-                });
+            return res.status(201).json({
+                sucesso: true,
+                mensagem:
+                    "Veículo publicado com sucesso!",
+                veiculoId:
+                    veiculoCriadoId,
+                precoFinal,
+                imagem: imagemUrl
+            });
         } catch (erro) {
-            await descartarUpload();
+            await descartarImagemEnviada();
+
+            if (veiculoCriadoId) {
+                try {
+                    await db.query(
+                        `
+                            DELETE FROM fotos_veiculos
+                            WHERE veiculo_id = ?
+                        `,
+                        [veiculoCriadoId]
+                    );
+
+                    await db.query(
+                        `
+                            DELETE FROM veiculos
+                            WHERE id = ?
+                        `,
+                        [veiculoCriadoId]
+                    );
+                } catch (erroLimpeza) {
+                    console.warn(
+                        "⚠️ Não foi possível desfazer o veículo incompleto:",
+                        erroLimpeza.message
+                    );
+                }
+            }
 
             console.error(
                 "❌ Erro ao cadastrar veículo:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro interno ao cadastrar veículo."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    erro.codigo
+                    === "CLOUDINARY_NAO_CONFIGURADO"
+                        ? "O armazenamento de imagens não está configurado."
+                        : "Erro interno ao cadastrar veículo."
+            });
         }
     }
 );
@@ -683,6 +672,7 @@ router.post(
 // GET /api/veiculos
 // LISTAGEM PÚBLICA DO CATÁLOGO
 // ==========================================
+
 router.get(
     "/",
     async (req, res) => {
@@ -709,68 +699,65 @@ router.get(
             const offset =
                 (pagina - 1) * limite;
 
-            const [[{ total }]] =
-                await db.query(
-                    `
-                        SELECT COUNT(*) AS total
-                        FROM veiculos
-                    `
-                );
+            const [[{ total }]] = await db.query(
+                `
+                    SELECT COUNT(*) AS total
+                    FROM veiculos
+                `
+            );
 
             const totalPaginas =
                 Math.ceil(
                     Number(total) / limite
                 );
 
-            const [veiculos] =
-                await db.query(
-                    `
-                        SELECT
-                            v.*,
-                            m.nome AS marca_nome,
-                            mo.nome AS modelo_nome,
-                            f.imagem AS imagem
-                        FROM veiculos v
-                        LEFT JOIN marca m
-                            ON m.id = v.marca_id
-                        LEFT JOIN modelo mo
-                            ON mo.id = v.modelo_id
-                        LEFT JOIN fotos_veiculos f
-                            ON f.veiculo_id = v.id
-                           AND f.principal = 1
-                        ORDER BY v.id DESC
-                        LIMIT ? OFFSET ?
-                    `,
-                    [
-                        limite,
-                        offset
-                    ]
-                );
+            const [veiculos] = await db.query(
+                `
+                    SELECT
+                        v.*,
+                        m.nome AS marca_nome,
+                        mo.nome AS modelo_nome,
+                        f.imagem AS imagem
+                    FROM veiculos v
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    veiculos,
-                    total_paginas:
-                        totalPaginas,
-                    pagina_atual:
-                        pagina
-                });
+                    LEFT JOIN marca m
+                        ON m.id = v.marca_id
+
+                    LEFT JOIN modelo mo
+                        ON mo.id = v.modelo_id
+
+                    LEFT JOIN fotos_veiculos f
+                        ON f.veiculo_id = v.id
+                       AND f.principal = 1
+
+                    ORDER BY v.id DESC
+                    LIMIT ? OFFSET ?
+                `,
+                [
+                    limite,
+                    offset
+                ]
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                veiculos,
+                total_paginas:
+                    totalPaginas,
+                pagina_atual:
+                    pagina
+            });
         } catch (erro) {
             console.error(
                 "❌ Erro ao listar veículos:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro ao buscar veículos."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    "Erro ao buscar veículos."
+            });
         }
     }
 );
@@ -779,86 +766,76 @@ router.get(
 // GET /api/veiculos/usuario/:usuarioId
 // ANÚNCIOS DE UMA CONTA
 // ==========================================
+
 router.get(
     "/usuario/:usuarioId",
     async (req, res) => {
         const usuarioId =
-            Number(
-                req.params.usuarioId
-            );
+            Number(req.params.usuarioId);
 
         if (
             !Number.isInteger(usuarioId)
             || usuarioId <= 0
         ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "ID de usuário inválido."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                mensagem:
+                    "ID de usuário inválido."
+            });
         }
 
         try {
-            const [veiculos] =
-                await db.query(
-                    `
-                        SELECT
-                            v.*,
-                            m.nome AS marca,
-                            mo.nome AS modelo,
-                            s.nome AS status_anuncio,
-                            f.imagem AS imagem,
+            const [veiculos] = await db.query(
+                `
+                    SELECT
+                        v.*,
+                        m.nome AS marca,
+                        mo.nome AS modelo,
+                        s.nome AS status_anuncio,
+                        f.imagem AS imagem,
 
-                            (
-                                SELECT COUNT(*)
-                                FROM visualizacoes_anuncios va
-                                WHERE va.veiculo_id = v.id
-                            ) AS total_visualizacoes
+                        (
+                            SELECT COUNT(*)
+                            FROM visualizacoes_anuncios va
+                            WHERE va.veiculo_id = v.id
+                        ) AS total_visualizacoes
 
-                        FROM veiculos v
+                    FROM veiculos v
 
-                        LEFT JOIN marca m
-                            ON m.id = v.marca_id
+                    LEFT JOIN marca m
+                        ON m.id = v.marca_id
 
-                        LEFT JOIN modelo mo
-                            ON mo.id = v.modelo_id
+                    LEFT JOIN modelo mo
+                        ON mo.id = v.modelo_id
 
-                        LEFT JOIN status_anuncio s
-                            ON s.id = v.status_anuncio_id
+                    LEFT JOIN status_anuncio s
+                        ON s.id = v.status_anuncio_id
 
-                        LEFT JOIN fotos_veiculos f
-                            ON f.veiculo_id = v.id
-                           AND f.principal = 1
+                    LEFT JOIN fotos_veiculos f
+                        ON f.veiculo_id = v.id
+                       AND f.principal = 1
 
-                        WHERE v.usuario_id = ?
+                    WHERE v.usuario_id = ?
+                    ORDER BY v.id DESC
+                `,
+                [usuarioId]
+            );
 
-                        ORDER BY v.id DESC
-                    `,
-                    [usuarioId]
-                );
-
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    veiculos
-                });
+            return res.status(200).json({
+                sucesso: true,
+                veiculos
+            });
         } catch (erro) {
             console.error(
                 "❌ Erro ao buscar veículos do usuário:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro ao buscar anúncios do usuário."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    "Erro ao buscar anúncios do usuário."
+            });
         }
     }
 );
@@ -867,6 +844,7 @@ router.get(
 // POST /api/veiculos/:id/visualizar
 // REGISTRAR VISUALIZAÇÃO
 // ==========================================
+
 router.post(
     "/:id/visualizar",
     authUser,
@@ -881,85 +859,70 @@ router.post(
             !Number.isInteger(veiculoId)
             || veiculoId <= 0
         ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "ID do veículo inválido."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                mensagem:
+                    "ID do veículo inválido."
+            });
         }
 
         if (!usuarioId) {
-            return res
-                .status(401)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Usuário não autenticado."
-                });
+            return res.status(401).json({
+                sucesso: false,
+                mensagem:
+                    "Usuário não autenticado."
+            });
         }
 
         try {
-            const [[usuario]] =
-                await db.query(
-                    `
-                        SELECT tipo
-                        FROM usuarios
-                        WHERE id = ?
-                          AND deleted_at IS NULL
-                        LIMIT 1
-                    `,
-                    [usuarioId]
-                );
+            const [[usuario]] = await db.query(
+                `
+                    SELECT tipo
+                    FROM usuarios
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                `,
+                [usuarioId]
+            );
 
-            if (
-                usuario?.tipo === "admin"
-            ) {
-                return res
-                    .status(200)
-                    .json({
-                        sucesso: true,
-                        ignorado: true,
-                        mensagem:
-                            "Visualização de administrador ignorada."
-                    });
+            if (usuario?.tipo === "admin") {
+                return res.status(200).json({
+                    sucesso: true,
+                    ignorado: true,
+                    mensagem:
+                        "Visualização de administrador ignorada."
+                });
             }
 
-            const [[veiculo]] =
-                await db.query(
-                    `
-                        SELECT usuario_id
-                        FROM veiculos
-                        WHERE id = ?
-                        LIMIT 1
-                    `,
-                    [veiculoId]
-                );
+            const [[veiculo]] = await db.query(
+                `
+                    SELECT usuario_id
+                    FROM veiculos
+                    WHERE id = ?
+                    LIMIT 1
+                `,
+                [veiculoId]
+            );
 
             if (!veiculo) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Veículo não encontrado."
-                    });
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem:
+                        "Veículo não encontrado."
+                });
             }
 
             if (
-                Number(
-                    veiculo.usuario_id
-                ) === usuarioId
+                Number(veiculo.usuario_id)
+                === usuarioId
             ) {
-                return res
-                    .status(200)
-                    .json({
-                        sucesso: true,
-                        ignorado: true,
-                        mensagem:
-                            "Visualização do proprietário ignorada."
-                    });
+                return res.status(200).json({
+                    sucesso: true,
+                    ignorado: true,
+                    mensagem:
+                        "Visualização do proprietário ignorada."
+                });
             }
 
             await db.query(
@@ -977,27 +940,22 @@ router.post(
                 ]
             );
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Visualização registrada com sucesso."
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Visualização registrada com sucesso."
+            });
         } catch (erro) {
             console.error(
                 "❌ Erro ao registrar visualização:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro interno ao registrar visualização."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    "Erro interno ao registrar visualização."
+            });
         }
     }
 );
@@ -1006,6 +964,7 @@ router.post(
 // GET /api/veiculos/:id
 // BUSCAR UM VEÍCULO
 // ==========================================
+
 router.get(
     "/:id",
     async (req, res) => {
@@ -1016,73 +975,64 @@ router.get(
             !Number.isInteger(veiculoId)
             || veiculoId <= 0
         ) {
-            return res
-                .status(400)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "ID do veículo inválido."
-                });
+            return res.status(400).json({
+                sucesso: false,
+                mensagem:
+                    "ID do veículo inválido."
+            });
         }
 
         try {
-            const [veiculos] =
-                await db.query(
-                    `
-                        SELECT
-                            v.*,
-                            m.nome AS marca,
-                            mo.nome AS modelo,
-                            f.imagem AS imagem
-                        FROM veiculos v
+            const [veiculos] = await db.query(
+                `
+                    SELECT
+                        v.*,
+                        m.nome AS marca,
+                        mo.nome AS modelo,
+                        f.imagem AS imagem
 
-                        LEFT JOIN marca m
-                            ON m.id = v.marca_id
+                    FROM veiculos v
 
-                        LEFT JOIN modelo mo
-                            ON mo.id = v.modelo_id
+                    LEFT JOIN marca m
+                        ON m.id = v.marca_id
 
-                        LEFT JOIN fotos_veiculos f
-                            ON f.veiculo_id = v.id
-                           AND f.principal = 1
+                    LEFT JOIN modelo mo
+                        ON mo.id = v.modelo_id
 
-                        WHERE v.id = ?
-                        LIMIT 1
-                    `,
-                    [veiculoId]
-                );
+                    LEFT JOIN fotos_veiculos f
+                        ON f.veiculo_id = v.id
+                       AND f.principal = 1
+
+                    WHERE v.id = ?
+                    LIMIT 1
+                `,
+                [veiculoId]
+            );
 
             if (!veiculos.length) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Veículo não encontrado."
-                    });
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem:
+                        "Veículo não encontrado."
+                });
             }
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    veiculo:
-                        veiculos[0]
-                });
+            return res.status(200).json({
+                sucesso: true,
+                veiculo:
+                    veiculos[0]
+            });
         } catch (erro) {
             console.error(
                 "❌ Erro ao buscar veículo:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro ao buscar o veículo."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    "Erro ao buscar o veículo."
+            });
         }
     }
 );
@@ -1091,6 +1041,7 @@ router.get(
 // PUT /api/veiculos/:id
 // ATUALIZAR VEÍCULO
 // ==========================================
+
 router.put(
     "/:id",
     authUser,
@@ -1100,90 +1051,93 @@ router.put(
         const veiculoId =
             Number(req.params.id);
 
-        const descartarUpload =
-            async () => {
-                if (req.file) {
-                    await apagarImagem(
-                        req.file.filename
-                    );
-                }
-            };
+        let novaImagem = null;
+        let imagemPersistida = false;
 
-        try {
-            const [[atual]] =
-                await db.query(
-                    `
-                        SELECT *
-                        FROM veiculos
-                        WHERE id = ?
-                        LIMIT 1
-                    `,
-                    [veiculoId]
+        async function descartarNovaImagem() {
+            if (
+                !novaImagem?.publicId
+                || imagemPersistida
+            ) {
+                return;
+            }
+
+            try {
+                await removerImagem(
+                    novaImagem.publicId
                 );
 
-            if (!atual) {
-                await descartarUpload();
+                novaImagem = null;
+            } catch (erro) {
+                console.warn(
+                    "⚠️ Não foi possível limpar a nova imagem:",
+                    erro.message
+                );
+            }
+        }
 
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Veículo não encontrado."
-                    });
+        try {
+            const [[atual]] = await db.query(
+                `
+                    SELECT *
+                    FROM veiculos
+                    WHERE id = ?
+                    LIMIT 1
+                `,
+                [veiculoId]
+            );
+
+            if (!atual) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem:
+                        "Veículo não encontrado."
+                });
             }
 
             const corpo = req.body;
 
-            const enviado =
-                (campo) => {
-                    return corpo[campo]
-                        !== undefined;
-                };
+            const enviado = (campo) => {
+                return corpo[campo] !== undefined;
+            };
 
-            const texto =
-                (
-                    campo,
-                    valorAntigo
-                ) => {
-                    return enviado(campo)
-                        ? (
-                            String(
-                                corpo[campo]
-                            ).trim()
-                            || null
-                        )
-                        : valorAntigo;
-                };
-
-            const inteiro =
-                (
-                    campo,
-                    valorAntigo
-                ) => {
-                    if (!enviado(campo)) {
-                        return valorAntigo;
-                    }
-
-                    if (
+            const texto = (
+                campo,
+                valorAntigo
+            ) => {
+                return enviado(campo)
+                    ? (
                         String(
                             corpo[campo]
-                        ).trim() === ""
-                    ) {
-                        return null;
-                    }
-
-                    const numero =
-                        Number(
-                            corpo[campo]
-                        );
-
-                    return Number.isInteger(
-                        numero
+                        ).trim()
+                        || null
                     )
-                        ? numero
-                        : valorAntigo;
-                };
+                    : valorAntigo;
+            };
+
+            const inteiro = (
+                campo,
+                valorAntigo
+            ) => {
+                if (!enviado(campo)) {
+                    return valorAntigo;
+                }
+
+                if (
+                    String(
+                        corpo[campo]
+                    ).trim() === ""
+                ) {
+                    return null;
+                }
+
+                const numero =
+                    Number(corpo[campo]);
+
+                return Number.isInteger(numero)
+                    ? numero
+                    : valorAntigo;
+            };
 
             let marcaId =
                 atual.marca_id;
@@ -1194,12 +1148,8 @@ router.put(
             if (
                 enviado("marca")
                 && enviado("modelo")
-                && String(
-                    corpo.marca
-                ).trim()
-                && String(
-                    corpo.modelo
-                ).trim()
+                && String(corpo.marca).trim()
+                && String(corpo.modelo).trim()
             ) {
                 ({
                     marcaId,
@@ -1208,7 +1158,6 @@ router.put(
                     String(
                         corpo.marca
                     ).trim(),
-
                     String(
                         corpo.modelo
                     ).trim()
@@ -1220,9 +1169,7 @@ router.put(
 
             if (
                 enviado("preco")
-                && String(
-                    corpo.preco
-                ).trim()
+                && String(corpo.preco).trim()
             ) {
                 const numero = Number(
                     String(corpo.preco)
@@ -1236,15 +1183,11 @@ router.put(
                     !Number.isFinite(numero)
                     || numero <= 0
                 ) {
-                    await descartarUpload();
-
-                    return res
-                        .status(400)
-                        .json({
-                            sucesso: false,
-                            mensagem:
-                                "O preço informado é inválido."
-                        });
+                    return res.status(400).json({
+                        sucesso: false,
+                        mensagem:
+                            "O preço informado é inválido."
+                    });
                 }
 
                 preco =
@@ -1347,20 +1290,27 @@ router.put(
             let imagem = null;
 
             if (req.file) {
-                const [fotos] =
-                    await db.query(
-                        `
-                            SELECT
-                                id,
-                                imagem
-                            FROM fotos_veiculos
-                            WHERE veiculo_id = ?
-                              AND principal = 1
-                            ORDER BY id
-                            LIMIT 1
-                        `,
-                        [veiculoId]
-                    );
+                novaImagem = await enviarImagem(
+                    req.file.buffer,
+                    {
+                        pasta:
+                            `motorflex/veiculos/${veiculoId}`
+                    }
+                );
+
+                const [fotos] = await db.query(
+                    `
+                        SELECT
+                            id,
+                            imagem
+                        FROM fotos_veiculos
+                        WHERE veiculo_id = ?
+                          AND principal = 1
+                        ORDER BY id
+                        LIMIT 1
+                    `,
+                    [veiculoId]
+                );
 
                 if (fotos[0]) {
                     await db.query(
@@ -1374,15 +1324,18 @@ router.put(
                             WHERE id = ?
                         `,
                         [
-                            req.file.filename,
+                            novaImagem.url,
                             req.file.originalname,
                             req.file.mimetype,
-                            req.file.size,
+                            novaImagem.tamanho
+                                || req.file.size,
                             fotos[0].id
                         ]
                     );
 
-                    await apagarImagem(
+                    imagemPersistida = true;
+
+                    await apagarImagemArmazenada(
                         fotos[0].imagem
                     );
                 } else {
@@ -1403,42 +1356,43 @@ router.put(
                         `,
                         [
                             veiculoId,
-                            req.file.filename,
+                            novaImagem.url,
                             req.file.originalname,
                             req.file.mimetype,
-                            req.file.size
+                            novaImagem.tamanho
+                                || req.file.size
                         ]
                     );
+
+                    imagemPersistida = true;
                 }
 
                 imagem =
-                    req.file.filename;
+                    novaImagem.url;
             }
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Anúncio atualizado com sucesso!",
-                    imagem
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Anúncio atualizado com sucesso!",
+                imagem
+            });
         } catch (erro) {
-            await descartarUpload();
+            await descartarNovaImagem();
 
             console.error(
                 "❌ Erro ao atualizar veículo:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro interno ao atualizar o anúncio."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    erro.codigo
+                    === "CLOUDINARY_NAO_CONFIGURADO"
+                        ? "O armazenamento de imagens não está configurado."
+                        : "Erro interno ao atualizar o anúncio."
+            });
         }
     }
 );
@@ -1447,6 +1401,7 @@ router.put(
 // DELETE /api/veiculos/:id
 // EXCLUIR VEÍCULO
 // ==========================================
+
 router.delete(
     "/:id",
     authUser,
@@ -1456,15 +1411,14 @@ router.delete(
             Number(req.params.id);
 
         try {
-            const [fotos] =
-                await db.query(
-                    `
-                        SELECT imagem
-                        FROM fotos_veiculos
-                        WHERE veiculo_id = ?
-                    `,
-                    [veiculoId]
-                );
+            const [fotos] = await db.query(
+                `
+                    SELECT imagem
+                    FROM fotos_veiculos
+                    WHERE veiculo_id = ?
+                `,
+                [veiculoId]
+            );
 
             await db.query(
                 `
@@ -1482,56 +1436,46 @@ router.delete(
                 [veiculoId]
             );
 
-            const [resultado] =
-                await db.query(
-                    `
-                        DELETE FROM veiculos
-                        WHERE id = ?
-                    `,
-                    [veiculoId]
-                );
+            const [resultado] = await db.query(
+                `
+                    DELETE FROM veiculos
+                    WHERE id = ?
+                `,
+                [veiculoId]
+            );
 
-            if (
-                !resultado.affectedRows
-            ) {
-                return res
-                    .status(404)
-                    .json({
-                        sucesso: false,
-                        mensagem:
-                            "Veículo não encontrado."
-                    });
+            if (!resultado.affectedRows) {
+                return res.status(404).json({
+                    sucesso: false,
+                    mensagem:
+                        "Veículo não encontrado."
+                });
             }
 
             await Promise.all(
                 fotos.map((foto) => {
-                    return apagarImagem(
+                    return apagarImagemArmazenada(
                         foto.imagem
                     );
                 })
             );
 
-            return res
-                .status(200)
-                .json({
-                    sucesso: true,
-                    mensagem:
-                        "Anúncio excluído com sucesso!"
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem:
+                    "Anúncio excluído com sucesso!"
+            });
         } catch (erro) {
             console.error(
                 "❌ Erro ao excluir veículo:",
-                erro.sqlMessage
-                || erro.message
+                erro.sqlMessage || erro.message
             );
 
-            return res
-                .status(500)
-                .json({
-                    sucesso: false,
-                    mensagem:
-                        "Erro interno ao excluir o anúncio."
-                });
+            return res.status(500).json({
+                sucesso: false,
+                mensagem:
+                    "Erro interno ao excluir o anúncio."
+            });
         }
     }
 );
