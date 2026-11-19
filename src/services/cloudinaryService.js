@@ -3,12 +3,22 @@
 const cloudinary = require("../config/cloudinary");
 
 function verificarConfiguracao() {
-    if (!cloudinary.configurado) {
+    const configuracao =
+        cloudinary.config();
+
+    const configurado = Boolean(
+        configuracao.cloud_name &&
+        configuracao.api_key &&
+        configuracao.api_secret
+    );
+
+    if (!configurado) {
         const erro = new Error(
             "Cloudinary não está configurado no servidor."
         );
 
-        erro.codigo = "CLOUDINARY_NAO_CONFIGURADO";
+        erro.codigo =
+            "CLOUDINARY_NAO_CONFIGURADO";
 
         throw erro;
     }
@@ -23,56 +33,105 @@ function enviarImagem(
 ) {
     verificarConfiguracao();
 
-    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    if (
+        !Buffer.isBuffer(buffer) ||
+        buffer.length === 0
+    ) {
         return Promise.reject(
-            new Error("Arquivo de imagem inválido.")
+            new Error(
+                "Arquivo de imagem inválido."
+            )
         );
     }
 
-    return new Promise((resolve, reject) => {
-        const opcoes = {
-            folder: pasta,
-            resource_type: "image",
-            overwrite: false,
-            unique_filename: true,
-            use_filename: false
-        };
+    return new Promise(
+        (resolve, reject) => {
+            const opcoes = {
+                folder: pasta,
+                resource_type: "image",
+                overwrite: false,
+                unique_filename: true,
+                use_filename: false,
+                transformation: [
+                    {
+                        quality: "auto",
+                        fetch_format: "auto"
+                    }
+                ]
+            };
 
-        if (publicId) {
-            opcoes.public_id = String(publicId);
-            opcoes.overwrite = true;
-            opcoes.unique_filename = false;
-        }
+            if (publicId) {
+                opcoes.public_id =
+                    String(publicId);
 
-        const upload = cloudinary.uploader.upload_stream(
-            opcoes,
-            (erro, resultado) => {
-                if (erro) {
-                    reject(erro);
-                    return;
-                }
-
-                resolve({
-                    url: resultado.secure_url,
-                    publicId: resultado.public_id,
-                    largura: resultado.width,
-                    altura: resultado.height,
-                    formato: resultado.format,
-                    tamanho: resultado.bytes
-                });
+                opcoes.overwrite = true;
+                opcoes.unique_filename = false;
             }
-        );
 
-        upload.end(buffer);
-    });
+            const upload =
+                cloudinary.uploader.upload_stream(
+                    opcoes,
+                    (erro, resultado) => {
+                        if (erro) {
+                            reject(erro);
+                            return;
+                        }
+
+                        if (
+                            !resultado ||
+                            !resultado.secure_url
+                        ) {
+                            reject(
+                                new Error(
+                                    "O Cloudinary não retornou o endereço da imagem."
+                                )
+                            );
+
+                            return;
+                        }
+
+                        resolve({
+                            url:
+                                resultado.secure_url,
+
+                            publicId:
+                                resultado.public_id,
+
+                            largura:
+                                resultado.width,
+
+                            altura:
+                                resultado.height,
+
+                            formato:
+                                resultado.format,
+
+                            tamanho:
+                                resultado.bytes
+                        });
+                    }
+                );
+
+            upload.on(
+                "error",
+                reject
+            );
+
+            upload.end(buffer);
+        }
+    );
 }
 
 function extrairPublicIdDaUrl(url) {
-    const endereco = String(url || "").trim();
+    const endereco = String(
+        url || ""
+    ).trim();
 
     if (
         !endereco ||
-        !endereco.includes("res.cloudinary.com") ||
+        !endereco.includes(
+            "res.cloudinary.com"
+        ) ||
         !endereco.includes("/upload/")
     ) {
         return null;
@@ -86,38 +145,61 @@ function extrairPublicIdDaUrl(url) {
             return null;
         }
 
-        const semParametros = depoisDoUpload
-            .split("?")[0]
-            .split("#")[0];
+        const semParametros =
+            depoisDoUpload
+                .split("?")[0]
+                .split("#")[0];
 
-        const partes = semParametros
-            .split("/")
-            .filter(Boolean);
+        const partes =
+            semParametros
+                .split("/")
+                .filter(Boolean);
 
-        const indiceVersao = partes.findIndex(
-            (parte) => /^v\d+$/.test(parte)
-        );
+        /*
+         * Remove transformações que podem existir antes
+         * do número da versão, por exemplo:
+         *
+         * /upload/c_fill,w_500/v123456/motorflex/foto.webp
+         */
+        const indiceVersao =
+            partes.findIndex(
+                (parte) =>
+                    /^v\d+$/.test(parte)
+            );
 
         const partesPublicId =
             indiceVersao >= 0
-                ? partes.slice(indiceVersao + 1)
+                ? partes.slice(
+                    indiceVersao + 1
+                )
                 : partes;
 
-        const caminho = partesPublicId.join("/");
+        const caminho =
+            partesPublicId.join("/");
 
         if (!caminho) {
             return null;
         }
 
         return decodeURIComponent(
-            caminho.replace(/\.[^/.]+$/, "")
+            caminho.replace(
+                /\.[^/.]+$/,
+                ""
+            )
         );
-    } catch {
+    } catch (erro) {
+        console.warn(
+            "Não foi possível extrair o public_id:",
+            erro.message
+        );
+
         return null;
     }
 }
 
-async function removerImagem(urlOuPublicId) {
+async function removerImagem(
+    urlOuPublicId
+) {
     verificarConfiguracao();
 
     const valor = String(
@@ -127,18 +209,23 @@ async function removerImagem(urlOuPublicId) {
     if (!valor) {
         return {
             removida: false,
-            resultado: "identificador_ausente"
+            resultado:
+                "identificador_ausente",
+            publicId: null
         };
     }
 
-    const publicId = valor.startsWith("http")
-        ? extrairPublicIdDaUrl(valor)
-        : valor;
+    const publicId =
+        /^https?:\/\//i.test(valor)
+            ? extrairPublicIdDaUrl(valor)
+            : valor;
 
     if (!publicId) {
         return {
             removida: false,
-            resultado: "imagem_externa"
+            resultado:
+                "imagem_externa",
+            publicId: null
         };
     }
 
@@ -157,7 +244,9 @@ async function removerImagem(urlOuPublicId) {
             "not found"
         ].includes(resultado.result),
 
-        resultado: resultado.result,
+        resultado:
+            resultado.result,
+
         publicId
     };
 }
@@ -165,5 +254,6 @@ async function removerImagem(urlOuPublicId) {
 module.exports = {
     enviarImagem,
     removerImagem,
-    extrairPublicIdDaUrl
+    extrairPublicIdDaUrl,
+    verificarConfiguracao
 };
