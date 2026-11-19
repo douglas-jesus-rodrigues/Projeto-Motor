@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
 
@@ -11,26 +10,20 @@
 
     <meta
         name="theme-color"
-        content="#0b0b0e"
+        content="#09090c"
     >
 
-    <title>MotorFlex - Mensagens e Negociações</title>
+    <meta
+        name="description"
+        content="Mensagens privadas e negociações do MotorFlex"
+    >
+
+    <title>Mensagens | MotorFlex</title>
 
     <link
         rel="icon"
         type="image/x-icon"
         href="/imagens/favicon.ico"
-    >
-
-    <link
-        rel="stylesheet"
-        href="../css/index.css"
-    >
-
-    <!-- O número evita que o navegador use o CSS antigo do cache -->
-    <link
-        rel="stylesheet"
-        href="../css/mensagens.css?v=4"
     >
 
     <link
@@ -45,7 +38,7 @@
     >
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Oswald:wght@500;600;700&display=swap"
         rel="stylesheet"
     >
 
@@ -53,26 +46,34 @@
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     >
+
+    <link
+        rel="stylesheet"
+        href="../css/index.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/mensagens.css"
+    >
 </head>
 
 <body class="chat-page">
 
-    <!-- ======================================
+    <!-- ==================================================
          CABEÇALHO
-    ======================================= -->
+         ================================================== -->
+
     <header class="header">
-
         <nav class="navbar">
-
             <div class="logo">
-
                 <a
                     href="/pages/index.html"
                     class="nav-link"
+                    aria-label="Página inicial do MotorFlex"
                 >
                     Motor<span>Flex</span>
                 </a>
-
             </div>
 
             <a
@@ -80,41 +81,39 @@
                 id="btnVoltar"
                 class="nav-back-btn"
             >
-                <i class="fa-solid fa-arrow-left"></i>
+                <i
+                    class="fa-solid fa-arrow-left"
+                    aria-hidden="true"
+                ></i>
 
                 <span id="btnVoltarTexto">
                     Voltar
                 </span>
             </a>
-
         </nav>
-
     </header>
 
-    <!-- ======================================
-         CONTEÚDO DAS MENSAGENS
-    ======================================= -->
-    <main class="container chat-main-container">
+    <!-- ==================================================
+         CONTEÚDO PRINCIPAL
+         ================================================== -->
 
+    <main class="container chat-main-container">
         <div
             class="chat-wrapper"
             id="chatWrapper"
         >
 
-            <!-- ==================================
-                 BARRA LATERAL
-            =================================== -->
+            <!-- ==========================================
+                 BARRA DE CONVERSAS
+                 ========================================== -->
+
             <aside
                 class="chat-sidebar"
                 aria-label="Lista de conversas"
             >
-
-                <!-- CABEÇALHO DA BARRA LATERAL -->
                 <div class="chat-sidebar-header">
-
-                    <h2>Conversas</h2>
-
-                    <div class="chat-sidebar-acoes">
+                    <div class="chat-sidebar-titulo">
+                        <h1>Conversas</h1>
 
                         <span
                             class="chat-badge-count"
@@ -123,43 +122,42 @@
                         >
                             0
                         </span>
-
-                        <button
-                            type="button"
-                            class="btn-nova-conversa"
-                            id="btnNovaConversa"
-                            aria-label="Iniciar nova conversa"
-                            title="Nova conversa"
-                        >
-                            <i class="fa-solid fa-user-plus"></i>
-                        </button>
-
                     </div>
 
+                    <button
+                        type="button"
+                        id="btnNovaConversa"
+                        class="btn-nova-conversa"
+                        aria-label="Pesquisar uma conta"
+                        title="Iniciar nova conversa"
+                    >
+                        <i
+                            class="fa-solid fa-user-plus"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
                 </div>
 
-                <!-- PESQUISA DE CONVERSAS -->
                 <div class="chat-search-box">
-
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <i
+                        class="fa-solid fa-magnifying-glass"
+                        aria-hidden="true"
+                    ></i>
 
                     <input
                         type="search"
                         id="inputPesquisaConversa"
-                        placeholder="Pesquisar por nome ou veículo"
+                        placeholder="Pesquisar nas conversas"
                         autocomplete="off"
                         aria-label="Pesquisar conversas"
                     >
-
                 </div>
 
-                <!-- FILTROS -->
                 <div
                     class="chat-filtros"
                     role="tablist"
-                    aria-label="Filtros de conversas"
+                    aria-label="Filtros das conversas"
                 >
-
                     <button
                         type="button"
                         class="filtro ativo"
@@ -181,15 +179,14 @@
 
                         <span
                             id="totalNaoLidas"
+                            class="filtro-contador"
                             hidden
                         >
                             0
                         </span>
                     </button>
-
                 </div>
 
-                <!-- LISTA DE CONVERSAS -->
                 <div
                     class="conversas-list"
                     id="conversasList"
@@ -199,47 +196,50 @@
                         Carregando conversas...
                     </div>
                 </div>
-
             </aside>
 
-            <!-- ==================================
+            <!-- ==========================================
                  ÁREA DA CONVERSA
-            =================================== -->
+                 ========================================== -->
+
             <section
                 class="chat-content-area"
                 id="chatContentArea"
-                aria-label="Conversa selecionada"
+                aria-label="Mensagens da conversa"
             >
 
-                <!-- ESTADO INICIAL -->
+                <!-- Estado sem conversa selecionada -->
+
                 <div
                     class="chat-empty-state"
                     id="chatEmptyState"
                 >
-
                     <div class="empty-icone">
-                        <i class="fa-solid fa-comments"></i>
+                        <i
+                            class="fa-solid fa-comments"
+                            aria-hidden="true"
+                        ></i>
                     </div>
 
-                    <h3>Suas mensagens</h3>
+                    <h2>Suas mensagens</h2>
 
                     <p>
-                        Selecione uma conversa ao lado para visualizar
+                        Selecione uma conversa para visualizar
                         e enviar mensagens.
                     </p>
-
                 </div>
 
-                <!-- CONVERSA ABERTA -->
+                <!-- Conversa selecionada -->
+
                 <div
                     class="chat-active-box"
                     id="chatActiveBox"
                     hidden
                 >
 
-                    <!-- CABEÇALHO DA CONVERSA -->
-                    <div class="chat-header-info">
+                    <!-- Cabeçalho da conversa -->
 
+                    <div class="chat-header-info">
                         <button
                             type="button"
                             class="btn-lista"
@@ -247,7 +247,10 @@
                             aria-label="Voltar para a lista de conversas"
                             title="Voltar"
                         >
-                            <i class="fa-solid fa-chevron-left"></i>
+                            <i
+                                class="fa-solid fa-chevron-left"
+                                aria-hidden="true"
+                            ></i>
                         </button>
 
                         <span
@@ -257,34 +260,34 @@
                         ></span>
 
                         <div class="chat-header-texto">
-
-                            <h3 id="chatDestinatarioNome">
+                            <h2 id="chatDestinatarioNome">
                                 Nome do usuário
-                            </h3>
+                            </h2>
 
                             <span
                                 class="chat-veiculo-ref"
                                 id="chatVeiculoRef"
                             >
-                                <i class="fa-solid fa-car-side"></i>
+                                <i
+                                    class="fa-solid fa-user"
+                                    aria-hidden="true"
+                                ></i>
 
                                 <span>
-                                    Veículo em negociação
+                                    Conversa direta
                                 </span>
                             </span>
-
                         </div>
-
                     </div>
 
-                    <!-- ÁREA DAS MENSAGENS -->
-                    <div class="chat-messages-wrap">
+                    <!-- Mensagens -->
 
+                    <div class="chat-messages-wrap">
                         <div
                             class="chat-messages-scroll"
                             id="chatMessagesScroll"
                             aria-live="polite"
-                            aria-label="Mensagens da conversa"
+                            aria-label="Histórico de mensagens"
                         ></div>
 
                         <button
@@ -295,7 +298,10 @@
                             title="Mensagens mais recentes"
                             hidden
                         >
-                            <i class="fa-solid fa-chevron-down"></i>
+                            <i
+                                class="fa-solid fa-chevron-down"
+                                aria-hidden="true"
+                            ></i>
 
                             <span
                                 id="baixoContador"
@@ -304,30 +310,31 @@
                                 0
                             </span>
                         </button>
-
                     </div>
 
-                    <!-- RESPOSTAS RÁPIDAS -->
+                    <!-- Respostas rápidas -->
+
                     <div
                         class="respostas-rapidas"
                         id="respostasRapidas"
                         hidden
                     ></div>
 
-                    <!-- PAINEL DE EMOJIS -->
+                    <!-- Emojis -->
+
                     <div
                         class="emoji-panel"
                         id="emojiPanel"
                         hidden
                     ></div>
 
-                    <!-- FORMULÁRIO DE ENVIO -->
+                    <!-- Formulário de envio -->
+
                     <form
                         class="chat-input-form"
                         id="chatForm"
                         autocomplete="off"
                     >
-
                         <button
                             type="button"
                             class="btn-icone"
@@ -335,17 +342,23 @@
                             aria-label="Abrir respostas rápidas"
                             title="Respostas rápidas"
                         >
-                            <i class="fa-solid fa-bolt"></i>
+                            <i
+                                class="fa-solid fa-bolt"
+                                aria-hidden="true"
+                            ></i>
                         </button>
 
                         <button
                             type="button"
                             class="btn-icone"
                             id="btnEmoji"
-                            aria-label="Abrir painel de emojis"
+                            aria-label="Abrir emojis"
                             title="Emojis"
                         >
-                            <i class="fa-regular fa-face-smile"></i>
+                            <i
+                                class="fa-regular fa-face-smile"
+                                aria-hidden="true"
+                            ></i>
                         </button>
 
                         <textarea
@@ -353,7 +366,8 @@
                             rows="1"
                             maxlength="2000"
                             placeholder="Escreva sua mensagem..."
-                            aria-label="Digite uma mensagem"
+                            aria-label="Mensagem"
+                            disabled
                         ></textarea>
 
                         <button
@@ -364,171 +378,273 @@
                             title="Enviar mensagem"
                             disabled
                         >
-                            <i class="fa-solid fa-paper-plane"></i>
+                            <i
+                                class="fa-solid fa-paper-plane"
+                                aria-hidden="true"
+                            ></i>
                         </button>
-
                     </form>
 
-                    <!-- RETORNO DE ERROS -->
                     <div
-                        class="chat-feedback"
                         id="chatFeedback"
+                        class="chat-feedback"
                         role="status"
                         aria-live="polite"
                     ></div>
-
                 </div>
-
             </section>
-
         </div>
-
     </main>
 
-    <!-- ======================================
+    <!-- ==================================================
          MODAL PARA PESQUISAR CONTAS
-    ======================================= -->
-    <div
-        class="modal-contas-overlay"
-        id="modalNovaConversa"
-        hidden
-    >
+         ================================================== -->
 
-        <section
-            class="modal-contas-card"
+    <div
+        id="modalNovaConversa"
+        class="modal-nova-conversa"
+        hidden
+        aria-hidden="true"
+    >
+        <div
+            class="modal-nova-conversa-card"
             role="dialog"
             aria-modal="true"
             aria-labelledby="tituloNovaConversa"
         >
+            <div class="modal-nova-conversa-header">
+                <div>
+                    <span class="modal-etiqueta">
+                        Nova mensagem
+                    </span>
 
-            <div class="modal-contas-header">
-
-                <h3 id="tituloNovaConversa">
-                    Nova conversa
-                </h3>
+                    <h2 id="tituloNovaConversa">
+                        Pesquisar conta
+                    </h2>
+                </div>
 
                 <button
                     type="button"
-                    class="btn-fechar-contas"
                     id="btnFecharNovaConversa"
-                    aria-label="Fechar busca de contas"
+                    class="btn-fechar-modal"
+                    aria-label="Fechar pesquisa"
                     title="Fechar"
                 >
-                    <i class="fa-solid fa-xmark"></i>
+                    <i
+                        class="fa-solid fa-xmark"
+                        aria-hidden="true"
+                    ></i>
                 </button>
-
             </div>
 
-            <div class="busca-contas-box">
+            <p class="modal-nova-conversa-descricao">
+                Pesquise pelo nome da pessoa ou empresa
+                para iniciar uma conversa.
+            </p>
 
-                <i class="fa-solid fa-magnifying-glass"></i>
+            <div class="busca-usuarios-box">
+                <i
+                    class="fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                ></i>
 
                 <input
                     type="search"
                     id="inputBuscaUsuarios"
-                    placeholder="Digite o nome da pessoa ou empresa"
+                    placeholder="Digite pelo menos 2 caracteres"
                     autocomplete="off"
-                    maxlength="80"
-                    aria-label="Pesquisar contas"
+                    aria-label="Pesquisar uma conta"
                 >
-
             </div>
-
-            <p class="busca-contas-ajuda">
-                Digite pelo menos dois caracteres para encontrar uma conta.
-            </p>
 
             <div
-                class="lista-contas-busca"
                 id="listaUsuariosBusca"
+                class="lista-usuarios-busca"
                 aria-live="polite"
-            >
-
-                <div class="resultado-contas-vazio">
-
-                    <i class="fa-solid fa-user-group"></i>
-
-                    <span>
-                        Pesquise uma conta para iniciar uma conversa.
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
+            ></div>
+        </div>
     </div>
 
-    <!-- ======================================
-         MODAL PARA APAGAR MENSAGEM
-    ======================================= -->
-    <div
-        class="modal-delete-overlay"
-        id="modalDeleteMsg"
-        hidden
-    >
+    <!-- ==================================================
+         MODAL DE OPÇÕES DA MENSAGEM
+         ================================================== -->
 
+    <div
+        id="modalDeleteMsg"
+        class="modal-delete-msg"
+        hidden
+        aria-hidden="true"
+    >
         <div
-            class="modal-delete-card wa-style"
+            class="modal-delete-card"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="modalDeleteTitulo"
+            aria-labelledby="tituloExcluirMensagem"
+            aria-describedby="modalDeleteTexto"
         >
+            <div class="modal-delete-icon">
+                <i
+                    class="fa-solid fa-trash-can"
+                    aria-hidden="true"
+                ></i>
+            </div>
 
-            <h3 id="modalDeleteTitulo">
-                Apagar mensagem?
-            </h3>
+            <h2 id="tituloExcluirMensagem">
+                Apagar mensagem
+            </h2>
 
             <p id="modalDeleteTexto">
-                Escolha como deseja remover esta mensagem.
+                Escolha como deseja apagar esta mensagem.
             </p>
 
-            <div class="modal-delete-acoes wa-acoes">
-
+            <div class="modal-delete-acoes">
                 <button
                     type="button"
-                    class="btn-wa btn-para-todos"
                     id="btnDeleteParaTodos"
+                    class="btn-delete-todos"
                 >
+                    <i
+                        class="fa-solid fa-users"
+                        aria-hidden="true"
+                    ></i>
+
                     Apagar para todos
                 </button>
 
                 <button
                     type="button"
-                    class="btn-wa btn-para-mim"
                     id="btnDeleteParaMim"
+                    class="btn-delete-mim"
                 >
+                    <i
+                        class="fa-solid fa-user"
+                        aria-hidden="true"
+                    ></i>
+
                     Apagar para mim
                 </button>
 
                 <button
                     type="button"
-                    class="btn-wa btn-cancelar"
                     id="btnDeleteCancelar"
+                    class="btn-delete-cancelar"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================
+         MODAL PARA REMOVER PESSOA DA LISTA
+         ================================================== -->
+
+    <div
+        id="modalRemoverConversa"
+        class="modal-remover-conversa"
+        hidden
+        aria-hidden="true"
+    >
+        <div
+            class="modal-remover-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloRemoverConversa"
+            aria-describedby="textoRemoverConversa"
+        >
+            <button
+                type="button"
+                id="btnFecharRemoverConversa"
+                class="btn-fechar-remover"
+                aria-label="Fechar"
+                title="Fechar"
+            >
+                <i
+                    class="fa-solid fa-xmark"
+                    aria-hidden="true"
+                ></i>
+            </button>
+
+            <div class="modal-remover-icone">
+                <i
+                    class="fa-solid fa-user-minus"
+                    aria-hidden="true"
+                ></i>
+            </div>
+
+            <div class="modal-remover-conteudo">
+                <span class="modal-remover-etiqueta">
+                    Remover da lista
+                </span>
+
+                <h2 id="tituloRemoverConversa">
+                    Remover conversa?
+                </h2>
+
+                <p id="textoRemoverConversa">
+                    A conversa com
+
+                    <strong id="nomePessoaRemover">
+                        esta pessoa
+                    </strong>
+
+                    será removida da sua barra de mensagens.
+                </p>
+
+                <div class="modal-remover-aviso">
+                    <i
+                        class="fa-solid fa-circle-info"
+                        aria-hidden="true"
+                    ></i>
+
+                    <span>
+                        As mensagens não serão apagadas.
+                        Se uma nova mensagem for enviada,
+                        a conversa aparecerá novamente.
+                    </span>
+                </div>
+            </div>
+
+            <div class="modal-remover-acoes">
+                <button
+                    type="button"
+                    id="btnCancelarRemoverConversa"
+                    class="btn-remover-cancelar"
                 >
                     Cancelar
                 </button>
 
+                <button
+                    type="button"
+                    id="btnConfirmarRemoverConversa"
+                    class="btn-remover-confirmar"
+                >
+                    <i
+                        class="fa-solid fa-user-minus"
+                        aria-hidden="true"
+                    ></i>
+
+                    Remover da lista
+                </button>
             </div>
-
         </div>
-
     </div>
 
-    <!-- AVISOS -->
+    <!-- ==================================================
+         NOTIFICAÇÕES
+         ================================================== -->
+
     <div
         class="toast-area"
         id="toastArea"
         aria-live="polite"
+        aria-atomic="true"
     ></div>
 
-    <!-- SOCKET.IO -->
+    <!-- Socket.IO servido automaticamente pelo backend -->
+
     <script src="/socket.io/socket.io.js"></script>
 
-    <!-- JAVASCRIPT DAS MENSAGENS -->
-    <script src="../js/mensagens.js?v=4"></script>
-
+    <script src="../js/mensagens.js"></script>
 </body>
-
 </html>

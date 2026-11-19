@@ -2,12 +2,17 @@
 
 const express = require("express");
 const router = express.Router();
+
 const db = require("../config/db");
 const authUser = require("../middlewares/authMiddleware");
 const { salaDoUsuario } = require("../sockets/chatPrivado");
 
 const LIMITE_MENSAGEM = 2000;
-const LIMITE_RESULTADOS_BUSCA = 20;
+const LIMITE_BUSCA = 20;
+
+// ==========================================================
+// FUNÇÕES AUXILIARES
+// ==========================================================
 
 function inteiroPositivo(valor) {
     const numero = Number(valor);
@@ -33,15 +38,20 @@ function resumoMensagem(texto) {
     return String(texto || "").slice(0, 255);
 }
 
-function emitirParaUsuarios(req, usuariosIds, evento, dados) {
+function emitirParaUsuarios(
+    req,
+    usuariosIds,
+    evento,
+    dados
+) {
     const io = req.app.get("io");
 
     if (!io) return;
 
-    const idsUnicos = [
+    const ids = [
         ...new Set(
             usuariosIds
-                .map((id) => Number(id))
+                .map(Number)
                 .filter(
                     (id) =>
                         Number.isInteger(id) &&
@@ -50,11 +60,119 @@ function emitirParaUsuarios(req, usuariosIds, evento, dados) {
         )
     ];
 
-    idsUnicos.forEach((usuarioId) => {
+    ids.forEach((usuarioId) => {
         io
             .to(salaDoUsuario(usuarioId))
             .emit(evento, dados);
     });
+}
+
+async function buscarConversaEntre(
+    executor,
+    usuario1Id,
+    usuario2Id,
+    bloquear = false
+) {
+    const bloqueio = bloquear
+        ? "FOR UPDATE"
+        : "";
+
+    const [conversas] = await executor.query(
+        `SELECT
+            id,
+            participante_1_id,
+            participante_2_id,
+            veiculo_id,
+            veiculo_chave,
+            status,
+            criado_em,
+            ultimo_envio
+
+         FROM mensagens
+
+         WHERE participante_menor_id =
+               LEAST(?, ?)
+
+           AND participante_maior_id =
+               GREATEST(?, ?)
+
+         ORDER BY
+            CASE
+                WHEN veiculo_chave = 0
+                    THEN 0
+                ELSE 1
+            END ASC,
+
+            COALESCE(
+                ultimo_envio,
+                criado_em
+            ) DESC,
+
+            id DESC
+
+         LIMIT 1
+
+         ${bloqueio}`,
+        [
+            usuario1Id,
+            usuario2Id,
+            usuario1Id,
+            usuario2Id
+        ]
+    );
+
+    return conversas[0] || null;
+}
+
+async function mostrarConversasDoUsuario(
+    executor,
+    meuId,
+    outroUsuarioId
+) {
+    await executor.query(
+        `UPDATE mensagens
+
+         SET excluido_para_usuario_id = NULL
+
+         WHERE participante_menor_id =
+               LEAST(?, ?)
+
+           AND participante_maior_id =
+               GREATEST(?, ?)
+
+           AND excluido_para_usuario_id = ?`,
+        [
+            meuId,
+            outroUsuarioId,
+            meuId,
+            outroUsuarioId,
+            meuId
+        ]
+    );
+}
+
+async function mostrarConversasParaTodos(
+    executor,
+    usuario1Id,
+    usuario2Id
+) {
+    await executor.query(
+        `UPDATE mensagens
+
+         SET excluido_para_usuario_id = NULL
+
+         WHERE participante_menor_id =
+               LEAST(?, ?)
+
+           AND participante_maior_id =
+               GREATEST(?, ?)`,
+        [
+            usuario1Id,
+            usuario2Id,
+            usuario1Id,
+            usuario2Id
+        ]
+    );
 }
 
 // ==========================================================
@@ -87,9 +205,18 @@ router.get("/", authUser, async (req, res) => {
                     WHEN u.tipo = 'empresa'
                     THEN COALESCE(
                         NULLIF(emp.nome_empresa, ''),
-                        CONCAT_WS(' ', u.nome, u.sobrenome)
+                        CONCAT_WS(
+                            ' ',
+                            u.nome,
+                            u.sobrenome
+                        )
                     )
-                    ELSE CONCAT_WS(' ', u.nome, u.sobrenome)
+
+                    ELSE CONCAT_WS(
+                        ' ',
+                        u.nome,
+                        u.sobrenome
+                    )
                 END AS outro_usuario_nome,
 
                 u.tipo AS outro_usuario_tipo,
@@ -115,6 +242,7 @@ router.get("/", authUser, async (req, res) => {
              LEFT JOIN mensagens_conversa ultima
                ON ultima.id = (
                     SELECT mc.id
+
                     FROM mensagens_conversa mc
 
                     LEFT JOIN mensagens_exclusoes me
@@ -150,14 +278,24 @@ router.get("/", authUser, async (req, res) => {
 
              AND c.status <> 'bloqueada'
 
+             AND (
+                    c.excluido_para_usuario_id IS NULL
+                    OR c.excluido_para_usuario_id <> ?
+             )
+
+             AND u.tipo <> 'admin'
+             AND COALESCE(u.cargo, '') <> 'admin'
+
              ORDER BY
                 COALESCE(
                     ultima.criado_em,
                     c.ultimo_envio,
                     c.criado_em
                 ) DESC,
+
                 c.id DESC`,
             [
+                meuId,
                 meuId,
                 meuId,
                 meuId,
@@ -195,7 +333,8 @@ router.get(
         const meuId = Number(req.usuario.id);
 
         const termo = prepararTermoBusca(
-            req.query.termo || req.query.q
+            req.query.termo ||
+            req.query.q
         );
 
         if (termo.length < 2) {
@@ -217,13 +356,18 @@ router.get(
                     CASE
                         WHEN u.tipo = 'empresa'
                         THEN COALESCE(
-                            NULLIF(emp.nome_empresa, ''),
+                            NULLIF(
+                                emp.nome_empresa,
+                                ''
+                            ),
+
                             CONCAT_WS(
                                 ' ',
                                 u.nome,
                                 u.sobrenome
                             )
                         )
+
                         ELSE CONCAT_WS(
                             ' ',
                             u.nome,
@@ -249,36 +393,51 @@ router.get(
                  WHERE u.id <> ?
                    AND u.deleted_at IS NULL
                    AND u.status = 'ativo'
+                   AND u.tipo <> 'admin'
+                   AND COALESCE(u.cargo, '') <> 'admin'
 
                    AND (
                         u.nome LIKE ?
                         OR u.sobrenome LIKE ?
+
                         OR CONCAT_WS(
                             ' ',
                             u.nome,
                             u.sobrenome
                         ) LIKE ?
+
                         OR emp.nome_empresa LIKE ?
                    )
 
                  ORDER BY
                     CASE
-                        WHEN u.nome LIKE ? THEN 0
-                        WHEN u.sobrenome LIKE ? THEN 1
-                        WHEN emp.nome_empresa LIKE ? THEN 2
+                        WHEN u.nome LIKE ?
+                            THEN 0
+
+                        WHEN u.sobrenome LIKE ?
+                            THEN 1
+
+                        WHEN emp.nome_empresa LIKE ?
+                            THEN 2
+
                         ELSE 3
                     END,
 
                     CASE
                         WHEN u.tipo = 'empresa'
                         THEN COALESCE(
-                            NULLIF(emp.nome_empresa, ''),
+                            NULLIF(
+                                emp.nome_empresa,
+                                ''
+                            ),
+
                             CONCAT_WS(
                                 ' ',
                                 u.nome,
                                 u.sobrenome
                             )
                         )
+
                         ELSE CONCAT_WS(
                             ' ',
                             u.nome,
@@ -286,7 +445,7 @@ router.get(
                         )
                     END ASC
 
-                 LIMIT ${LIMITE_RESULTADOS_BUSCA}`,
+                 LIMIT ${LIMITE_BUSCA}`,
                 [
                     meuId,
                     termoLike,
@@ -301,7 +460,8 @@ router.get(
 
             return res.status(200).json({
                 sucesso: true,
-                total: usuarios.length,
+                total:
+                    usuarios.length,
                 usuarios
             });
         } catch (erro) {
@@ -312,7 +472,103 @@ router.get(
 
             return res.status(500).json({
                 sucesso: false,
-                erro: "Erro ao pesquisar contas."
+                erro:
+                    "Erro ao pesquisar contas."
+            });
+        }
+    }
+);
+
+// ==========================================================
+// REMOVER PESSOA DA BARRA
+// DELETE /api/conversas/usuario/:usuarioId
+// ==========================================================
+
+router.delete(
+    "/usuario/:usuarioId",
+    authUser,
+    async (req, res) => {
+        const meuId = Number(req.usuario.id);
+
+        const outroUsuarioId =
+            inteiroPositivo(
+                req.params.usuarioId
+            );
+
+        if (!outroUsuarioId) {
+            return res.status(400).json({
+                sucesso: false,
+                erro:
+                    "Conta selecionada inválida."
+            });
+        }
+
+        if (outroUsuarioId === meuId) {
+            return res.status(400).json({
+                sucesso: false,
+                erro:
+                    "Você não pode remover a própria conta."
+            });
+        }
+
+        try {
+            const [resultado] = await db.query(
+                `UPDATE mensagens
+
+                 SET excluido_para_usuario_id = ?
+
+                 WHERE participante_menor_id =
+                       LEAST(?, ?)
+
+                   AND participante_maior_id =
+                       GREATEST(?, ?)`,
+                [
+                    meuId,
+                    meuId,
+                    outroUsuarioId,
+                    meuId,
+                    outroUsuarioId
+                ]
+            );
+
+            if (
+                resultado.affectedRows === 0
+            ) {
+                return res.status(404).json({
+                    sucesso: false,
+                    erro:
+                        "Nenhuma conversa foi encontrada."
+                });
+            }
+
+            emitirParaUsuarios(
+                req,
+                [meuId],
+                "privado:conversa_atualizada",
+                {
+                    removida_da_lista: true,
+                    usuario_id:
+                        outroUsuarioId
+                }
+            );
+
+            return res.status(200).json({
+                sucesso: true,
+                usuario_id:
+                    outroUsuarioId,
+                mensagem:
+                    "Conversa removida da sua lista."
+            });
+        } catch (erro) {
+            console.error(
+                "❌ Erro ao remover conversa:",
+                erro.sqlMessage || erro
+            );
+
+            return res.status(500).json({
+                sucesso: false,
+                erro:
+                    "Erro ao remover a conversa."
             });
         }
     }
@@ -329,14 +585,16 @@ router.post(
     async (req, res) => {
         const meuId = Number(req.usuario.id);
 
-        const destinatarioId = inteiroPositivo(
-            req.body.destinatario_id
-        );
+        const destinatarioId =
+            inteiroPositivo(
+                req.body.destinatario_id
+            );
 
         if (!destinatarioId) {
             return res.status(400).json({
                 sucesso: false,
-                erro: "Conta destinatária inválida."
+                erro:
+                    "Conta destinatária inválida."
             });
         }
 
@@ -351,7 +609,9 @@ router.post(
         let conexao;
 
         try {
-            conexao = await db.getConnection();
+            conexao =
+                await db.getConnection();
+
             await conexao.beginTransaction();
 
             const [destinatarios] =
@@ -361,6 +621,7 @@ router.post(
                         u.nome,
                         u.sobrenome,
                         u.tipo,
+                        u.cargo,
                         u.foto_perfil,
                         emp.nome_empresa
 
@@ -372,13 +633,17 @@ router.post(
                      WHERE u.id = ?
                        AND u.deleted_at IS NULL
                        AND u.status = 'ativo'
+                       AND u.tipo <> 'admin'
+                       AND COALESCE(u.cargo, '') <> 'admin'
 
                      LIMIT 1
                      FOR UPDATE`,
                     [destinatarioId]
                 );
 
-            if (destinatarios.length === 0) {
+            if (
+                destinatarios.length === 0
+            ) {
                 await conexao.rollback();
 
                 return res.status(404).json({
@@ -388,52 +653,46 @@ router.post(
                 });
             }
 
-            const [existentes] =
-                await conexao.query(
-                    `SELECT id
-                     FROM mensagens
+            const destinatario =
+                destinatarios[0];
 
-                     WHERE participante_menor_id =
-                           LEAST(?, ?)
-
-                       AND participante_maior_id =
-                           GREATEST(?, ?)
-
-                       AND veiculo_chave = 0
-
-                     LIMIT 1
-                     FOR UPDATE`,
-                    [
-                        meuId,
-                        destinatarioId,
-                        meuId,
-                        destinatarioId
-                    ]
+            let conversa =
+                await buscarConversaEntre(
+                    conexao,
+                    meuId,
+                    destinatarioId,
+                    true
                 );
 
             let conversaId;
             let conversaCriada = false;
 
-            if (existentes.length > 0) {
-                conversaId = Number(
-                    existentes[0].id
-                );
+            if (conversa) {
+                conversaId =
+                    Number(conversa.id);
 
-                await conexao.query(
-                    `UPDATE mensagens
-                     SET status = 'aberta',
-                         excluido_para_todos = 0,
-                         excluido_para_usuario_id = NULL
-                     WHERE id = ?`,
-                    [conversaId]
-                );
-            } else {
-                const participanteMenorId = Math.min(
+                await mostrarConversasDoUsuario(
+                    conexao,
                     meuId,
                     destinatarioId
                 );
 
-                const participanteMaiorId = Math.max(
+                await conexao.query(
+                    `UPDATE mensagens
+
+                     SET status = 'aberta',
+                         excluido_para_todos = 0
+
+                     WHERE id = ?`,
+                    [conversaId]
+                );
+            } else {
+                const menorId = Math.min(
+                    meuId,
+                    destinatarioId
+                );
+
+                const maiorId = Math.max(
                     meuId,
                     destinatarioId
                 );
@@ -473,24 +732,22 @@ router.post(
                         [
                             meuId,
                             destinatarioId,
-                            participanteMenorId,
-                            participanteMaiorId
+                            menorId,
+                            maiorId
                         ]
                     );
 
-                conversaId = Number(
-                    novaConversa.insertId
-                );
+                conversaId =
+                    Number(
+                        novaConversa.insertId
+                    );
 
                 conversaCriada = true;
             }
 
             await conexao.commit();
 
-            const destinatario =
-                destinatarios[0];
-
-            const nomeDestinatario =
+            const nome =
                 destinatario.tipo === "empresa"
                     ? (
                         destinatario.nome_empresa ||
@@ -510,14 +767,11 @@ router.post(
 
             emitirParaUsuarios(
                 req,
-                [
-                    meuId,
-                    destinatarioId
-                ],
+                [meuId],
                 "privado:conversa_atualizada",
                 {
-                    conversa_id: conversaId,
-                    criado_por: meuId
+                    conversa_id:
+                        conversaId
                 }
             );
 
@@ -527,98 +781,38 @@ router.post(
                 )
                 .json({
                     sucesso: true,
-                    conversa_id: conversaId,
+                    conversa_id:
+                        conversaId,
                     conversa_criada:
                         conversaCriada,
 
                     destinatario: {
-                        id: destinatarioId,
-
+                        id:
+                            destinatarioId,
                         nome:
-                            nomeDestinatario ||
-                            "Usuário",
-
+                            nome || "Usuário",
                         tipo:
                             destinatario.tipo,
-
                         foto_perfil:
                             destinatario.foto_perfil
                     },
 
-                    mensagem: conversaCriada
-                        ? "Conversa iniciada com sucesso."
-                        : "Conversa existente aberta."
+                    mensagem:
+                        conversaCriada
+                            ? "Conversa iniciada."
+                            : "Conversa existente aberta."
                 });
         } catch (erro) {
             if (conexao) {
                 try {
                     await conexao.rollback();
-                } catch (erroRollback) {
-                    console.error(
-                        "❌ Erro ao desfazer transação:",
-                        erroRollback.message
-                    );
-                }
+                } catch {}
             }
 
             console.error(
-                "❌ Erro ao iniciar conversa direta:",
+                "❌ Erro ao iniciar conversa:",
                 erro.sqlMessage || erro
             );
-
-            if (
-                erro.code === "ER_DUP_ENTRY" ||
-                erro.errno === 1062
-            ) {
-                try {
-                    const [existentes] =
-                        await db.query(
-                            `SELECT id
-                             FROM mensagens
-
-                             WHERE participante_menor_id =
-                                   LEAST(?, ?)
-
-                               AND participante_maior_id =
-                                   GREATEST(?, ?)
-
-                               AND veiculo_chave = 0
-
-                             LIMIT 1`,
-                            [
-                                meuId,
-                                destinatarioId,
-                                meuId,
-                                destinatarioId
-                            ]
-                        );
-
-                    if (existentes.length > 0) {
-                        return res
-                            .status(200)
-                            .json({
-                                sucesso: true,
-
-                                conversa_id:
-                                    Number(
-                                        existentes[0].id
-                                    ),
-
-                                conversa_criada:
-                                    false,
-
-                                mensagem:
-                                    "Conversa existente aberta."
-                            });
-                    }
-                } catch (erroBusca) {
-                    console.error(
-                        "❌ Erro ao recuperar conversa duplicada:",
-                        erroBusca.sqlMessage ||
-                        erroBusca
-                    );
-                }
-            }
 
             return res.status(500).json({
                 sucesso: false,
@@ -626,9 +820,7 @@ router.post(
                     "Erro ao iniciar a conversa."
             });
         } finally {
-            if (conexao) {
-                conexao.release();
-            }
+            conexao?.release();
         }
     }
 );
@@ -642,11 +834,13 @@ router.get(
     "/:id/mensagens",
     authUser,
     async (req, res) => {
-        const conversaId = inteiroPositivo(
-            req.params.id
-        );
+        const conversaId =
+            inteiroPositivo(
+                req.params.id
+            );
 
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
         if (!conversaId) {
             return res.status(400).json({
@@ -660,6 +854,7 @@ router.get(
             const [participacao] =
                 await db.query(
                     `SELECT id
+
                      FROM mensagens
 
                      WHERE id = ?
@@ -677,7 +872,9 @@ router.get(
                     ]
                 );
 
-            if (participacao.length === 0) {
+            if (
+                participacao.length === 0
+            ) {
                 return res.status(404).json({
                     sucesso: false,
                     erro:
@@ -727,7 +924,7 @@ router.get(
             });
         } catch (erro) {
             console.error(
-                "❌ Erro ao buscar mensagens:",
+                "❌ Erro ao carregar mensagens:",
                 erro.sqlMessage || erro
             );
 
@@ -741,7 +938,7 @@ router.get(
 );
 
 // ==========================================================
-// CONTADORES DE NÃO LIDAS
+// RESUMO DE NÃO LIDAS
 // GET /api/conversas/nao-lidas/resumo
 // ==========================================================
 
@@ -749,7 +946,8 @@ router.get(
     "/nao-lidas/resumo",
     authUser,
     async (req, res) => {
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
         try {
             const [resultados] =
@@ -772,6 +970,11 @@ router.get(
                             OR c.participante_2_id = ?
                      )
 
+                     AND (
+                            c.excluido_para_usuario_id IS NULL
+                            OR c.excluido_para_usuario_id <> ?
+                     )
+
                      AND mc.remetente_id <> ?
                      AND mc.lida_em IS NULL
                      AND mc.excluida_para_todos = 0
@@ -785,37 +988,46 @@ router.get(
                         meuId,
                         meuId,
                         meuId,
+                        meuId,
                         meuId
                     ]
                 );
 
-            const conversas = resultados.map(
-                (item) => ({
-                    conversa_id: Number(
-                        item.conversa_id
-                    ),
+            const conversas =
+                resultados.map(
+                    (item) => ({
+                        conversa_id:
+                            Number(
+                                item.conversa_id
+                            ),
 
-                    total_nao_lidas: Number(
-                        item.total_nao_lidas
-                    )
-                })
-            );
+                        total_nao_lidas:
+                            Number(
+                                item.total_nao_lidas
+                            )
+                    })
+                );
 
-            const totalGeral = conversas.reduce(
-                (acumulado, conversa) =>
-                    acumulado +
-                    conversa.total_nao_lidas,
-                0
-            );
+            const totalGeral =
+                conversas.reduce(
+                    (
+                        total,
+                        conversa
+                    ) =>
+                        total +
+                        conversa.total_nao_lidas,
+                    0
+                );
 
             return res.status(200).json({
                 sucesso: true,
-                total_nao_lidas: totalGeral,
+                total_nao_lidas:
+                    totalGeral,
                 conversas
             });
         } catch (erro) {
             console.error(
-                "❌ Erro ao contar mensagens não lidas:",
+                "❌ Erro ao contar mensagens:",
                 erro.sqlMessage || erro
             );
 
@@ -829,7 +1041,7 @@ router.get(
 );
 
 // ==========================================================
-// MARCAR MENSAGENS COMO LIDAS
+// MARCAR COMO LIDAS
 // POST /api/conversas/:id/ler
 // ==========================================================
 
@@ -837,11 +1049,13 @@ router.post(
     "/:id/ler",
     authUser,
     async (req, res) => {
-        const conversaId = inteiroPositivo(
-            req.params.id
-        );
+        const conversaId =
+            inteiroPositivo(
+                req.params.id
+            );
 
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
         if (!conversaId) {
             return res.status(400).json({
@@ -875,17 +1089,20 @@ router.post(
                     ]
                 );
 
-            if (participantes.length === 0) {
+            if (
+                participantes.length === 0
+            ) {
                 return res.status(404).json({
                     sucesso: false,
                     erro:
-                        "Conversa não encontrada ou sem permissão."
+                        "Conversa não encontrada."
                 });
             }
 
             const [resultado] =
                 await db.query(
                     `UPDATE mensagens_conversa
+
                      SET lida_em = NOW()
 
                      WHERE conversa_id = ?
@@ -898,35 +1115,24 @@ router.post(
                     ]
                 );
 
-            const participante1Id = Number(
-                participantes[0]
-                    .participante_1_id
-            );
-
-            const participante2Id = Number(
-                participantes[0]
-                    .participante_2_id
-            );
-
-            if (resultado.affectedRows > 0) {
+            if (
+                resultado.affectedRows > 0
+            ) {
                 emitirParaUsuarios(
                     req,
                     [
-                        participante1Id,
-                        participante2Id
+                        participantes[0]
+                            .participante_1_id,
+
+                        participantes[0]
+                            .participante_2_id
                     ],
                     "privado:mensagens_lidas",
                     {
                         conversa_id:
                             conversaId,
-
                         usuario_id:
-                            meuId,
-
-                        quantidade:
-                            Number(
-                                resultado.affectedRows
-                            )
+                            meuId
                     }
                 );
             }
@@ -940,7 +1146,7 @@ router.post(
             });
         } catch (erro) {
             console.error(
-                "❌ Erro ao marcar mensagens como lidas:",
+                "❌ Erro ao marcar como lidas:",
                 erro.sqlMessage || erro
             );
 
@@ -962,32 +1168,31 @@ router.post(
     "/iniciar",
     authUser,
     async (req, res) => {
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
-        const veiculoId = inteiroPositivo(
-            req.body.veiculo_id
-        );
+        const veiculoId =
+            inteiroPositivo(
+                req.body.veiculo_id
+            );
 
-        const texto = prepararTexto(
-            req.body.texto
-        );
+        const texto =
+            prepararTexto(
+                req.body.texto
+            );
 
-        if (!veiculoId) {
-            return res.status(400).json({
-                sucesso: false,
-                erro: "ID do veículo inválido."
-            });
-        }
-
-        if (!texto) {
+        if (!veiculoId || !texto) {
             return res.status(400).json({
                 sucesso: false,
                 erro:
-                    "A mensagem não pode estar vazia."
+                    "Veículo ou mensagem inválida."
             });
         }
 
-        if (texto.length > LIMITE_MENSAGEM) {
+        if (
+            texto.length >
+            LIMITE_MENSAGEM
+        ) {
             return res.status(400).json({
                 sucesso: false,
                 erro:
@@ -998,7 +1203,9 @@ router.post(
         let conexao;
 
         try {
-            conexao = await db.getConnection();
+            conexao =
+                await db.getConnection();
+
             await conexao.beginTransaction();
 
             const [veiculos] =
@@ -1016,7 +1223,9 @@ router.post(
                     [veiculoId]
                 );
 
-            if (veiculos.length === 0) {
+            if (
+                veiculos.length === 0
+            ) {
                 await conexao.rollback();
 
                 return res.status(404).json({
@@ -1026,9 +1235,10 @@ router.post(
                 });
             }
 
-            const anuncianteId = Number(
-                veiculos[0].usuario_id
-            );
+            const anuncianteId =
+                Number(
+                    veiculos[0].usuario_id
+                );
 
             if (anuncianteId === meuId) {
                 await conexao.rollback();
@@ -1036,53 +1246,36 @@ router.post(
                 return res.status(400).json({
                     sucesso: false,
                     erro:
-                        "Você não pode enviar uma mensagem para o próprio anúncio."
+                        "Você não pode enviar mensagem para o próprio anúncio."
                 });
             }
 
-            const [existentes] =
-                await conexao.query(
-                    `SELECT id
-                     FROM mensagens
-
-                     WHERE participante_menor_id =
-                           LEAST(?, ?)
-
-                       AND participante_maior_id =
-                           GREATEST(?, ?)
-
-                       AND veiculo_chave = ?
-
-                     LIMIT 1
-                     FOR UPDATE`,
-                    [
-                        meuId,
-                        anuncianteId,
-                        meuId,
-                        anuncianteId,
-                        veiculoId
-                    ]
+            let conversa =
+                await buscarConversaEntre(
+                    conexao,
+                    meuId,
+                    anuncianteId,
+                    true
                 );
 
             let conversaId;
-            let statusHttp;
+            let conversaCriada = false;
 
-            if (existentes.length > 0) {
-                conversaId = Number(
-                    existentes[0].id
-                );
-
-                statusHttp = 200;
+            if (conversa) {
+                conversaId =
+                    Number(conversa.id);
             } else {
-                const participanteMenorId = Math.min(
-                    meuId,
-                    anuncianteId
-                );
+                const menorId =
+                    Math.min(
+                        meuId,
+                        anuncianteId
+                    );
 
-                const participanteMaiorId = Math.max(
-                    meuId,
-                    anuncianteId
-                );
+                const maiorId =
+                    Math.max(
+                        meuId,
+                        anuncianteId
+                    );
 
                 const [novaConversa] =
                     await conexao.query(
@@ -1093,11 +1286,9 @@ router.post(
                             participante_menor_id,
                             participante_maior_id,
                             veiculo_chave,
-                            ultima_mensagem,
                             total_mensagens,
                             status,
-                            criado_em,
-                            ultimo_envio
+                            criado_em
                          )
                          VALUES (
                             ?,
@@ -1106,28 +1297,26 @@ router.post(
                             ?,
                             ?,
                             ?,
-                            ?,
                             0,
                             'aberta',
-                            NOW(),
                             NOW()
                          )`,
                         [
                             meuId,
                             anuncianteId,
                             veiculoId,
-                            participanteMenorId,
-                            participanteMaiorId,
-                            veiculoId,
-                            resumoMensagem(texto)
+                            menorId,
+                            maiorId,
+                            veiculoId
                         ]
                     );
 
-                conversaId = Number(
-                    novaConversa.insertId
-                );
+                conversaId =
+                    Number(
+                        novaConversa.insertId
+                    );
 
-                statusHttp = 201;
+                conversaCriada = true;
             }
 
             const [novaMensagem] =
@@ -1151,40 +1340,47 @@ router.post(
                     ]
                 );
 
-            const [mensagensCriadas] =
+            const [criadas] =
                 await conexao.query(
                     `SELECT
                         id,
                         conversa_id,
                         remetente_id,
                         texto,
-                        criado_em
+                        criado_em,
+                        lida_em
 
                      FROM mensagens_conversa
 
                      WHERE id = ?
 
                      LIMIT 1`,
-                    [novaMensagem.insertId]
+                    [
+                        novaMensagem.insertId
+                    ]
                 );
-
-            const mensagemCriada =
-                mensagensCriadas[0];
 
             await conexao.query(
                 `UPDATE mensagens
+
                  SET ultima_mensagem = ?,
                      total_mensagens =
                         total_mensagens + 1,
                      status = 'aberta',
                      ultimo_envio = NOW(),
-                     excluido_para_todos = 0,
-                     excluido_para_usuario_id = NULL
+                     excluido_para_todos = 0
+
                  WHERE id = ?`,
                 [
                     resumoMensagem(texto),
                     conversaId
                 ]
+            );
+
+            await mostrarConversasParaTodos(
+                conexao,
+                meuId,
+                anuncianteId
             );
 
             await conexao.commit();
@@ -1197,61 +1393,57 @@ router.post(
                 ],
                 "privado:mensagem",
                 {
-                    conversa_id: conversaId,
-                    mensagem: mensagemCriada
+                    conversa_id:
+                        conversaId,
+                    mensagem:
+                        criadas[0]
                 }
             );
 
             return res
-                .status(statusHttp)
+                .status(
+                    conversaCriada ? 201 : 200
+                )
                 .json({
                     sucesso: true,
-                    conversa_id: conversaId,
-
-                    mensagem_id: Number(
-                        novaMensagem.insertId
-                    ),
-
+                    conversa_id:
+                        conversaId,
+                    conversa_criada:
+                        conversaCriada,
+                    mensagem_id:
+                        Number(
+                            novaMensagem.insertId
+                        ),
                     destinatario_id:
                         anuncianteId,
-
-                    mensagem_enviada: true,
-
-                    mensagem:
-                        "Mensagem enviada ao anunciante com sucesso!"
+                    mensagem_enviada:
+                        true
                 });
         } catch (erro) {
             if (conexao) {
                 try {
                     await conexao.rollback();
-                } catch (erroRollback) {
-                    console.error(
-                        "❌ Erro ao desfazer transação:",
-                        erroRollback.message
-                    );
-                }
+                } catch {}
             }
 
             console.error(
-                "❌ Erro ao iniciar conversa:",
+                "❌ Erro ao enviar ao anunciante:",
                 erro.sqlMessage || erro
             );
 
             return res.status(500).json({
                 sucesso: false,
                 erro:
-                    "Erro ao enviar a mensagem ao anunciante."
+                    "Erro ao enviar mensagem ao anunciante."
             });
         } finally {
-            if (conexao) {
-                conexao.release();
-            }
+            conexao?.release();
         }
     }
 );
 
 // ==========================================================
-// ENVIAR MENSAGEM EM CONVERSA EXISTENTE
+// ENVIAR MENSAGEM
 // POST /api/conversas/:id/mensagem
 // ==========================================================
 
@@ -1259,33 +1451,31 @@ router.post(
     "/:id/mensagem",
     authUser,
     async (req, res) => {
-        const conversaId = inteiroPositivo(
-            req.params.id
-        );
+        const conversaId =
+            inteiroPositivo(
+                req.params.id
+            );
 
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
-        const texto = prepararTexto(
-            req.body.texto
-        );
+        const texto =
+            prepararTexto(
+                req.body.texto
+            );
 
-        if (!conversaId) {
+        if (!conversaId || !texto) {
             return res.status(400).json({
                 sucesso: false,
                 erro:
-                    "ID da conversa inválido."
+                    "Conversa ou mensagem inválida."
             });
         }
 
-        if (!texto) {
-            return res.status(400).json({
-                sucesso: false,
-                erro:
-                    "A mensagem não pode estar vazia."
-            });
-        }
-
-        if (texto.length > LIMITE_MENSAGEM) {
+        if (
+            texto.length >
+            LIMITE_MENSAGEM
+        ) {
             return res.status(400).json({
                 sucesso: false,
                 erro:
@@ -1296,7 +1486,9 @@ router.post(
         let conexao;
 
         try {
-            conexao = await db.getConnection();
+            conexao =
+                await db.getConnection();
+
             await conexao.beginTransaction();
 
             const [conversas] =
@@ -1325,18 +1517,23 @@ router.post(
                     ]
                 );
 
-            if (conversas.length === 0) {
+            if (
+                conversas.length === 0
+            ) {
                 await conexao.rollback();
 
                 return res.status(404).json({
                     sucesso: false,
                     erro:
-                        "Conversa não encontrada ou sem permissão."
+                        "Conversa não encontrada."
                 });
             }
 
+            const conversa =
+                conversas[0];
+
             if (
-                conversas[0].status ===
+                conversa.status ===
                 "bloqueada"
             ) {
                 await conexao.rollback();
@@ -1348,15 +1545,20 @@ router.post(
                 });
             }
 
-            const participante1Id = Number(
-                conversas[0]
-                    .participante_1_id
-            );
+            const participante1Id =
+                Number(
+                    conversa.participante_1_id
+                );
 
-            const participante2Id = Number(
-                conversas[0]
-                    .participante_2_id
-            );
+            const participante2Id =
+                Number(
+                    conversa.participante_2_id
+                );
+
+            const outroUsuarioId =
+                participante1Id === meuId
+                    ? participante2Id
+                    : participante1Id;
 
             const [novaMensagem] =
                 await conexao.query(
@@ -1379,40 +1581,47 @@ router.post(
                     ]
                 );
 
-            const [mensagensCriadas] =
+            const [criadas] =
                 await conexao.query(
                     `SELECT
                         id,
                         conversa_id,
                         remetente_id,
                         texto,
-                        criado_em
+                        criado_em,
+                        lida_em
 
                      FROM mensagens_conversa
 
                      WHERE id = ?
 
                      LIMIT 1`,
-                    [novaMensagem.insertId]
+                    [
+                        novaMensagem.insertId
+                    ]
                 );
-
-            const mensagemCriada =
-                mensagensCriadas[0];
 
             await conexao.query(
                 `UPDATE mensagens
+
                  SET ultima_mensagem = ?,
                      total_mensagens =
                         total_mensagens + 1,
                      status = 'aberta',
                      ultimo_envio = NOW(),
-                     excluido_para_todos = 0,
-                     excluido_para_usuario_id = NULL
+                     excluido_para_todos = 0
+
                  WHERE id = ?`,
                 [
                     resumoMensagem(texto),
                     conversaId
                 ]
+            );
+
+            await mostrarConversasParaTodos(
+                conexao,
+                meuId,
+                outroUsuarioId
             );
 
             await conexao.commit();
@@ -1425,8 +1634,10 @@ router.post(
                 ],
                 "privado:mensagem",
                 {
-                    conversa_id: conversaId,
-                    mensagem: mensagemCriada
+                    conversa_id:
+                        conversaId,
+                    mensagem:
+                        criadas[0]
                 }
             );
 
@@ -1436,20 +1647,16 @@ router.post(
                     "Mensagem enviada com sucesso!",
 
                 dados: {
-                    ...mensagemCriada,
-                    enviada_por_mim: true
+                    ...criadas[0],
+                    enviada_por_mim:
+                        true
                 }
             });
         } catch (erro) {
             if (conexao) {
                 try {
                     await conexao.rollback();
-                } catch (erroRollback) {
-                    console.error(
-                        "❌ Erro ao desfazer transação:",
-                        erroRollback.message
-                    );
-                }
+                } catch {}
             }
 
             console.error(
@@ -1460,12 +1667,10 @@ router.post(
             return res.status(500).json({
                 sucesso: false,
                 erro:
-                    "Erro interno ao enviar a mensagem."
+                    "Erro interno ao enviar mensagem."
             });
         } finally {
-            if (conexao) {
-                conexao.release();
-            }
+            conexao?.release();
         }
     }
 );
@@ -1479,11 +1684,13 @@ router.delete(
     "/mensagem/:id",
     authUser,
     async (req, res) => {
-        const mensagemId = inteiroPositivo(
-            req.params.id
-        );
+        const mensagemId =
+            inteiroPositivo(
+                req.params.id
+            );
 
-        const meuId = Number(req.usuario.id);
+        const meuId =
+            Number(req.usuario.id);
 
         const tipo =
             req.body.tipo === "para_todos"
@@ -1501,7 +1708,9 @@ router.delete(
         let conexao;
 
         try {
-            conexao = await db.getConnection();
+            conexao =
+                await db.getConnection();
+
             await conexao.beginTransaction();
 
             const [mensagens] =
@@ -1510,7 +1719,6 @@ router.delete(
                         mc.id,
                         mc.conversa_id,
                         mc.remetente_id,
-                        mc.excluida_para_todos,
                         c.participante_1_id,
                         c.participante_2_id
 
@@ -1535,17 +1743,20 @@ router.delete(
                     ]
                 );
 
-            if (mensagens.length === 0) {
+            if (
+                mensagens.length === 0
+            ) {
                 await conexao.rollback();
 
                 return res.status(404).json({
                     sucesso: false,
                     erro:
-                        "Mensagem não encontrada ou sem permissão."
+                        "Mensagem não encontrada."
                 });
             }
 
-            const mensagem = mensagens[0];
+            const mensagem =
+                mensagens[0];
 
             if (tipo === "para_todos") {
                 if (
@@ -1564,8 +1775,10 @@ router.delete(
 
                 await conexao.query(
                     `UPDATE mensagens_conversa
+
                      SET excluida_para_todos = 1,
                          excluida_para_todos_em = NOW()
+
                      WHERE id = ?`,
                     [mensagemId]
                 );
@@ -1596,12 +1809,15 @@ router.delete(
 
                 await conexao.query(
                     `UPDATE mensagens
+
                      SET ultima_mensagem = ?,
                          ultimo_envio = ?,
 
                          total_mensagens = (
                             SELECT COUNT(*)
+
                             FROM mensagens_conversa
+
                             WHERE conversa_id = ?
                               AND excluida_para_todos = 0
                          )
@@ -1647,6 +1863,7 @@ router.delete(
                 Number(
                     mensagem.participante_1_id
                 ),
+
                 Number(
                     mensagem.participante_2_id
                 )
@@ -1662,13 +1879,17 @@ router.delete(
                 "privado:mensagem_excluida",
 
                 {
-                    conversa_id: Number(
-                        mensagem.conversa_id
-                    ),
+                    conversa_id:
+                        Number(
+                            mensagem.conversa_id
+                        ),
 
-                    mensagem_id: mensagemId,
+                    mensagem_id:
+                        mensagemId,
+
                     tipo,
-                    usuario_id: meuId
+                    usuario_id:
+                        meuId
                 }
             );
 
@@ -1684,12 +1905,7 @@ router.delete(
             if (conexao) {
                 try {
                     await conexao.rollback();
-                } catch (erroRollback) {
-                    console.error(
-                        "❌ Erro ao desfazer transação:",
-                        erroRollback.message
-                    );
-                }
+                } catch {}
             }
 
             console.error(
@@ -1703,9 +1919,7 @@ router.delete(
                     "Erro ao apagar a mensagem."
             });
         } finally {
-            if (conexao) {
-                conexao.release();
-            }
+            conexao?.release();
         }
     }
 );
