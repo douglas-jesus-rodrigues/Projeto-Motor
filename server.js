@@ -6,21 +6,32 @@ const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const { Server } = require("socket.io");
+const MySQLStore =
+    require("express-mysql-session")(
+        session
+    );
+
+const { Server } =
+    require("socket.io");
 
 require("dotenv").config();
 
 const app = express();
-const httpServer = http.createServer(app);
+
+const httpServer =
+    http.createServer(app);
 
 // ==========================================
 // CONFIGURAÇÃO DO AMBIENTE
 // ==========================================
+
 const PORT =
-    Number(process.env.PORT) || 4000;
+    Number(process.env.PORT) ||
+    4000;
 
 const HOST =
-    process.env.HOST || "0.0.0.0";
+    process.env.HOST ||
+    "0.0.0.0";
 
 const EM_PRODUCAO =
     process.env.NODE_ENV ===
@@ -35,6 +46,7 @@ const APP_URL = String(
 // ==========================================
 // ORIGENS PERMITIDAS
 // ==========================================
+
 const origensPadrao = [
     `http://localhost:${PORT}`,
     "http://localhost:3000",
@@ -66,12 +78,13 @@ const ORIGENS_PERMITIDAS = [
 // ==========================================
 // CONFIGURAÇÃO DO CORS
 // ==========================================
+
 const configuracaoCors = {
     credentials: true,
 
     origin(origem, callback) {
         /*
-         * Requisições internas ou ferramentas
+         * Requisições internas e ferramentas
          * locais podem não enviar Origin.
          */
         if (!origem) {
@@ -115,6 +128,7 @@ const configuracaoCors = {
 // ==========================================
 // CONFIGURAÇÃO DO SOCKET.IO
 // ==========================================
+
 const io = new Server(
     httpServer,
     {
@@ -125,15 +139,16 @@ const io = new Server(
             "polling"
         ],
 
-        maxHttpBufferSize: 1e6
+        maxHttpBufferSize:
+            1e6
     }
 );
 
 /*
- * Disponibiliza o Socket.IO para as rotas.
+ * Disponibiliza o Socket.IO
+ * para as rotas.
  *
- * Dentro das rotas será possível acessar:
- *
+ * Uso:
  * req.app.get("io")
  */
 app.set("io", io);
@@ -141,6 +156,7 @@ app.set("io", io);
 // ==========================================
 // SOCKET.IO DAS MENSAGENS PRIVADAS
 // ==========================================
+
 const iniciarChatPrivado =
     require(
         "./src/sockets/chatPrivado"
@@ -151,10 +167,11 @@ iniciarChatPrivado(io);
 // ==========================================
 // CONFIGURAÇÕES DO EXPRESS
 // ==========================================
+
 if (EM_PRODUCAO) {
     /*
-     * Necessário em hospedagens que utilizam
-     * proxy HTTPS, como Render e Railway.
+     * Necessário no Render, pois o serviço
+     * utiliza um proxy HTTPS.
      */
     app.set(
         "trust proxy",
@@ -188,6 +205,7 @@ app.use(
 // ==========================================
 // CONFIGURAÇÃO DA SESSÃO
 // ==========================================
+
 const SESSION_SECRET =
     process.env.SESSION_SECRET ||
     "motorflex_sessao_local";
@@ -201,8 +219,161 @@ if (
     );
 }
 
+// ==========================================
+// BANCO DAS SESSÕES
+// ==========================================
+
+const configuracaoBancoSessao = {
+    host:
+        process.env.DB_HOST ||
+        process.env.MYSQL_ADDON_HOST ||
+        "localhost",
+
+    port:
+        Number(
+            process.env.DB_PORT ||
+            process.env.MYSQL_ADDON_PORT
+        ) || 3306,
+
+    user:
+        process.env.DB_USER ||
+        process.env.MYSQL_ADDON_USER ||
+        "root",
+
+    password:
+        process.env.DB_PASSWORD ||
+        process.env.MYSQL_ADDON_PASSWORD ||
+        "",
+
+    database:
+        process.env.DB_NAME ||
+        process.env.MYSQL_ADDON_DB ||
+        "motorflex",
+
+    connectionLimit:
+        Number(
+            process.env
+                .DB_CONNECTION_LIMIT
+        ) || 10,
+
+    /*
+     * Cria automaticamente a tabela
+     * sessions caso ela não exista.
+     */
+    createDatabaseTable:
+        true,
+
+    /*
+     * Remove sessões vencidas.
+     */
+    clearExpired:
+        true,
+
+    /*
+     * Verifica sessões vencidas
+     * a cada 15 minutos.
+     */
+    checkExpirationInterval:
+        1000 *
+        60 *
+        15,
+
+    /*
+     * Duração da sessão:
+     * 24 horas.
+     */
+    expiration:
+        1000 *
+        60 *
+        60 *
+        24,
+
+    schema: {
+        tableName:
+            "sessions",
+
+        columnNames: {
+            session_id:
+                "session_id",
+
+            expires:
+                "expires",
+
+            data:
+                "data"
+        }
+    }
+};
+
+// ==========================================
+// SSL DO BANCO DAS SESSÕES
+// ==========================================
+
+const usarSslBanco =
+    String(
+        process.env.DB_SSL ||
+        "false"
+    )
+        .trim()
+        .toLowerCase() ===
+    "true";
+
+if (usarSslBanco) {
+    configuracaoBancoSessao.ssl = {
+        rejectUnauthorized:
+            String(
+                process.env
+                    .DB_SSL_REJECT_UNAUTHORIZED ||
+                "true"
+            )
+                .trim()
+                .toLowerCase() !==
+            "false"
+    };
+}
+
+// ==========================================
+// CRIAÇÃO DO ARMAZENAMENTO DE SESSÕES
+// ==========================================
+
+const armazenamentoSessao =
+    new MySQLStore(
+        configuracaoBancoSessao
+    );
+
+if (
+    typeof armazenamentoSessao.on ===
+    "function"
+) {
+    armazenamentoSessao.on(
+        "error",
+        (erro) => {
+            console.error(
+                "❌ Erro no armazenamento de sessões:",
+                erro.message
+            );
+        }
+    );
+}
+
+// ==========================================
+// MIDDLEWARE DA SESSÃO
+// ==========================================
+
 app.use(
     session({
+        /*
+         * Nome personalizado do cookie.
+         */
+        name:
+            "motorflex.sid",
+
+        /*
+         * Sessões persistentes no MySQL.
+         */
+        store:
+            armazenamentoSessao,
+
         secret:
             SESSION_SECRET,
 
@@ -211,6 +382,20 @@ app.use(
 
         saveUninitialized:
             false,
+
+        /*
+         * Renova o tempo do cookie
+         * enquanto o usuário navega.
+         */
+        rolling:
+            true,
+
+        /*
+         * Permite cookies seguros
+         * atrás do proxy do Render.
+         */
+        proxy:
+            EM_PRODUCAO,
 
         cookie: {
             httpOnly:
@@ -233,9 +418,14 @@ app.use(
     })
 );
 
+console.log(
+    "🗃️ Sessões persistentes configuradas no MySQL."
+);
+
 // ==========================================
-// PASTA DE UPLOADS
+// PASTA DE UPLOADS LOCAIS ANTIGOS
 // ==========================================
+
 const pastaUploadsPublic =
     path.join(
         __dirname,
@@ -272,6 +462,7 @@ console.log(
 // ------------------------------------------
 // Inatividade e LGPD
 // ------------------------------------------
+
 try {
     require(
         "./src/middlewares/cronInatividade"
@@ -290,6 +481,7 @@ try {
 // ------------------------------------------
 // Limpeza das mensagens com mais de 10 dias
 // ------------------------------------------
+
 try {
     const limpezaMensagens =
         require(
@@ -312,6 +504,7 @@ try {
 // ==========================================
 // ARQUIVOS PÚBLICOS
 // ==========================================
+
 app.use(
     express.static(
         path.join(
@@ -324,6 +517,7 @@ app.use(
 // ==========================================
 // PÁGINA INICIAL
 // ==========================================
+
 app.get(
     "/",
     (req, res) => {
@@ -341,6 +535,7 @@ app.get(
 // ==========================================
 // IMPORTAÇÃO DAS ROTAS
 // ==========================================
+
 const usuarioRoutes =
     require(
         "./src/routes/usuarioRoutes"
@@ -379,6 +574,7 @@ const auxiliaresRoutes =
 // ==========================================
 // REGISTRO DAS ROTAS
 // ==========================================
+
 app.use(
     "/api/usuarios",
     usuarioRoutes
@@ -417,6 +613,7 @@ app.use(
 // ==========================================
 // ROTA DE TESTE
 // ==========================================
+
 app.get(
     "/teste",
     (req, res) => {
@@ -435,6 +632,9 @@ app.get(
                 chatPrivado:
                     true,
 
+                sessaoPersistente:
+                    true,
+
                 ambiente:
                     process.env.NODE_ENV ||
                     "development",
@@ -451,6 +651,7 @@ app.get(
 // ==========================================
 // ROTA NÃO ENCONTRADA
 // ==========================================
+
 app.use(
     (req, res) => {
         return res
@@ -468,6 +669,7 @@ app.use(
 // ==========================================
 // TRATAMENTO GERAL DE ERROS
 // ==========================================
+
 app.use(
     (
         erro,
@@ -501,7 +703,8 @@ app.use(
 
         return res
             .status(
-                erro.status || 500
+                erro.status ||
+                500
             )
             .json({
                 sucesso:
@@ -521,6 +724,7 @@ app.use(
 // ==========================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==========================================
+
 httpServer.listen(
     PORT,
     HOST,
@@ -542,6 +746,7 @@ httpServer.listen(
 // ==========================================
 // EXPORTAÇÃO PARA TESTES
 // ==========================================
+
 module.exports = {
     app,
     httpServer,
