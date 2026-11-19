@@ -1,79 +1,12 @@
 "use strict";
 
-// ==========================================
-// ESTADO E UTILITÁRIOS
-// ==========================================
+// ==========================================================
+// ESTADO E CONFIGURAÇÕES
+// ==========================================================
 const CHAVES_SESSAO = ["usuario", "usuario_logado"];
 
 const IMAGEM_PADRAO =
     "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=800&q=80";
-
-let veiculoAtual = null;
-let veiculoIdAtual = null;
-
-// ==========================================
-// COMBUSTÍVEL E CÂMBIO
-// ==========================================
-const ICONES = {
-    raio: { classe: "fa-bolt" },
-    folha: { classe: "fa-leaf" }
-};
-
-const COMBUSTIVEIS = {
-    gasolina: {
-        rotulo: "Gasolina",
-        grupo: "liquido",
-        tipo: "Combustível líquido",
-        icones: ["folha"],
-        descricao:
-            "O combustível fóssil mais comum para veículos leves, derivado do petróleo, que oferece uma boa resposta de desempenho e autonomia."
-    },
-
-    etanol: {
-        rotulo: "Etanol",
-        grupo: "liquido",
-        tipo: "Combustível líquido",
-        icones: ["folha"],
-        descricao:
-            "Um biocombustível renovável produzido a partir da cana-de-açúcar, que emite menos poluentes."
-    },
-
-    flex: {
-        rotulo: "Flex",
-        grupo: "liquido",
-        tipo: "Combustível líquido",
-        icones: ["folha"],
-        descricao:
-            "Veículos equipados com motores capazes de funcionar com gasolina, etanol ou uma mistura dos dois combustíveis."
-    },
-
-    diesel: {
-        rotulo: "Diesel",
-        grupo: "liquido",
-        tipo: "Combustível líquido",
-        icones: ["folha"],
-        descricao:
-            "Combustível utilizado em motores que oferecem maior torque e eficiência em longas distâncias."
-    },
-
-    eletrico: {
-        rotulo: "Elétrico",
-        grupo: "eletrico",
-        tipo: "Energia elétrica",
-        icones: ["raio"],
-        descricao:
-            "Veículos que funcionam exclusivamente com energia elétrica armazenada em baterias recarregáveis."
-    },
-
-    hibrido: {
-        rotulo: "Híbrido",
-        grupo: "hibrido",
-        tipo: "Combustível + elétrico",
-        icones: ["raio", "folha"],
-        descricao:
-            "Veículos que combinam um motor tradicional com um motor elétrico para melhorar a eficiência energética."
-    }
-};
 
 const nomesCombustivel = {
     1: "Gasolina",
@@ -90,48 +23,121 @@ const nomesCambio = {
     3: "Semi-automático"
 };
 
-async function carregarListaAuxiliar(url, destino) {
-    try {
-        const resposta = await fetch(url);
+const COMBUSTIVEIS = {
+    gasolina: {
+        rotulo: "Gasolina",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Combustível derivado do petróleo que oferece boa resposta de desempenho e autonomia."
+    },
 
-        if (!resposta.ok) return;
+    etanol: {
+        rotulo: "Etanol",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Biocombustível renovável produzido principalmente a partir da cana-de-açúcar."
+    },
 
-        const lista = await resposta.json();
+    flex: {
+        rotulo: "Flex",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Motor capaz de funcionar com gasolina, etanol ou uma mistura dos dois."
+    },
 
-        if (!Array.isArray(lista)) return;
+    diesel: {
+        rotulo: "Diesel",
+        grupo: "liquido",
+        tipo: "Combustível líquido",
+        icones: ["folha"],
+        descricao:
+            "Combustível utilizado em motores com maior torque e eficiência em longas distâncias."
+    },
 
-        lista.forEach((item) => {
-            if (item && item.id != null && item.nome) {
-                destino[item.id] = String(item.nome);
-            }
-        });
-    } catch {
-        // Mantém os nomes padrões definidos acima.
+    eletrico: {
+        rotulo: "Elétrico",
+        grupo: "eletrico",
+        tipo: "Energia elétrica",
+        icones: ["raio"],
+        descricao:
+            "Veículo movido exclusivamente por energia elétrica armazenada em baterias."
+    },
+
+    hibrido: {
+        rotulo: "Híbrido",
+        grupo: "hibrido",
+        tipo: "Combustível e energia elétrica",
+        icones: ["raio", "folha"],
+        descricao:
+            "Combina um motor tradicional com um motor elétrico para melhorar a eficiência."
+    }
+};
+
+const ICONES = {
+    raio: "fa-bolt",
+    folha: "fa-leaf"
+};
+
+let veiculoAtual = null;
+let veiculoIdAtual = null;
+let enviandoProposta = false;
+let temporizadorToast = null;
+
+// ==========================================================
+// FUNÇÕES AUXILIARES
+// ==========================================================
+function definirTexto(id, texto) {
+    const elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.textContent = texto ?? "";
     }
 }
 
-function carregarListasAuxiliares() {
-    return Promise.all([
-        carregarListaAuxiliar(
-            "/api/combustiveis",
-            nomesCombustivel
-        ),
+async function lerRespostaJson(resposta) {
+    try {
+        return await resposta.json();
+    } catch {
+        return {};
+    }
+}
 
-        carregarListaAuxiliar(
-            "/api/cambios",
-            nomesCambio
-        )
-    ]);
+function mostrarToast(mensagem) {
+    const toast = document.getElementById("toast");
+
+    if (!toast) {
+        console.log(mensagem);
+        return;
+    }
+
+    toast.textContent = String(mensagem || "");
+    toast.hidden = false;
+
+    clearTimeout(temporizadorToast);
+
+    temporizadorToast = setTimeout(() => {
+        toast.hidden = true;
+    }, 3500);
 }
 
 function nomeValido(valor) {
-    if (typeof valor !== "string") return null;
+    if (typeof valor !== "string") {
+        return null;
+    }
 
     const texto = valor.trim();
 
-    return texto && !/^\d+$/.test(texto)
-        ? texto
-        : null;
+    if (!texto || /^\d+$/.test(texto)) {
+        return null;
+    }
+
+    return texto;
 }
 
 function normalizarTexto(valor) {
@@ -141,196 +147,19 @@ function normalizarTexto(valor) {
         .toLowerCase();
 }
 
-function infoCombustivel(nomeBanco) {
-    const nome = normalizarTexto(nomeBanco);
+function formatarPreco(valor) {
+    const numero = Number(valor);
 
-    let chave = null;
-
-    if (nome.includes("hibrid")) {
-        chave = "hibrido";
-    } else if (nome.includes("eletric")) {
-        chave = "eletrico";
-    } else if (
-        nome.includes("flex") ||
-        (
-            nome.includes("gasolina") &&
-            (
-                nome.includes("etanol") ||
-                nome.includes("alcool")
-            )
-        )
-    ) {
-        chave = "flex";
-    } else if (nome.includes("gasolina")) {
-        chave = "gasolina";
-    } else if (
-        nome.includes("etanol") ||
-        nome.includes("alcool")
-    ) {
-        chave = "etanol";
-    } else if (nome.includes("diesel")) {
-        chave = "diesel";
+    if (!Number.isFinite(numero)) {
+        return "R$ --";
     }
 
-    return chave
-        ? COMBUSTIVEIS[chave]
-        : null;
-}
-
-function aplicarIcones(id, icones) {
-    const elemento = document.getElementById(id);
-
-    if (!elemento) return;
-
-    const lista =
-        Array.isArray(icones) && icones.length
-            ? icones
-            : ["bomba"];
-
-    const elementos = lista.map((nome) => {
-        const icone = document.createElement("i");
-
-        icone.setAttribute("aria-hidden", "true");
-
-        icone.className =
-            nome === "bomba"
-                ? "fa-solid fa-gas-pump"
-                : `fa-solid ${ICONES[nome].classe} ic-${nome}`;
-
-        return icone;
+    return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
     });
-
-    elemento.replaceChildren(...elementos);
 }
 
-function mostrarTipoCombustivel(nomeBanco) {
-    const info = infoCombustivel(nomeBanco);
-    const icones = info ? info.icones : null;
-
-    aplicarIcones("chipCombIcones", icones);
-    aplicarIcones("specCombIcones", icones);
-
-    const caixa = document.getElementById(
-        "combustivelInfo"
-    );
-
-    if (!caixa) return;
-
-    if (!info) {
-        caixa.hidden = true;
-        return;
-    }
-
-    aplicarIcones(
-        "combustivelInfoIcones",
-        icones
-    );
-
-    definirTexto(
-        "combustivelInfoNome",
-        nomeBanco
-    );
-
-    definirTexto(
-        "combustivelInfoTipo",
-        info.tipo
-    );
-
-    definirTexto(
-        "combustivelInfoTexto",
-        info.descricao
-    );
-
-    caixa.className =
-        `combustivel-info combustivel-info--${info.grupo}`;
-
-    caixa.hidden = false;
-
-    const chip = document.getElementById(
-        "chipCombustivel"
-    );
-
-    if (chip) {
-        chip.title =
-            `${info.rotulo}: ${info.tipo}`;
-    }
-}
-
-// ==========================================
-// SESSÃO E AUTENTICAÇÃO
-// ==========================================
-function lerUsuario() {
-    for (const chave of CHAVES_SESSAO) {
-        const valor =
-            localStorage.getItem(chave) ||
-            sessionStorage.getItem(chave);
-
-        if (
-            !valor ||
-            valor === "undefined" ||
-            valor === "null"
-        ) {
-            continue;
-        }
-
-        try {
-            const usuario = JSON.parse(valor);
-
-            if (
-                usuario &&
-                typeof usuario === "object"
-            ) {
-                return usuario;
-            }
-        } catch {
-            // Tenta a próxima chave.
-        }
-    }
-
-    return null;
-}
-
-function obterToken() {
-    return (
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("token")
-    );
-}
-
-function usuarioEstaLogado() {
-    const usuario = lerUsuario();
-    const token = obterToken();
-
-    return Boolean(
-        usuario?.id &&
-        token
-    );
-}
-
-function obterRotaPainel(usuario) {
-    if (!usuario) {
-        return "/pages/login.html";
-    }
-
-    if (usuario.tipo === "empresa") {
-        return "/pages/painel-empresa.html";
-    }
-
-    if (
-        ["admin", "super_admin"].includes(
-            usuario.tipo
-        ) ||
-        usuario.cargo === "admin"
-    ) {
-        return "/pages/painel-admin.html";
-    }
-
-    return "/pages/painel-cliente.html";
-}
-
-// ==========================================
-// FUNÇÕES AUXILIARES
-// ==========================================
 function normalizarUrlImagem(valor) {
     if (typeof valor !== "string") {
         return null;
@@ -370,84 +199,276 @@ function normalizarUrlImagem(valor) {
     return `/uploads/${encodeURIComponent(caminho)}`;
 }
 
-function formatarPreco(valor) {
-    const numero = Number(valor);
+// ==========================================================
+// SESSÃO E AUTENTICAÇÃO
+// ==========================================================
+function lerUsuario() {
+    for (const chave of CHAVES_SESSAO) {
+        const valor =
+            localStorage.getItem(chave) ||
+            sessionStorage.getItem(chave);
 
-    if (!Number.isFinite(numero)) {
-        return "R$ --";
+        if (
+            !valor ||
+            valor === "undefined" ||
+            valor === "null"
+        ) {
+            continue;
+        }
+
+        try {
+            const usuario = JSON.parse(valor);
+
+            if (
+                usuario &&
+                typeof usuario === "object"
+            ) {
+                return usuario;
+            }
+        } catch {
+            // Continua procurando outra chave.
+        }
     }
 
-    return numero.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+    return null;
 }
 
-function definirTexto(id, texto) {
-    const elemento = document.getElementById(id);
-
-    if (elemento) {
-        elemento.textContent = texto;
-    }
-}
-
-async function lerRespostaJson(resposta) {
-    try {
-        return await resposta.json();
-    } catch {
-        return {};
-    }
-}
-
-let temporizadorToast = null;
-
-function mostrarToast(mensagem) {
-    const toast = document.getElementById("toast");
-
-    if (!toast) {
-        console.log(mensagem);
-        return;
-    }
-
-    toast.textContent = mensagem;
-    toast.hidden = false;
-
-    clearTimeout(temporizadorToast);
-
-    temporizadorToast = setTimeout(() => {
-        toast.hidden = true;
-    }, 3500);
-}
-
-function atualizarBloqueioScroll() {
-    const propostaAberta =
-        !document.getElementById(
-            "modalProposta"
-        )?.hidden;
-
-    const loginAberto =
-        !document.getElementById(
-            "modalLoginNecessario"
-        )?.hidden;
-
-    const imagemAberta =
-        document.getElementById(
-            "modalImagem"
-        )?.classList.contains("ativo");
-
-    document.body.classList.toggle(
-        "modal-aberto",
-        Boolean(
-            propostaAberta ||
-            loginAberto ||
-            imagemAberta
-        )
+function obterToken() {
+    return (
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token")
     );
 }
 
-// ==========================================
+function usuarioEstaLogado() {
+    const usuario = lerUsuario();
+    const token = obterToken();
+
+    return Boolean(usuario?.id && token);
+}
+
+function obterRotaPainel(usuario) {
+    if (!usuario) {
+        return "/pages/login.html";
+    }
+
+    if (usuario.tipo === "empresa") {
+        return "/pages/painel-empresa.html";
+    }
+
+    if (
+        ["admin", "super_admin"].includes(
+            usuario.tipo
+        ) ||
+        usuario.cargo === "admin"
+    ) {
+        return "/pages/painel-admin.html";
+    }
+
+    return "/pages/painel-cliente.html";
+}
+
+function criarErroSessao() {
+    const erro = new Error(
+        "Sua sessão expirou. Entre novamente."
+    );
+
+    erro.sessaoExpirada = true;
+
+    return erro;
+}
+
+// ==========================================================
+// COMBUSTÍVEL E CÂMBIO
+// ==========================================================
+async function carregarListaAuxiliar(url, destino) {
+    try {
+        const resposta = await fetch(url);
+
+        if (!resposta.ok) {
+            return;
+        }
+
+        const lista = await resposta.json();
+
+        if (!Array.isArray(lista)) {
+            return;
+        }
+
+        lista.forEach((item) => {
+            if (
+                item &&
+                item.id != null &&
+                item.nome
+            ) {
+                destino[item.id] =
+                    String(item.nome);
+            }
+        });
+    } catch {
+        // Mantém os valores padrões.
+    }
+}
+
+function carregarListasAuxiliares() {
+    return Promise.all([
+        carregarListaAuxiliar(
+            "/api/combustiveis",
+            nomesCombustivel
+        ),
+
+        carregarListaAuxiliar(
+            "/api/cambios",
+            nomesCambio
+        )
+    ]);
+}
+
+function infoCombustivel(nomeBanco) {
+    const nome = normalizarTexto(nomeBanco);
+
+    if (nome.includes("hibrid")) {
+        return COMBUSTIVEIS.hibrido;
+    }
+
+    if (nome.includes("eletric")) {
+        return COMBUSTIVEIS.eletrico;
+    }
+
+    if (
+        nome.includes("flex") ||
+        (
+            nome.includes("gasolina") &&
+            (
+                nome.includes("etanol") ||
+                nome.includes("alcool")
+            )
+        )
+    ) {
+        return COMBUSTIVEIS.flex;
+    }
+
+    if (nome.includes("gasolina")) {
+        return COMBUSTIVEIS.gasolina;
+    }
+
+    if (
+        nome.includes("etanol") ||
+        nome.includes("alcool")
+    ) {
+        return COMBUSTIVEIS.etanol;
+    }
+
+    if (nome.includes("diesel")) {
+        return COMBUSTIVEIS.diesel;
+    }
+
+    return null;
+}
+
+function aplicarIcones(id, icones) {
+    const elemento = document.getElementById(id);
+
+    if (!elemento) {
+        return;
+    }
+
+    const lista =
+        Array.isArray(icones) &&
+        icones.length > 0
+            ? icones
+            : ["bomba"];
+
+    const elementos = lista.map((nome) => {
+        const icone =
+            document.createElement("i");
+
+        icone.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        if (nome === "bomba") {
+            icone.className =
+                "fa-solid fa-gas-pump";
+        } else {
+            icone.className =
+                `fa-solid ${ICONES[nome]} ic-${nome}`;
+        }
+
+        return icone;
+    });
+
+    elemento.replaceChildren(...elementos);
+}
+
+function mostrarTipoCombustivel(nomeBanco) {
+    const info = infoCombustivel(nomeBanco);
+    const icones = info?.icones || null;
+
+    aplicarIcones(
+        "chipCombIcones",
+        icones
+    );
+
+    aplicarIcones(
+        "specCombIcones",
+        icones
+    );
+
+    const caixa =
+        document.getElementById(
+            "combustivelInfo"
+        );
+
+    if (!caixa) {
+        return;
+    }
+
+    if (!info) {
+        caixa.hidden = true;
+        return;
+    }
+
+    aplicarIcones(
+        "combustivelInfoIcones",
+        info.icones
+    );
+
+    definirTexto(
+        "combustivelInfoNome",
+        nomeBanco
+    );
+
+    definirTexto(
+        "combustivelInfoTipo",
+        info.tipo
+    );
+
+    definirTexto(
+        "combustivelInfoTexto",
+        info.descricao
+    );
+
+    caixa.className =
+        `combustivel-info combustivel-info--${info.grupo}`;
+
+    caixa.hidden = false;
+
+    const chip =
+        document.getElementById(
+            "chipCombustivel"
+        );
+
+    if (chip) {
+        chip.title =
+            `${info.rotulo}: ${info.tipo}`;
+    }
+}
+
+// ==========================================================
 // INICIALIZAÇÃO
-// ==========================================
+// ==========================================================
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
@@ -493,9 +514,9 @@ document.addEventListener(
     }
 );
 
-// ==========================================
-// BUSCAR VEÍCULO
-// ==========================================
+// ==========================================================
+// CARREGAR DADOS DO VEÍCULO
+// ==========================================================
 async function carregarDetalhesDoCarro(id) {
     const loadingEl =
         document.getElementById("loading");
@@ -509,7 +530,9 @@ async function carregarDetalhesDoCarro(id) {
         const [resposta] =
             await Promise.all([
                 fetch(
-                    `/api/veiculos/${encodeURIComponent(id)}`
+                    `/api/veiculos/${encodeURIComponent(
+                        id
+                    )}`
                 ),
 
                 carregarListasAuxiliares()
@@ -546,36 +569,9 @@ async function carregarDetalhesDoCarro(id) {
             "Modelo";
 
         const titulo =
-            `${marca} ${modelo}`.trim();
-
-        document.title =
-            `${titulo} - MotorFlex`;
-
-        definirTexto(
-            "breadcrumbAtual",
-            titulo
-        );
-
-        definirTexto(
-            "marcaModeloBadge",
-            `${marca} / ${modelo}`
-        );
-
-        definirTexto(
-            "tituloVeiculo",
-            titulo
-        );
-
-        definirTexto(
-            "versaoVeiculo",
-            veiculo.versao ||
-            "Versão padrão"
-        );
-
-        definirTexto(
-            "precoVeiculo",
-            formatarPreco(veiculo.preco)
-        );
+            `${marca} ${modelo}`
+                .replace(/\s+/g, " ")
+                .trim();
 
         const ano =
             `${veiculo.ano_fabricacao || "--"} / ` +
@@ -615,7 +611,39 @@ async function carregarDetalhesDoCarro(id) {
             ] ||
             "Não informado";
 
-        definirTexto("specAno", ano);
+        document.title =
+            `${titulo} - MotorFlex`;
+
+        definirTexto(
+            "breadcrumbAtual",
+            titulo
+        );
+
+        definirTexto(
+            "marcaModeloBadge",
+            `${marca} / ${modelo}`
+        );
+
+        definirTexto(
+            "tituloVeiculo",
+            titulo
+        );
+
+        definirTexto(
+            "versaoVeiculo",
+            veiculo.versao ||
+            "Versão padrão"
+        );
+
+        definirTexto(
+            "precoVeiculo",
+            formatarPreco(veiculo.preco)
+        );
+
+        definirTexto(
+            "specAno",
+            ano
+        );
 
         definirTexto(
             "specQuilometragem",
@@ -668,9 +696,7 @@ async function carregarDetalhesDoCarro(id) {
 
         if (
             veiculo.descricao &&
-            String(
-                veiculo.descricao
-            ).trim()
+            String(veiculo.descricao).trim()
         ) {
             definirTexto(
                 "descricaoVeiculo",
@@ -682,11 +708,13 @@ async function carregarDetalhesDoCarro(id) {
         renderizarCardContato(veiculo);
 
         if (loadingEl) {
-            loadingEl.style.display = "none";
+            loadingEl.style.display =
+                "none";
         }
 
         if (conteudoEl) {
-            conteudoEl.style.display = "block";
+            conteudoEl.style.display =
+                "block";
         }
     } catch (erro) {
         console.error(
@@ -704,21 +732,23 @@ async function carregarDetalhesDoCarro(id) {
     }
 }
 
-// ==========================================
+// ==========================================================
 // GALERIA
-// ==========================================
+// ==========================================================
 function montarGaleria(veiculo) {
-    const fotoEl =
+    const fotoPrincipal =
         document.getElementById(
             "fotoPrincipal"
         );
 
-    const miniaturasEl =
+    const miniaturas =
         document.getElementById(
             "miniaturas"
         );
 
-    if (!fotoEl) return;
+    if (!fotoPrincipal) {
+        return;
+    }
 
     const principal =
         normalizarUrlImagem(
@@ -751,14 +781,15 @@ function montarGaleria(veiculo) {
         fotos.unshift(principal);
     }
 
-    fotoEl.onerror = () => {
-        fotoEl.onerror = null;
-        fotoEl.src = IMAGEM_PADRAO;
+    fotoPrincipal.onerror = () => {
+        fotoPrincipal.onerror = null;
+        fotoPrincipal.src =
+            IMAGEM_PADRAO;
     };
 
-    fotoEl.src = principal;
+    fotoPrincipal.src = principal;
 
-    fotoEl.alt = (
+    fotoPrincipal.alt =
         `Foto de ${
             veiculo.marca_nome ||
             veiculo.marca ||
@@ -767,85 +798,84 @@ function montarGaleria(veiculo) {
             veiculo.modelo_nome ||
             veiculo.modelo ||
             ""
-        }`
-    ).trim();
+        }`.trim();
 
     if (
-        miniaturasEl &&
-        fotos.length > 1
+        !miniaturas ||
+        fotos.length <= 1
     ) {
-        miniaturasEl.innerHTML = "";
+        if (miniaturas) {
+            miniaturas.hidden = true;
+        }
 
-        fotos.forEach((url, indice) => {
-            const botao =
-                document.createElement(
-                    "button"
-                );
-
-            botao.type = "button";
-
-            botao.className =
-                indice === 0
-                    ? "ativa"
-                    : "";
-
-            botao.setAttribute(
-                "aria-label",
-                `Ver foto ${indice + 1}`
-            );
-
-            const imagem =
-                document.createElement("img");
-
-            imagem.src = url;
-            imagem.alt = "";
-
-            imagem.onerror = () => {
-                botao.remove();
-            };
-
-            botao.appendChild(imagem);
-
-            botao.addEventListener(
-                "click",
-                () => {
-                    fotoEl.src = url;
-
-                    miniaturasEl
-                        .querySelectorAll("button")
-                        .forEach((item) => {
-                            item.classList.remove(
-                                "ativa"
-                            );
-                        });
-
-                    botao.classList.add(
-                        "ativa"
-                    );
-                }
-            );
-
-            miniaturasEl.appendChild(
-                botao
-            );
-        });
-
-        miniaturasEl.hidden = false;
-    } else if (miniaturasEl) {
-        miniaturasEl.hidden = true;
+        return;
     }
+
+    miniaturas.innerHTML = "";
+
+    fotos.forEach((url, indice) => {
+        const botao =
+            document.createElement("button");
+
+        const imagem =
+            document.createElement("img");
+
+        botao.type = "button";
+
+        botao.className =
+            indice === 0
+                ? "ativa"
+                : "";
+
+        botao.setAttribute(
+            "aria-label",
+            `Ver foto ${indice + 1}`
+        );
+
+        imagem.src = url;
+        imagem.alt = "";
+
+        imagem.onerror = () => {
+            botao.remove();
+        };
+
+        botao.appendChild(imagem);
+
+        botao.addEventListener(
+            "click",
+            () => {
+                fotoPrincipal.src = url;
+
+                miniaturas
+                    .querySelectorAll("button")
+                    .forEach((item) => {
+                        item.classList.remove(
+                            "ativa"
+                        );
+                    });
+
+                botao.classList.add("ativa");
+            }
+        );
+
+        miniaturas.appendChild(botao);
+    });
+
+    miniaturas.hidden = false;
 }
 
-// ==========================================
+// ==========================================================
 // CARD DE CONTATO
-// ==========================================
+// ==========================================================
 function renderizarCardContato(veiculo) {
     const card =
         document.getElementById(
             "contatoCard"
         );
 
-    if (!card) return;
+    if (!card) {
+        return;
+    }
 
     const usuario = lerUsuario();
 
@@ -912,7 +942,7 @@ function renderizarCardContato(veiculo) {
 
         <p>
             Envie uma mensagem diretamente ao anunciante.
-            Deixamos a mensagem pronta para você.
+            A mensagem será enviada para a conversa já existente.
         </p>
 
         <button
@@ -926,16 +956,18 @@ function renderizarCardContato(veiculo) {
     `;
 
     document
-        .getElementById("btnAbrirProposta")
+        .getElementById(
+            "btnAbrirProposta"
+        )
         ?.addEventListener(
             "click",
             abrirFluxoProposta
         );
 }
 
-// ==========================================
+// ==========================================================
 // REGISTRAR VISUALIZAÇÃO
-// ==========================================
+// ==========================================================
 async function registrarVisualizacaoUnica(
     veiculoId
 ) {
@@ -955,7 +987,7 @@ async function registrarVisualizacaoUnica(
                 method: "POST",
 
                 headers: {
-                    "Authorization":
+                    Authorization:
                         `Bearer ${token}`
                 }
             }
@@ -978,9 +1010,9 @@ async function registrarVisualizacaoUnica(
     }
 }
 
-// ==========================================
+// ==========================================================
 // FAVORITOS
-// ==========================================
+// ==========================================================
 function lerFavoritos() {
     try {
         const lista = JSON.parse(
@@ -990,7 +1022,7 @@ function lerFavoritos() {
         );
 
         return Array.isArray(lista)
-            ? lista
+            ? lista.map(Number)
             : [];
     } catch {
         return [];
@@ -1010,7 +1042,9 @@ function configurarBotaoFavorito(
             "iconeFavorito"
         );
 
-    if (!botao || !icone) return;
+    if (!botao || !icone) {
+        return;
+    }
 
     const idNumerico =
         Number(veiculoId);
@@ -1037,27 +1071,24 @@ function configurarBotaoFavorito(
             let favoritos =
                 lerFavoritos();
 
-            let ehFavorito;
-
-            if (
-                favoritos.includes(
-                    idNumerico
-                )
-            ) {
-                favoritos =
-                    favoritos.filter(
-                        (id) =>
-                            id !== idNumerico
-                    );
-
-                ehFavorito = false;
-            } else {
-                favoritos.push(
+            const indice =
+                favoritos.indexOf(
                     idNumerico
                 );
 
+            let ehFavorito;
+
+            if (indice >= 0) {
+                favoritos.splice(indice, 1);
+                ehFavorito = false;
+            } else {
+                favoritos.push(idNumerico);
                 ehFavorito = true;
             }
+
+            favoritos = [
+                ...new Set(favoritos)
+            ];
 
             localStorage.setItem(
                 "favoritos_veiculos",
@@ -1149,9 +1180,108 @@ window.addEventListener(
     }
 );
 
-// ==========================================
-// CONFIGURAÇÃO DOS MODAIS
-// ==========================================
+// ==========================================================
+// CONTROLE DOS MODAIS
+// ==========================================================
+function atualizarBloqueioScroll() {
+    const propostaAberta =
+        !document.getElementById(
+            "modalProposta"
+        )?.hidden;
+
+    const loginAberto =
+        !document.getElementById(
+            "modalLoginNecessario"
+        )?.hidden;
+
+    const imagemAberta =
+        document.getElementById(
+            "modalImagem"
+        )?.classList.contains("ativo");
+
+    document.body.classList.toggle(
+        "modal-aberto",
+        Boolean(
+            propostaAberta ||
+            loginAberto ||
+            imagemAberta
+        )
+    );
+}
+
+function abrirModalLoginNecessario() {
+    const modal =
+        document.getElementById(
+            "modalLoginNecessario"
+        );
+
+    if (modal) {
+        modal.hidden = false;
+    }
+
+    atualizarBloqueioScroll();
+}
+
+function fecharModalLoginNecessario() {
+    const modal =
+        document.getElementById(
+            "modalLoginNecessario"
+        );
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    atualizarBloqueioScroll();
+}
+
+function abrirModalImagem(url) {
+    const modal =
+        document.getElementById(
+            "modalImagem"
+        );
+
+    const imagem =
+        document.getElementById(
+            "imagemAmpliada"
+        );
+
+    if (!modal || !imagem) {
+        return;
+    }
+
+    imagem.src = url;
+    modal.classList.add("ativo");
+
+    atualizarBloqueioScroll();
+}
+
+function fecharModalImagem() {
+    const modal =
+        document.getElementById(
+            "modalImagem"
+        );
+
+    if (modal) {
+        modal.classList.remove("ativo");
+    }
+
+    atualizarBloqueioScroll();
+}
+
+function fecharModalProposta() {
+    const modal =
+        document.getElementById(
+            "modalProposta"
+        );
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    atualizarBloqueioScroll();
+}
+
 function configurarModais() {
     document
         .getElementById("fotoWrapper")
@@ -1172,7 +1302,9 @@ function configurarModais() {
         );
 
     document
-        .getElementById("modalImagem")
+        .getElementById(
+            "modalImagem"
+        )
         ?.addEventListener(
             "click",
             fecharModalImagem
@@ -1278,7 +1410,9 @@ function configurarModais() {
                         "button[data-frase]"
                     );
 
-                if (!botao) return;
+                if (!botao) {
+                    return;
+                }
 
                 const campo =
                     document.getElementById(
@@ -1342,91 +1476,9 @@ function configurarModais() {
     );
 }
 
-// ==========================================
-// MODAL DE LOGIN
-// ==========================================
-function abrirModalLoginNecessario() {
-    const modal =
-        document.getElementById(
-            "modalLoginNecessario"
-        );
-
-    if (modal) {
-        modal.hidden = false;
-    }
-
-    atualizarBloqueioScroll();
-}
-
-function fecharModalLoginNecessario() {
-    const modal =
-        document.getElementById(
-            "modalLoginNecessario"
-        );
-
-    if (modal) {
-        modal.hidden = true;
-    }
-
-    atualizarBloqueioScroll();
-}
-
-// ==========================================
-// MODAL DE IMAGEM
-// ==========================================
-function abrirModalImagem(url) {
-    const modal =
-        document.getElementById(
-            "modalImagem"
-        );
-
-    const imagem =
-        document.getElementById(
-            "imagemAmpliada"
-        );
-
-    if (!modal || !imagem) return;
-
-    imagem.src = url;
-    modal.classList.add("ativo");
-
-    atualizarBloqueioScroll();
-}
-
-function fecharModalImagem() {
-    const modal =
-        document.getElementById(
-            "modalImagem"
-        );
-
-    if (modal) {
-        modal.classList.remove(
-            "ativo"
-        );
-    }
-
-    atualizarBloqueioScroll();
-}
-
-// ==========================================
-// MODAL DE PROPOSTA
-// ==========================================
-function fecharModalProposta() {
-    const modal =
-        document.getElementById(
-            "modalProposta"
-        );
-
-    if (modal) {
-        modal.hidden = true;
-    }
-
-    atualizarBloqueioScroll();
-}
-
-// ==========================================
-// MENSAGEM AUTOMÁTICA
-// ==========================================
+// ==========================================================
+// PROPOSTA E MENSAGEM AUTOMÁTICA
+// ==========================================================
 function montarMensagemAutomatica() {
     const usuario = lerUsuario();
 
@@ -1489,16 +1541,13 @@ function montarMensagemAutomatica() {
     const mensagem =
         `Olá! Tenho interesse no ${identificacaoVeiculo}` +
         `${informacaoAno}, anunciado por ${preco}. ` +
-        `O veículo ainda está disponível? ` +
-        `Gostaria de conversar sobre a negociação.` +
-        `${assinatura}`;
+        "O veículo ainda está disponível? " +
+        "Gostaria de conversar sobre a negociação." +
+        assinatura;
 
     return mensagem.slice(0, 255);
 }
 
-// ==========================================
-// ABRIR PROPOSTA
-// ==========================================
 function abrirFluxoProposta() {
     if (!usuarioEstaLogado()) {
         abrirModalLoginNecessario();
@@ -1529,7 +1578,9 @@ function abrirFluxoProposta() {
             "modalProposta"
         );
 
-    if (!modal) return;
+    if (!modal) {
+        return;
+    }
 
     const foto =
         document.getElementById(
@@ -1583,18 +1634,235 @@ function abrirFluxoProposta() {
         ?.focus();
 }
 
-// Compatibilidade com o nome antigo.
 function enviarPropostaModal() {
     abrirFluxoProposta();
 }
 
-// ==========================================
-// ENVIAR MENSAGEM AO ANUNCIANTE
-// ==========================================
-let enviandoProposta = false;
+// ==========================================================
+// CONVERSA ÚNICA ENTRE AS DUAS CONTAS
+// ==========================================================
+async function buscarConversaExistente(
+    destinatarioId,
+    token
+) {
+    const resposta = await fetch(
+        "/api/conversas",
+        {
+            method: "GET",
 
+            headers: {
+                Authorization:
+                    `Bearer ${token}`
+            }
+        }
+    );
+
+    const dados =
+        await lerRespostaJson(resposta);
+
+    if (
+        resposta.status === 401 ||
+        resposta.status === 403
+    ) {
+        throw criarErroSessao();
+    }
+
+    if (!resposta.ok) {
+        throw new Error(
+            dados.erro ||
+            dados.mensagem ||
+            "Não foi possível consultar as conversas."
+        );
+    }
+
+    const conversas =
+        Array.isArray(dados.conversas)
+            ? dados.conversas
+            : [];
+
+    const conversasComUsuario =
+        conversas.filter(
+            (conversa) =>
+                Number(
+                    conversa.outro_usuario_id
+                ) === Number(
+                    destinatarioId
+                )
+        );
+
+    if (
+        conversasComUsuario.length === 0
+    ) {
+        return null;
+    }
+
+    /*
+     * Prioriza a conversa direta.
+     * Se ela não existir, reutiliza qualquer conversa
+     * já existente com a mesma conta.
+     */
+    const conversaDireta =
+        conversasComUsuario.find(
+            (conversa) =>
+                !Number(
+                    conversa.veiculo_id
+                )
+        );
+
+    const conversaEscolhida =
+        conversaDireta ||
+        conversasComUsuario[0];
+
+    const conversaId =
+        Number(conversaEscolhida.id);
+
+    if (
+        !Number.isInteger(conversaId) ||
+        conversaId <= 0
+    ) {
+        return null;
+    }
+
+    return conversaId;
+}
+
+async function criarConversaDireta(
+    destinatarioId,
+    token
+) {
+    const resposta = await fetch(
+        "/api/conversas/iniciar-direta",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+
+                Authorization:
+                    `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+                destinatario_id:
+                    destinatarioId
+            })
+        }
+    );
+
+    const dados =
+        await lerRespostaJson(resposta);
+
+    if (
+        resposta.status === 401 ||
+        resposta.status === 403
+    ) {
+        throw criarErroSessao();
+    }
+
+    if (
+        !resposta.ok ||
+        !dados.sucesso
+    ) {
+        throw new Error(
+            dados.erro ||
+            dados.mensagem ||
+            "Não foi possível iniciar a conversa."
+        );
+    }
+
+    const conversaId =
+        Number(dados.conversa_id);
+
+    if (
+        !Number.isInteger(conversaId) ||
+        conversaId <= 0
+    ) {
+        throw new Error(
+            "O servidor não retornou uma conversa válida."
+        );
+    }
+
+    return conversaId;
+}
+
+async function obterConversaUnica(
+    destinatarioId,
+    token
+) {
+    const conversaExistenteId =
+        await buscarConversaExistente(
+            destinatarioId,
+            token
+        );
+
+    if (conversaExistenteId) {
+        return conversaExistenteId;
+    }
+
+    return criarConversaDireta(
+        destinatarioId,
+        token
+    );
+}
+
+async function enviarMensagemNaConversa(
+    conversaId,
+    texto,
+    token
+) {
+    const resposta = await fetch(
+        `/api/conversas/${encodeURIComponent(
+            conversaId
+        )}/mensagem`,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json",
+
+                Authorization:
+                    `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+                texto
+            })
+        }
+    );
+
+    const dados =
+        await lerRespostaJson(resposta);
+
+    if (
+        resposta.status === 401 ||
+        resposta.status === 403
+    ) {
+        throw criarErroSessao();
+    }
+
+    if (
+        !resposta.ok ||
+        !dados.sucesso
+    ) {
+        throw new Error(
+            dados.erro ||
+            dados.mensagem ||
+            "Não foi possível enviar a mensagem."
+        );
+    }
+
+    return dados;
+}
+
+// ==========================================================
+// ENVIAR MENSAGEM AO ANUNCIANTE
+// ==========================================================
 async function enviarProposta() {
-    if (enviandoProposta) return;
+    if (enviandoProposta) {
+        return;
+    }
 
     const usuario = lerUsuario();
     const token = obterToken();
@@ -1631,15 +1899,30 @@ async function enviarProposta() {
         return;
     }
 
-    const veiculoId =
-        Number(veiculoIdAtual);
+    const anuncianteId =
+        Number(
+            veiculoAtual?.usuario_id ||
+            veiculoAtual?.proprietario_id ||
+            0
+        );
 
     if (
-        !Number.isInteger(veiculoId) ||
-        veiculoId <= 0
+        !Number.isInteger(anuncianteId) ||
+        anuncianteId <= 0
     ) {
         mostrarToast(
-            "Não foi possível identificar o veículo."
+            "Não foi possível identificar o anunciante."
+        );
+
+        return;
+    }
+
+    if (
+        Number(usuario.id) ===
+        anuncianteId
+    ) {
+        mostrarToast(
+            "Você não pode enviar mensagem para o próprio anúncio."
         );
 
         return;
@@ -1666,76 +1949,20 @@ async function enviarProposta() {
 
     try {
         /*
-         * Uma única requisição:
-         * o servidor localiza o anunciante pelo veículo
-         * e grava a mensagem na conversa.
+         * Procura uma conversa com a conta.
+         * Não usa o veículo como chave da conversa.
          */
-        const resposta = await fetch(
-            "/api/conversas/iniciar",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    "Authorization":
-                        `Bearer ${token}`
-                },
-
-                body: JSON.stringify({
-                    veiculo_id: veiculoId,
-                    texto
-                })
-            }
-        );
-
-        const dados =
-            await lerRespostaJson(
-                resposta
-            );
-
-        if (
-            resposta.status === 401 ||
-            resposta.status === 403
-        ) {
-            fecharModalProposta();
-
-            mostrarToast(
-                "Sua sessão expirou. Entre novamente."
-            );
-
-            setTimeout(() => {
-                window.location.href =
-                    "/pages/login.html";
-            }, 1200);
-
-            return;
-        }
-
-        if (
-            !resposta.ok ||
-            !dados.sucesso ||
-            !dados.conversa_id
-        ) {
-            throw new Error(
-                dados.erro ||
-                dados.mensagem ||
-                "Não foi possível enviar a mensagem ao anunciante."
-            );
-        }
-
         const conversaId =
-            Number(dados.conversa_id);
-
-        if (
-            !Number.isInteger(conversaId) ||
-            conversaId <= 0
-        ) {
-            throw new Error(
-                "O servidor não retornou uma conversa válida."
+            await obterConversaUnica(
+                anuncianteId,
+                token
             );
-        }
+
+        await enviarMensagemNaConversa(
+            conversaId,
+            texto,
+            token
+        );
 
         fecharModalProposta();
 
@@ -1755,6 +1982,21 @@ async function enviarProposta() {
             erro
         );
 
+        if (erro.sessaoExpirada) {
+            fecharModalProposta();
+
+            mostrarToast(
+                "Sua sessão expirou. Entre novamente."
+            );
+
+            setTimeout(() => {
+                window.location.href =
+                    "/pages/login.html";
+            }, 1200);
+
+            return;
+        }
+
         mostrarToast(
             erro.message ||
             "Erro ao enviar a mensagem. Tente novamente."
@@ -1764,6 +2006,7 @@ async function enviarProposta() {
 
         if (botao) {
             botao.disabled = false;
+
             botao.innerHTML =
                 conteudoOriginal;
         }

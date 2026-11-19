@@ -2,26 +2,60 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     const LOGIN_URL = "/pages/login.html";
-    const PAINEL_CLIENTE = "/pages/painel-cliente.html";
-    const TAMANHO_MAX_FOTO = 5 * 1024 * 1024;
-    const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
-    const $ = (id) => document.getElementById(id);
+    const PAINEL_CLIENTE_URL =
+        "/pages/painel-cliente.html";
 
-    // ==========================================
-    // 1. SESSÃO
-    // ==========================================
+    const MAX_FOTO_BYTES =
+        5 * 1024 * 1024;
+
+    const TIPOS_FOTO = new Set([
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ]);
+
+    const $ = (id) =>
+        document.getElementById(id);
+
+    let sessaoExpirando = false;
+    let modalAtivo = null;
+    let resolverConfirmacao = null;
+    let focoAnterior = null;
+    let cropper = null;
+    let enviandoFoto = false;
+    let fotoAtual = "";
+
+    // ======================================================
+    // SESSÃO
+    // ======================================================
+
     function obterSessao() {
-        for (const storage of [localStorage, sessionStorage]) {
-            for (const chave of ["usuario", "usuario_logado"]) {
-                const bruto = storage.getItem(chave);
+        for (
+            const storage of
+            [localStorage, sessionStorage]
+        ) {
+            for (
+                const chave of
+                ["usuario", "usuario_logado"]
+            ) {
+                const valor =
+                    storage.getItem(chave);
 
-                if (!bruto) continue;
+                if (!valor) continue;
 
                 try {
-                    const dados = JSON.parse(bruto);
+                    const dados =
+                        JSON.parse(valor);
 
-                    if (dados && typeof dados === "object") {
-                        return { dados, storage, chave };
+                    if (
+                        dados &&
+                        typeof dados === "object"
+                    ) {
+                        return {
+                            dados,
+                            storage,
+                            chave
+                        };
                     }
                 } catch {
                     storage.removeItem(chave);
@@ -35,39 +69,76 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessao = obterSessao();
 
     if (!sessao) {
-        window.location.replace(LOGIN_URL);
+        window.location.replace(
+            LOGIN_URL
+        );
+
         return;
     }
 
     const usuario = sessao.dados;
-    const tipo = String(usuario.tipo || "").toLowerCase().trim();
 
-    if (tipo !== "empresa" && tipo !== "admin") {
-        window.location.replace(PAINEL_CLIENTE);
+    const usuarioId = Number(
+        usuario.id ??
+        usuario._id ??
+        usuario.usuario_id
+    );
+
+    const tipoUsuario = String(
+        usuario.tipo || ""
+    )
+        .trim()
+        .toLowerCase();
+
+    if (
+        !Number.isInteger(usuarioId) ||
+        usuarioId <= 0
+    ) {
+        window.location.replace(
+            LOGIN_URL
+        );
+
         return;
     }
 
-    const usuarioId = usuario.id ?? usuario._id ?? null;
+    if (
+        ![
+            "empresa",
+            "admin",
+            "super_admin"
+        ].includes(tipoUsuario)
+    ) {
+        window.location.replace(
+            PAINEL_CLIENTE_URL
+        );
 
-    if (usuarioId === null) {
-        window.location.replace(LOGIN_URL);
         return;
     }
 
-    function getToken() {
-        return localStorage.getItem("token")
-            || sessionStorage.getItem("token");
+    function obterToken() {
+        return (
+            localStorage.getItem("token") ||
+            sessionStorage.getItem("token") ||
+            ""
+        );
     }
 
-    function authHeaders() {
-        const token = getToken();
-
-        return {
-            "Content-Type": "application/json",
-            ...(token && {
-                Authorization: `Bearer ${token}`
-            })
-        };
+    function limparSessao() {
+        for (
+            const storage of
+            [localStorage, sessionStorage]
+        ) {
+            for (
+                const chave of
+                [
+                    "usuario",
+                    "usuario_logado",
+                    "token"
+                ]
+            ) {
+                storage.removeItem(chave);
+            }
+        }
     }
 
     function salvarSessao() {
@@ -76,868 +147,1457 @@ document.addEventListener("DOMContentLoaded", () => {
                 sessao.chave,
                 JSON.stringify(usuario)
             );
-        } catch {
-            // Armazenamento cheio ou bloqueado.
+        } catch (erro) {
+            console.warn(
+                "Não foi possível atualizar a sessão local:",
+                erro
+            );
         }
     }
 
-    // ==========================================
-    // 2. UTILITÁRIOS
-    // ==========================================
-    function toast(mensagem, tipoToast = "ok") {
+    // ======================================================
+    // AVISOS
+    // ======================================================
+
+    function toast(
+        mensagem,
+        tipo = "ok"
+    ) {
         const area = $("toastArea");
 
-        if (!area) {
-            console.log(mensagem);
-            return;
-        }
+        if (!area) return;
 
-        const elemento = document.createElement("div");
+        const elemento =
+            document.createElement("div");
 
-        elemento.className = `toast toast--${tipoToast}`;
+        const icone =
+            document.createElement("i");
 
-        elemento.innerHTML = `
-            <i class="fa-solid ${
-                tipoToast === "erro"
+        const texto =
+            document.createElement("span");
+
+        elemento.className =
+            `toast toast--${tipo}`;
+
+        elemento.setAttribute(
+            "role",
+            tipo === "erro"
+                ? "alert"
+                : "status"
+        );
+
+        icone.className =
+            `fa-solid ${
+                tipo === "erro"
                     ? "fa-circle-exclamation"
                     : "fa-circle-check"
-            }"></i>
-            <span></span>
-        `;
+            }`;
 
-        elemento.querySelector("span").textContent = mensagem;
+        texto.textContent =
+            String(mensagem || "");
+
+        elemento.append(
+            icone,
+            texto
+        );
+
         area.appendChild(elemento);
 
         requestAnimationFrame(() => {
-            elemento.classList.add("visivel");
+            elemento.classList.add(
+                "visivel"
+            );
         });
 
-        setTimeout(() => {
-            elemento.classList.remove("visivel");
+        window.setTimeout(() => {
+            elemento.classList.remove(
+                "visivel"
+            );
 
-            setTimeout(() => {
-                elemento.remove();
-            }, 300);
+            window.setTimeout(
+                () => elemento.remove(),
+                220
+            );
         }, 3800);
     }
 
-    function limparDadosDaSessao() {
-        [localStorage, sessionStorage].forEach((storage) => {
-            ["usuario", "usuario_logado", "token"].forEach((chave) => {
-                storage.removeItem(chave);
-            });
-        });
-    }
+    function encerrarSessaoExpirada() {
+        if (sessaoExpirando) return;
 
-    function sessaoExpirada() {
+        sessaoExpirando = true;
+
         toast(
-            "Sessão expirada. Faça login novamente.",
+            "Sua sessão expirou. Entre novamente.",
             "erro"
         );
 
-        setTimeout(() => {
-            limparDadosDaSessao();
-            window.location.replace(LOGIN_URL);
-        }, 1600);
+        window.setTimeout(() => {
+            limparSessao();
+
+            window.location.replace(
+                LOGIN_URL
+            );
+        }, 1100);
     }
 
-    if (!getToken()) {
-        sessaoExpirada();
-        return;
-    }
+    // ======================================================
+    // REQUISIÇÕES
+    // ======================================================
 
     async function requisitar(
         url,
         opcoes = {},
-        tempoMs = 15000
+        tempoLimite = 20000
     ) {
-        const controle = new AbortController();
+        const token = obterToken();
 
-        const relogio = setTimeout(() => {
-            controle.abort();
-        }, tempoMs);
+        const controle =
+            new AbortController();
+
+        const temporizador =
+            window.setTimeout(
+                () => controle.abort(),
+                tempoLimite
+            );
+
+        const headers =
+            new Headers(
+                opcoes.headers || {}
+            );
+
+        if (
+            token &&
+            !headers.has("Authorization")
+        ) {
+            headers.set(
+                "Authorization",
+                `Bearer ${token}`
+            );
+        }
+
+        if (
+            opcoes.body &&
+            !(
+                opcoes.body
+                instanceof FormData
+            ) &&
+            !headers.has("Content-Type")
+        ) {
+            headers.set(
+                "Content-Type",
+                "application/json"
+            );
+        }
 
         try {
-            const resposta = await fetch(url, {
-                ...opcoes,
-                signal: controle.signal
-            });
+            const resposta =
+                await fetch(url, {
+                    ...opcoes,
+                    headers,
+                    signal:
+                        controle.signal,
+                    credentials:
+                        "same-origin"
+                });
 
-            const dados = await resposta
-                .json()
-                .catch(() => ({}));
+            const tipoConteudo =
+                resposta.headers.get(
+                    "content-type"
+                ) || "";
 
-            /*
-             * Somente 401 encerra a sessão.
-             * Um erro 403 será exibido sem desconectar o usuário.
-             */
-            if (resposta.status === 401) {
-                sessaoExpirada();
+            const dados =
+                tipoConteudo.includes(
+                    "application/json"
+                )
+                    ? await resposta
+                        .json()
+                        .catch(() => ({}))
+                    : {
+                        mensagem:
+                            await resposta
+                                .text()
+                                .catch(
+                                    () => ""
+                                )
+                    };
+
+            if (
+                resposta.status === 401
+            ) {
+                encerrarSessaoExpirada();
 
                 throw new Error(
-                    "Sessão expirada. Faça login novamente."
+                    "Sessão expirada."
                 );
             }
 
-            return {
-                resp: resposta,
-                dados
-            };
+            if (
+                !resposta.ok ||
+                dados.sucesso === false
+            ) {
+                throw new Error(
+                    dados.mensagem ||
+                    dados.erro ||
+                    `Não foi possível concluir a solicitação (erro ${resposta.status}).`
+                );
+            }
+
+            return dados;
         } catch (erro) {
-            if (erro.name === "AbortError") {
+            if (
+                erro.name ===
+                "AbortError"
+            ) {
                 throw new Error(
                     "O servidor demorou para responder. Tente novamente."
                 );
             }
 
-            if (erro instanceof TypeError) {
+            if (
+                erro instanceof TypeError
+            ) {
                 throw new Error(
-                    "Erro de conexão. Verifique sua internet e tente novamente."
+                    "Não foi possível conectar ao servidor."
                 );
             }
 
             throw erro;
         } finally {
-            clearTimeout(relogio);
+            window.clearTimeout(
+                temporizador
+            );
         }
     }
 
-    // ==========================================
-    // 3. MODAIS
-    // ==========================================
-    let modaisAbertos = 0;
+    // ======================================================
+    // MODAIS
+    // ======================================================
 
     function abrirModal(elemento) {
-        if (!elemento || !elemento.hidden) return;
+        if (!elemento) return;
+
+        if (
+            modalAtivo &&
+            modalAtivo !== elemento
+        ) {
+            fecharModal(
+                modalAtivo,
+                false
+            );
+        }
+
+        focoAnterior =
+            document.activeElement;
+
+        modalAtivo = elemento;
 
         elemento.hidden = false;
-        modaisAbertos++;
 
-        document.body.classList.add("sem-scroll");
+        elemento.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        document.body.classList.add(
+            "sem-scroll"
+        );
     }
 
-    function fecharModal(elemento) {
-        if (!elemento || elemento.hidden) return;
+    function fecharModal(
+        elemento,
+        restaurarFoco = true
+    ) {
+        if (
+            !elemento ||
+            elemento.hidden
+        ) {
+            return;
+        }
 
         elemento.hidden = true;
 
-        modaisAbertos = Math.max(
-            0,
-            modaisAbertos - 1
+        elemento.setAttribute(
+            "aria-hidden",
+            "true"
         );
 
-        if (!modaisAbertos) {
-            document.body.classList.remove("sem-scroll");
+        if (
+            modalAtivo === elemento
+        ) {
+            modalAtivo = null;
+        }
+
+        if (!modalAtivo) {
+            document.body.classList.remove(
+                "sem-scroll"
+            );
+        }
+
+        if (
+            restaurarFoco &&
+            focoAnterior
+                instanceof HTMLElement
+        ) {
+            focoAnterior.focus();
         }
     }
-
-    const modalConfirma = $("modalConfirma");
-
-    let resolverConfirma = null;
-    let focoAnterior = null;
 
     function confirmar({
         titulo,
         texto,
-        botao = "Confirmar",
-        perigo = true
+        botao = "Confirmar"
     }) {
-        return new Promise((resolve) => {
-            if (resolverConfirma) {
-                resolverConfirma(false);
+        const modal =
+            $("modalConfirma");
+
+        return new Promise(
+            (resolve) => {
+                if (!modal) {
+                    resolve(
+                        window.confirm(
+                            texto
+                        )
+                    );
+
+                    return;
+                }
+
+                if (
+                    resolverConfirmacao
+                ) {
+                    resolverConfirmacao(
+                        false
+                    );
+                }
+
+                resolverConfirmacao =
+                    resolve;
+
+                $("confirmaTitulo")
+                    .textContent =
+                    titulo;
+
+                $("confirmaTexto")
+                    .textContent =
+                    texto;
+
+                $("confirmaOk")
+                    .textContent =
+                    botao;
+
+                abrirModal(modal);
+
+                requestAnimationFrame(
+                    () => {
+                        $("confirmaCancelar")
+                            ?.focus();
+                    }
+                );
             }
-
-            resolverConfirma = resolve;
-            focoAnterior = document.activeElement;
-
-            $("confirmaTitulo").textContent = titulo;
-            $("confirmaTexto").textContent = texto;
-            $("confirmaOk").textContent = botao;
-
-            abrirModal(modalConfirma);
-
-            const elementoParaFocar = perigo
-                ? $("confirmaCancelar")
-                : $("confirmaOk");
-
-            elementoParaFocar?.focus();
-        });
+        );
     }
 
-    function responderConfirma(resposta) {
-        if (!resolverConfirma) return;
-
-        const resolver = resolverConfirma;
-
-        resolverConfirma = null;
-
-        fecharModal(modalConfirma);
-
-        if (focoAnterior?.focus) {
-            focoAnterior.focus();
+    function responderConfirmacao(
+        resposta
+    ) {
+        if (
+            !resolverConfirmacao
+        ) {
+            return;
         }
 
-        resolver(resposta);
+        const resolver =
+            resolverConfirmacao;
+
+        resolverConfirmacao = null;
+
+        fecharModal(
+            $("modalConfirma")
+        );
+
+        resolver(
+            Boolean(resposta)
+        );
     }
 
-    $("confirmaOk")?.addEventListener("click", () => {
-        responderConfirma(true);
-    });
+    $("confirmaOk")
+        ?.addEventListener(
+            "click",
+            () => {
+                responderConfirmacao(
+                    true
+                );
+            }
+        );
 
-    $("confirmaCancelar")?.addEventListener("click", () => {
-        responderConfirma(false);
-    });
+    $("confirmaCancelar")
+        ?.addEventListener(
+            "click",
+            () => {
+                responderConfirmacao(
+                    false
+                );
+            }
+        );
 
-    modalConfirma?.addEventListener("click", (evento) => {
-        if (evento.target === modalConfirma) {
-            responderConfirma(false);
-        }
-    });
+    $("modalConfirma")
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target ===
+                    $("modalConfirma")
+                ) {
+                    responderConfirmacao(
+                        false
+                    );
+                }
+            }
+        );
 
-    // ==========================================
-    // 4. CABEÇALHO DA EMPRESA
-    // ==========================================
-    const empresa = usuario.empresa || {};
+    // ======================================================
+    // DADOS DA EMPRESA
+    // ======================================================
 
-    const nomeEmpresa =
-        empresa.nome_empresa
-        || usuario.nome_empresa
-        || usuario.nome
-        || "Empresa";
+    const empresa =
+        usuario.empresa || {};
+
+    const nomeEmpresa = String(
+        empresa.nome_fantasia ||
+        empresa.nome_empresa ||
+        usuario.nome_empresa ||
+        usuario.nome ||
+        "Empresa"
+    ).trim();
 
     if ($("nomeEmpresa")) {
-        $("nomeEmpresa").textContent = nomeEmpresa;
+        $("nomeEmpresa").textContent =
+            nomeEmpresa;
     }
 
     document.title =
         `${nomeEmpresa} | Painel da Empresa | MotorFlex`;
 
-    // ==========================================
-    // 5. FOTO E AVATAR
-    // ==========================================
-    const imgPerfil = $("imgPerfil");
-    const iniciaisEl = $("avatarIniciais");
-    const btnRemoverFoto = $("btnRemoverFoto");
-    const inputFoto = $("inputFotoPerfil");
-    const avatarWrapper = $("avatarWrapper");
+    const iniciais = (
+        nomeEmpresa
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((parte) =>
+                parte.charAt(0)
+            )
+            .join("")
+            .toUpperCase()
+        || "E"
+    );
 
-    let fotoAtual = null;
-    let enviando = false;
-
-    const partesNome = nomeEmpresa
-        .split(/\s+/)
-        .filter(Boolean);
-
-    if (iniciaisEl) {
-        iniciaisEl.textContent = partesNome.length
-            ? (
-                partesNome[0][0]
-                + (
-                    partesNome[1]
-                        ? partesNome[1][0]
-                        : ""
-                )
-            ).toUpperCase()
-            : "E";
+    if ($("avatarIniciais")) {
+        $("avatarIniciais")
+            .textContent =
+            iniciais;
     }
+
+    // ======================================================
+    // FOTO DA EMPRESA
+    // ======================================================
 
     function resolverUrlFoto(foto) {
-        if (!foto) return "";
+        const valor = String(
+            foto || ""
+        ).trim();
 
-        return /^(https?:\/\/|\/)/.test(foto)
-            ? foto
-            : `/uploads/${foto}`;
+        if (!valor) return "";
+
+        if (
+            /^(https?:|data:|blob:)/i
+                .test(valor) ||
+            valor.startsWith("/")
+        ) {
+            return valor;
+        }
+
+        return `/uploads/${
+            valor.replace(
+                /^uploads\//i,
+                ""
+            )
+        }`;
     }
 
-    function comCacheBuster(url) {
-        return `${url}${
-            url.includes("?") ? "&" : "?"
-        }v=${Date.now()}`;
+    function adicionarCacheBuster(
+        url
+    ) {
+        if (
+            !url ||
+            /^blob:|^data:/i
+                .test(url)
+        ) {
+            return url;
+        }
+
+        return (
+            `${url}${
+                url.includes("?")
+                    ? "&"
+                    : "?"
+            }v=${Date.now()}`
+        );
     }
 
     function mostrarIniciais() {
-        if (imgPerfil) {
-            imgPerfil.onload = null;
-            imgPerfil.onerror = null;
-            imgPerfil.hidden = true;
-            imgPerfil.removeAttribute("src");
+        const imagem =
+            $("imgPerfil");
+
+        if (imagem) {
+            imagem.onload = null;
+            imagem.onerror = null;
+            imagem.hidden = true;
+
+            imagem.removeAttribute(
+                "src"
+            );
         }
 
-        if (iniciaisEl) {
-            iniciaisEl.hidden = false;
+        if ($("avatarIniciais")) {
+            $("avatarIniciais")
+                .hidden = false;
         }
 
-        if (btnRemoverFoto) {
-            btnRemoverFoto.hidden = true;
+        if ($("btnRemoverFoto")) {
+            $("btnRemoverFoto")
+                .hidden = true;
         }
     }
 
-    function mostrarFoto(url, mostrarRemover = true) {
-        if (!imgPerfil || !url) {
+    function mostrarFoto(
+        url,
+        permitirRemocao = true
+    ) {
+        const imagem =
+            $("imgPerfil");
+
+        if (!imagem || !url) {
             mostrarIniciais();
             return;
         }
 
-        imgPerfil.onload = () => {
-            imgPerfil.hidden = false;
+        imagem.onload = () => {
+            imagem.hidden = false;
 
-            if (iniciaisEl) {
-                iniciaisEl.hidden = true;
+            if (
+                $("avatarIniciais")
+            ) {
+                $("avatarIniciais")
+                    .hidden = true;
             }
 
-            if (btnRemoverFoto) {
-                btnRemoverFoto.hidden = !mostrarRemover;
+            if (
+                $("btnRemoverFoto")
+            ) {
+                $("btnRemoverFoto")
+                    .hidden =
+                    !permitirRemocao;
             }
         };
 
-        imgPerfil.onerror = () => {
-            fotoAtual = null;
+        imagem.onerror = () => {
+            fotoAtual = "";
             mostrarIniciais();
         };
 
-        imgPerfil.src = url;
+        imagem.src = url;
     }
 
-    function restaurarFoto() {
-        if (fotoAtual) {
-            mostrarFoto(fotoAtual);
-        } else {
-            mostrarIniciais();
+    function definirEnviandoFoto(
+        estado
+    ) {
+        enviandoFoto =
+            Boolean(estado);
+
+        $("avatarWrapper")
+            ?.classList.toggle(
+                "enviando",
+                enviandoFoto
+            );
+
+        for (
+            const id of [
+                "btnTrocarFoto",
+                "btnRemoverFoto",
+                "btnConfirmarRecorte"
+            ]
+        ) {
+            if ($(id)) {
+                $(id).disabled =
+                    enviandoFoto;
+            }
         }
     }
 
-    function setEnviando(sim) {
-        enviando = sim;
+    const fotoSessao =
+        usuario.foto_perfil ||
+        usuario.fotoUrl ||
+        usuario.foto_url ||
+        empresa.foto_perfil ||
+        "";
 
-        avatarWrapper?.classList.toggle(
-            "enviando",
-            sim
+    fotoAtual =
+        resolverUrlFoto(
+            fotoSessao
         );
 
-        if ($("btnConfirmarRecorte")) {
-            $("btnConfirmarRecorte").disabled = sim;
-        }
-    }
-
-    const fotoSalva =
-        usuario.fotoUrl
-        || usuario.foto_perfil;
-
-    if (fotoSalva) {
-        fotoAtual = resolverUrlFoto(fotoSalva);
+    if (fotoAtual) {
         mostrarFoto(fotoAtual);
     } else {
         mostrarIniciais();
     }
 
-    // ==========================================
-    // 6. MENU E SAÍDA
-    // ==========================================
-    const btnConfig = $("btnConfig");
-    const menuConfig = $("menuConfig");
+    // ======================================================
+    // MENU E SAÍDA
+    // ======================================================
+
+    const btnConfig =
+        $("btnConfig");
+
+    const menuConfig =
+        $("menuConfig");
 
     function fecharMenu() {
-        menuConfig?.classList.remove("mostrar");
+        menuConfig
+            ?.classList.remove(
+                "mostrar"
+            );
 
-        btnConfig?.setAttribute(
-            "aria-expanded",
-            "false"
-        );
+        btnConfig
+            ?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
     }
 
-    btnConfig?.addEventListener("click", (evento) => {
-        evento.stopPropagation();
+    btnConfig
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                evento.stopPropagation();
 
-        const aberto = menuConfig?.classList.toggle(
-            "mostrar"
+                const aberto =
+                    menuConfig
+                        ?.classList
+                        .toggle(
+                            "mostrar"
+                        );
+
+                btnConfig.setAttribute(
+                    "aria-expanded",
+                    String(
+                        Boolean(aberto)
+                    )
+                );
+            }
         );
 
-        btnConfig.setAttribute(
-            "aria-expanded",
-            String(Boolean(aberto))
-        );
-    });
-
-    document.addEventListener("click", (evento) => {
-        if (
-            menuConfig
-            && btnConfig
-            && !menuConfig.contains(evento.target)
-            && !btnConfig.contains(evento.target)
-        ) {
-            fecharMenu();
-        }
-    });
-
-    function sair() {
-        limparDadosDaSessao();
-        window.location.replace(LOGIN_URL);
-    }
-
-    $("gatilhoSair")?.addEventListener(
+    document.addEventListener(
         "click",
-        async (evento) => {
-            evento.preventDefault();
-
-            fecharMenu();
-
-            const confirmado = await confirmar({
-                titulo: "Confirmar saída",
-                texto: "Tem certeza que deseja encerrar sua sessão na MotorFlex?",
-                botao: "Sim, sair"
-            });
-
-            if (confirmado) {
-                sair();
+        (evento) => {
+            if (
+                menuConfig &&
+                btnConfig &&
+                !menuConfig.contains(
+                    evento.target
+                ) &&
+                !btnConfig.contains(
+                    evento.target
+                )
+            ) {
+                fecharMenu();
             }
         }
     );
 
-    // ==========================================
-    // 7. UPLOAD COM RECORTE
-    // ==========================================
-    const modalRecorte = $("modalRecorte");
-    const imagemParaCortar = $("imagemParaCortar");
+    $("gatilhoSair")
+        ?.addEventListener(
+            "click",
+            async (evento) => {
+                evento.preventDefault();
 
-    let cropper = null;
+                fecharMenu();
 
-    function fecharRecorte() {
-        fecharModal(modalRecorte);
+                const confirmado =
+                    await confirmar({
+                        titulo:
+                            "Encerrar sessão?",
 
+                        texto:
+                            "Você precisará entrar novamente para acessar o painel.",
+
+                        botao:
+                            "Sim, sair"
+                    });
+
+                if (confirmado) {
+                    limparSessao();
+
+                    window.location
+                        .replace(
+                            LOGIN_URL
+                        );
+                }
+            }
+        );
+
+    // ======================================================
+    // RECORTE DA FOTO
+    // ======================================================
+
+    const inputFoto =
+        $("inputFotoPerfil");
+
+    const imagemParaCortar =
+        $("imagemParaCortar");
+
+    function destruirCropper() {
         if (cropper) {
             cropper.destroy();
             cropper = null;
         }
+    }
 
-        imagemParaCortar?.removeAttribute("src");
+    function fecharRecorte() {
+        destruirCropper();
+
+        fecharModal(
+            $("modalRecorte")
+        );
+
+        if (
+            imagemParaCortar
+        ) {
+            imagemParaCortar.onload =
+                null;
+
+            imagemParaCortar
+                .removeAttribute(
+                    "src"
+                );
+        }
 
         if (inputFoto) {
             inputFoto.value = "";
         }
     }
 
-    $("btnTrocarFoto")?.addEventListener("click", () => {
-        if (!enviando) {
-            inputFoto?.click();
-        }
-    });
+    $("btnTrocarFoto")
+        ?.addEventListener(
+            "click",
+            () => {
+                if (
+                    !enviandoFoto
+                ) {
+                    inputFoto?.click();
+                }
+            }
+        );
 
-    inputFoto?.addEventListener("change", (evento) => {
-        const arquivo = evento.target.files?.[0];
+    inputFoto
+        ?.addEventListener(
+            "change",
+            (evento) => {
+                const arquivo =
+                    evento.target
+                        .files?.[0];
 
-        if (!arquivo) return;
+                if (!arquivo) return;
 
-        if (typeof Cropper === "undefined") {
-            toast(
-                "O editor de imagem não carregou. Verifique sua conexão e recarregue a página.",
-                "erro"
+                if (
+                    typeof window.Cropper
+                    !== "function"
+                ) {
+                    toast(
+                        "O editor de imagem não carregou. Recarregue a página.",
+                        "erro"
+                    );
+
+                    inputFoto.value =
+                        "";
+
+                    return;
+                }
+
+                if (
+                    !TIPOS_FOTO.has(
+                        arquivo.type
+                    )
+                ) {
+                    toast(
+                        "Selecione uma imagem JPEG, PNG ou WEBP.",
+                        "erro"
+                    );
+
+                    inputFoto.value =
+                        "";
+
+                    return;
+                }
+
+                if (
+                    arquivo.size >
+                    MAX_FOTO_BYTES
+                ) {
+                    toast(
+                        "A imagem deve ter no máximo 5 MB.",
+                        "erro"
+                    );
+
+                    inputFoto.value =
+                        "";
+
+                    return;
+                }
+
+                const leitor =
+                    new FileReader();
+
+                leitor.onload = () => {
+                    if (
+                        !imagemParaCortar
+                    ) {
+                        return;
+                    }
+
+                    destruirCropper();
+
+                    imagemParaCortar
+                        .onload = () => {
+                            cropper =
+                                new window
+                                    .Cropper(
+                                        imagemParaCortar,
+                                        {
+                                            aspectRatio: 1,
+                                            viewMode: 1,
+                                            dragMode: "move",
+                                            autoCropArea: 0.88,
+                                            responsive: true,
+                                            guides: false,
+                                            background: false,
+                                            toggleDragModeOnDblclick: false
+                                        }
+                                    );
+                        };
+
+                    imagemParaCortar.src =
+                        String(
+                            leitor.result ||
+                            ""
+                        );
+
+                    abrirModal(
+                        $("modalRecorte")
+                    );
+                };
+
+                leitor.onerror = () => {
+                    toast(
+                        "Não foi possível abrir a imagem selecionada.",
+                        "erro"
+                    );
+
+                    inputFoto.value =
+                        "";
+                };
+
+                leitor.readAsDataURL(
+                    arquivo
+                );
+            }
+        );
+
+    $("btnCancelarRecorte")
+        ?.addEventListener(
+            "click",
+            fecharRecorte
+        );
+
+    $("modalRecorte")
+        ?.addEventListener(
+            "click",
+            (evento) => {
+                if (
+                    evento.target ===
+                        $("modalRecorte") &&
+                    !enviandoFoto
+                ) {
+                    fecharRecorte();
+                }
+            }
+        );
+
+    // ======================================================
+    // ENVIAR FOTO
+    // ======================================================
+
+    $("btnConfirmarRecorte")
+        ?.addEventListener(
+            "click",
+            () => {
+                if (
+                    !cropper ||
+                    enviandoFoto
+                ) {
+                    return;
+                }
+
+                const canvas =
+                    cropper
+                        .getCroppedCanvas({
+                            width: 500,
+                            height: 500,
+                            imageSmoothingEnabled: true,
+                            imageSmoothingQuality: "high"
+                        });
+
+                if (!canvas) {
+                    toast(
+                        "Não foi possível processar o recorte.",
+                        "erro"
+                    );
+
+                    return;
+                }
+
+                definirEnviandoFoto(
+                    true
+                );
+
+                canvas.toBlob(
+                    async (blob) => {
+                        if (!blob) {
+                            definirEnviandoFoto(
+                                false
+                            );
+
+                            toast(
+                                "Não foi possível gerar a nova foto.",
+                                "erro"
+                            );
+
+                            return;
+                        }
+
+                        const arquivo =
+                            new File(
+                                [blob],
+                                "foto-empresa.webp",
+                                {
+                                    type:
+                                        "image/webp"
+                                }
+                            );
+
+                        const preview =
+                            URL.createObjectURL(
+                                arquivo
+                            );
+
+                        const formData =
+                            new FormData();
+
+                        formData.append(
+                            "fotoPerfil",
+                            arquivo
+                        );
+
+                        fecharRecorte();
+
+                        mostrarFoto(
+                            preview,
+                            false
+                        );
+
+                        try {
+                            const dados =
+                                await requisitar(
+                                    "/api/usuarios/upload-foto",
+                                    {
+                                        method:
+                                            "POST",
+
+                                        body:
+                                            formData
+                                    },
+                                    45000
+                                );
+
+                            const novaFoto =
+                                dados.fotoUrl ||
+                                dados.foto_perfil ||
+                                dados.foto_url ||
+                                dados.url ||
+                                dados.usuario
+                                    ?.foto_perfil ||
+                                dados.usuario
+                                    ?.foto_url;
+
+                            if (!novaFoto) {
+                                throw new Error(
+                                    "A imagem foi enviada, mas o servidor não retornou seu endereço."
+                                );
+                            }
+
+                            fotoAtual =
+                                resolverUrlFoto(
+                                    novaFoto
+                                );
+
+                            usuario.foto_perfil =
+                                novaFoto;
+
+                            usuario.fotoUrl =
+                                novaFoto;
+
+                            usuario.foto_url =
+                                novaFoto;
+
+                            salvarSessao();
+
+                            mostrarFoto(
+                                adicionarCacheBuster(
+                                    fotoAtual
+                                )
+                            );
+
+                            toast(
+                                "Foto da empresa atualizada."
+                            );
+                        } catch (erro) {
+                            console.error(
+                                "Erro ao atualizar foto:",
+                                erro
+                            );
+
+                            toast(
+                                erro.message ||
+                                "Não foi possível atualizar a foto.",
+                                "erro"
+                            );
+
+                            if (fotoAtual) {
+                                mostrarFoto(
+                                    fotoAtual
+                                );
+                            } else {
+                                mostrarIniciais();
+                            }
+                        } finally {
+                            URL.revokeObjectURL(
+                                preview
+                            );
+
+                            definirEnviandoFoto(
+                                false
+                            );
+                        }
+                    },
+                    "image/webp",
+                    0.9
+                );
+            }
+        );
+
+    // ======================================================
+    // REMOVER FOTO
+    // ======================================================
+
+    $("btnRemoverFoto")
+        ?.addEventListener(
+            "click",
+            async () => {
+                if (
+                    enviandoFoto
+                ) {
+                    return;
+                }
+
+                const confirmado =
+                    await confirmar({
+                        titulo:
+                            "Remover foto?",
+
+                        texto:
+                            "A imagem atual será removida e as iniciais da empresa voltarão a aparecer.",
+
+                        botao:
+                            "Remover foto"
+                    });
+
+                if (!confirmado) {
+                    return;
+                }
+
+                definirEnviandoFoto(
+                    true
+                );
+
+                try {
+                    await requisitar(
+                        "/api/usuarios/remover-foto",
+                        {
+                            method:
+                                "DELETE"
+                        }
+                    );
+
+                    fotoAtual = "";
+
+                    usuario.foto_perfil =
+                        null;
+
+                    usuario.fotoUrl =
+                        null;
+
+                    usuario.foto_url =
+                        null;
+
+                    salvarSessao();
+                    mostrarIniciais();
+
+                    toast(
+                        "Foto removida com sucesso."
+                    );
+                } catch (erro) {
+                    console.error(
+                        "Erro ao remover foto:",
+                        erro
+                    );
+
+                    toast(
+                        erro.message ||
+                        "Não foi possível remover a foto.",
+                        "erro"
+                    );
+                } finally {
+                    definirEnviandoFoto(
+                        false
+                    );
+                }
+            }
+        );
+
+    // ======================================================
+    // INDICADORES
+    // ======================================================
+
+    function formatarNumero(
+        valor
+    ) {
+        return new Intl
+            .NumberFormat(
+                "pt-BR",
+                {
+                    maximumFractionDigits: 0
+                }
+            )
+            .format(
+                Number(valor) || 0
             );
+    }
 
-            inputFoto.value = "";
-            return;
+    function extrairLista(
+        dados,
+        chaves
+    ) {
+        if (
+            Array.isArray(dados)
+        ) {
+            return dados;
         }
 
-        if (!TIPOS_FOTO.includes(arquivo.type)) {
-            toast(
-                "Envie uma imagem JPEG, PNG ou WEBP.",
-                "erro"
-            );
-
-            inputFoto.value = "";
-            return;
+        for (
+            const chave of chaves
+        ) {
+            if (
+                Array.isArray(
+                    dados?.[chave]
+                )
+            ) {
+                return dados[chave];
+            }
         }
 
-        if (arquivo.size > TAMANHO_MAX_FOTO) {
-            toast(
-                "A foto deve ter no máximo 5 MB.",
-                "erro"
-            );
+        return [];
+    }
 
-            inputFoto.value = "";
-            return;
-        }
+    function veiculoPertenceAoUsuario(
+        veiculo
+    ) {
+        const proprietario =
+            veiculo.usuario_id ??
+            veiculo.usuarioId ??
+            veiculo.empresa_usuario_id ??
+            veiculo.vendedor_id ??
+            veiculo.anunciante_id;
 
-        const leitor = new FileReader();
+        return (
+            proprietario == null ||
+            String(proprietario) ===
+                String(usuarioId)
+        );
+    }
 
-        leitor.onload = (eventoLeitura) => {
-            if (!imagemParaCortar) return;
+    async function carregarResumo() {
+        const elementoVeiculos =
+            $("totalVeiculos");
 
-            imagemParaCortar.src =
-                eventoLeitura.target.result;
+        const elementoConversas =
+            $("totalConversas");
 
-            abrirModal(modalRecorte);
+        const elementoVisualizacoes =
+            $("totalVisualizacoes");
 
-            if (cropper) {
-                cropper.destroy();
+        const [
+            resultadoVeiculos,
+            resultadoConversas
+        ] = await Promise.allSettled([
+            requisitar(
+                "/api/veiculos",
+                {
+                    method: "GET"
+                }
+            ),
+
+            requisitar(
+                "/api/conversas",
+                {
+                    method: "GET"
+                }
+            )
+        ]);
+
+        if (
+            resultadoVeiculos.status ===
+            "fulfilled"
+        ) {
+            const veiculos =
+                extrairLista(
+                    resultadoVeiculos
+                        .value,
+                    [
+                        "veiculos",
+                        "dados",
+                        "resultados"
+                    ]
+                )
+                    .filter(
+                        veiculoPertenceAoUsuario
+                    );
+
+            const visualizacoes =
+                veiculos.reduce(
+                    (
+                        total,
+                        veiculo
+                    ) => {
+                        const quantidade =
+                            veiculo.total_visualizacoes ??
+                            veiculo.visualizacoes ??
+                            veiculo.views ??
+                            0;
+
+                        return (
+                            total +
+                            (
+                                Number(
+                                    quantidade
+                                ) || 0
+                            )
+                        );
+                    },
+                    0
+                );
+
+            if (
+                elementoVeiculos
+            ) {
+                elementoVeiculos
+                    .textContent =
+                    formatarNumero(
+                        veiculos.length
+                    );
             }
 
-            cropper = new Cropper(
-                imagemParaCortar,
-                {
-                    aspectRatio: 1,
-                    viewMode: 1,
-                    dragMode: "move",
-                    autoCropArea: 0.8,
-                    guides: false,
-                    responsive: true,
-                    toggleDragModeOnDblclick: false
-                }
+            if (
+                elementoVisualizacoes
+            ) {
+                elementoVisualizacoes
+                    .textContent =
+                    formatarNumero(
+                        visualizacoes
+                    );
+            }
+        } else {
+            console.error(
+                "Erro ao carregar veículos:",
+                resultadoVeiculos.reason
             );
-        };
 
-        leitor.onerror = () => {
+            if (
+                elementoVeiculos
+            ) {
+                elementoVeiculos
+                    .textContent =
+                    "–";
+            }
+
+            if (
+                elementoVisualizacoes
+            ) {
+                elementoVisualizacoes
+                    .textContent =
+                    "–";
+            }
+        }
+
+        if (
+            resultadoConversas.status ===
+            "fulfilled"
+        ) {
+            const conversas =
+                extrairLista(
+                    resultadoConversas
+                        .value,
+                    [
+                        "conversas",
+                        "dados",
+                        "resultados"
+                    ]
+                );
+
+            const usuarios =
+                new Set();
+
+            for (
+                const conversa
+                of conversas
+            ) {
+                const outroUsuarioId =
+                    Number(
+                        conversa
+                            .outro_usuario_id
+                    );
+
+                if (
+                    Number.isInteger(
+                        outroUsuarioId
+                    ) &&
+                    outroUsuarioId > 0
+                ) {
+                    usuarios.add(
+                        outroUsuarioId
+                    );
+                }
+            }
+
+            const totalConversas =
+                usuarios.size ||
+                conversas.length;
+
+            if (
+                elementoConversas
+            ) {
+                elementoConversas
+                    .textContent =
+                    formatarNumero(
+                        totalConversas
+                    );
+            }
+        } else {
+            console.error(
+                "Erro ao carregar conversas:",
+                resultadoConversas.reason
+            );
+
+            if (
+                elementoConversas
+            ) {
+                elementoConversas
+                    .textContent =
+                    "–";
+            }
+        }
+
+        $("stats")
+            ?.classList.remove(
+                "carregando"
+            );
+
+        if (
+            resultadoVeiculos.status ===
+                "rejected" &&
+            resultadoConversas.status ===
+                "rejected"
+        ) {
             toast(
-                "Não foi possível ler a imagem.",
+                "Não foi possível atualizar o resumo do painel.",
                 "erro"
             );
-
-            inputFoto.value = "";
-        };
-
-        leitor.readAsDataURL(arquivo);
-    });
-
-    $("btnCancelarRecorte")?.addEventListener(
-        "click",
-        fecharRecorte
-    );
-
-    modalRecorte?.addEventListener("click", (evento) => {
-        if (evento.target === modalRecorte) {
-            fecharRecorte();
         }
-    });
+    }
 
-    $("btnConfirmarRecorte")?.addEventListener(
-        "click",
-        () => {
-            if (!cropper || enviando) return;
+    // ======================================================
+    // TECLADO
+    // ======================================================
 
-            const canvas = cropper.getCroppedCanvas({
-                width: 400,
-                height: 400,
-                imageSmoothingQuality: "high"
-            });
+    document.addEventListener(
+        "keydown",
+        (evento) => {
+            if (
+                evento.key !==
+                "Escape"
+            ) {
+                return;
+            }
 
-            if (!canvas) {
-                toast(
-                    "Não foi possível recortar a imagem.",
-                    "erro"
+            if (
+                $("modalConfirma") &&
+                !$("modalConfirma")
+                    .hidden
+            ) {
+                responderConfirmacao(
+                    false
                 );
 
                 return;
             }
 
-            setEnviando(true);
-
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    toast(
-                        "Não foi possível processar a imagem.",
-                        "erro"
-                    );
-
-                    setEnviando(false);
-                    return;
-                }
-
-                const arquivo = new File(
-                    [blob],
-                    "foto-perfil.png",
-                    { type: "image/png" }
-                );
-
-                const preview =
-                    URL.createObjectURL(arquivo);
-
+            if (
+                $("modalRecorte") &&
+                !$("modalRecorte")
+                    .hidden &&
+                !enviandoFoto
+            ) {
                 fecharRecorte();
-                mostrarFoto(preview, false);
-
-                const formData = new FormData();
-
-                /*
-                 * O ID não é enviado.
-                 * O backend identifica o usuário pelo token.
-                 */
-                formData.append(
-                    "fotoPerfil",
-                    arquivo
-                );
-
-                try {
-                    const token = getToken();
-
-                    const { resp, dados } =
-                        await requisitar(
-                            "/api/usuarios/upload-foto",
-                            {
-                                method: "POST",
-
-                                /*
-                                 * Não definir Content-Type aqui.
-                                 * O navegador criará o multipart/form-data.
-                                 */
-                                headers: token
-                                    ? {
-                                        Authorization:
-                                            `Bearer ${token}`
-                                    }
-                                    : {},
-
-                                body: formData
-                            },
-                            30000
-                        );
-
-                    if (
-                        !resp.ok
-                        || dados.sucesso === false
-                    ) {
-                        throw new Error(
-                            dados.mensagem
-                            || dados.erro
-                            || "Erro no servidor ao salvar a imagem."
-                        );
-                    }
-
-                    const novaFoto =
-                        dados.fotoUrl
-                        || dados.foto_perfil
-                        || dados.url;
-
-                    if (!novaFoto) {
-                        throw new Error(
-                            "A foto foi enviada, mas o servidor não informou o novo endereço."
-                        );
-                    }
-
-                    fotoAtual =
-                        resolverUrlFoto(novaFoto);
-
-                    usuario.fotoUrl = novaFoto;
-                    usuario.foto_perfil = novaFoto;
-
-                    salvarSessao();
-
-                    mostrarFoto(
-                        comCacheBuster(fotoAtual)
-                    );
-
-                    toast(
-                        "Foto atualizada com sucesso!"
-                    );
-                } catch (erro) {
-                    console.error(
-                        "Falha no upload:",
-                        erro
-                    );
-
-                    toast(
-                        erro.message
-                        || "Não foi possível salvar a foto.",
-                        "erro"
-                    );
-
-                    restaurarFoto();
-                } finally {
-                    URL.revokeObjectURL(preview);
-                    setEnviando(false);
-                }
-            }, "image/png");
-        }
-    );
-
-    // ==========================================
-    // 8. REMOVER FOTO
-    // ==========================================
-    btnRemoverFoto?.addEventListener(
-        "click",
-        async () => {
-            if (enviando) return;
-
-            const confirmado = await confirmar({
-                titulo: "Remover foto?",
-                texto: "A foto da empresa será removida e o painel voltará a mostrar as iniciais.",
-                botao: "Sim, remover"
-            });
-
-            if (!confirmado) return;
-
-            setEnviando(true);
-
-            try {
-                /*
-                 * O ID não é enviado.
-                 * O servidor identifica o usuário pelo token.
-                 */
-                const { resp, dados } =
-                    await requisitar(
-                        "/api/usuarios/remover-foto",
-                        {
-                            method: "DELETE",
-                            headers: authHeaders()
-                        }
-                    );
-
-                if (
-                    !resp.ok
-                    || dados.sucesso === false
-                ) {
-                    throw new Error(
-                        dados.mensagem
-                        || dados.erro
-                        || `Não foi possível remover a foto. Erro ${resp.status}.`
-                    );
-                }
-
-                fotoAtual = null;
-                usuario.fotoUrl = null;
-                usuario.foto_perfil = null;
-
-                salvarSessao();
-                mostrarIniciais();
-
-                toast(
-                    "Foto removida com sucesso!"
-                );
-            } catch (erro) {
-                console.error(
-                    "Falha ao remover foto:",
-                    erro
-                );
-
-                toast(
-                    erro.message
-                    || "Erro de conexão ao remover a foto.",
-                    "erro"
-                );
-            } finally {
-                setEnviando(false);
+                return;
             }
-        }
-    );
 
-    // ==========================================
-    // 9. TECLA ESC
-    // ==========================================
-    document.addEventListener("keydown", (evento) => {
-        if (evento.key !== "Escape") return;
-
-        if (
-            modalConfirma
-            && !modalConfirma.hidden
-        ) {
-            responderConfirma(false);
-        } else if (
-            modalRecorte
-            && !modalRecorte.hidden
-        ) {
-            fecharRecorte();
-        } else {
             fecharMenu();
         }
-    });
+    );
 
-    // ==========================================
-    // 10. RESUMO
-    // ==========================================
-    function formatarNumero(numero) {
-        return Number(numero).toLocaleString(
-            "pt-BR"
-        );
-    }
+    // ======================================================
+    // INICIALIZAÇÃO
+    // ======================================================
 
-    async function carregarResumo() {
-        const elVeiculos = $("totalVeiculos");
-        const elVisualizacoes =
-            $("totalVisualizacoes");
-
-        try {
-            const { resp, dados } =
-                await requisitar(
-                    "/api/veiculos",
-                    {
-                        method: "GET",
-                        headers: authHeaders()
-                    }
-                );
-
-            if (
-                !resp.ok
-                || !dados.sucesso
-                || !Array.isArray(dados.veiculos)
-            ) {
-                throw new Error(
-                    dados.mensagem
-                    || "Resposta inválida do servidor."
-                );
-            }
-
-            const meusVeiculos =
-                dados.veiculos.filter((veiculo) => {
-                    return String(veiculo.usuario_id)
-                        === String(usuarioId);
-                });
-
-            if (elVeiculos) {
-                elVeiculos.textContent =
-                    formatarNumero(
-                        meusVeiculos.length
-                    );
-            }
-
-            const obterVisualizacoes = (veiculo) => {
-                return veiculo.total_visualizacoes
-                    ?? veiculo.visualizacoes
-                    ?? veiculo.views;
-            };
-
-            if (elVisualizacoes) {
-                const possuiVisualizacoes =
-                    meusVeiculos.some((veiculo) => {
-                        return obterVisualizacoes(
-                            veiculo
-                        ) != null;
-                    });
-
-                elVisualizacoes.textContent =
-                    possuiVisualizacoes
-                        ? formatarNumero(
-                            meusVeiculos.reduce(
-                                (total, veiculo) => {
-                                    return total
-                                        + (
-                                            Number(
-                                                obterVisualizacoes(
-                                                    veiculo
-                                                )
-                                            ) || 0
-                                        );
-                                },
-                                0
-                            )
-                        )
-                        : "–";
-            }
-        } catch (erro) {
+    carregarResumo()
+        .catch((erro) => {
             console.error(
-                "Erro ao carregar resumo:",
+                "Erro inesperado ao montar o painel:",
                 erro
             );
 
-            if (elVeiculos) {
-                elVeiculos.textContent = "–";
-            }
-
-            if (elVisualizacoes) {
-                elVisualizacoes.textContent = "–";
-            }
-        } finally {
-            $("stats")?.classList.remove(
-                "carregando"
-            );
-        }
-    }
-
-    carregarResumo();
+            $("stats")
+                ?.classList.remove(
+                    "carregando"
+                );
+        });
 });

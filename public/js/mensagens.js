@@ -33,6 +33,8 @@ let temporizadorBuscaUsuarios = null;
 let controleBuscaUsuarios = null;
 let iniciandoConversaDireta = false;
 let temporizadorAjusteBaloes = null;
+let mapaConversaCanonica = new Map();
+let pessoaSelecionadaParaRemover = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -378,6 +380,122 @@ function inicializarSocketPrivado() {
     );
 }
 
+function obterMomentoConversa(conversa) {
+    const data = new Date(
+        conversa?.ultimo_envio ||
+        conversa?.criado_em ||
+        0
+    );
+
+    const momento = data.getTime();
+
+    return Number.isFinite(momento)
+        ? momento
+        : 0;
+}
+
+function consolidarConversasPorUsuario(conversas) {
+    const grupos = new Map();
+    const novoMapaCanonico = new Map();
+
+    for (const conversa of conversas) {
+        const conversaId = Number(conversa.id);
+        const outroUsuarioId = Number(
+            conversa.outro_usuario_id
+        );
+
+        if (
+            !Number.isInteger(conversaId) ||
+            conversaId <= 0
+        ) {
+            continue;
+        }
+
+        const chave =
+            Number.isInteger(outroUsuarioId) &&
+            outroUsuarioId > 0
+                ? `usuario:${outroUsuarioId}`
+                : `conversa:${conversaId}`;
+
+        if (!grupos.has(chave)) {
+            grupos.set(chave, []);
+        }
+
+        grupos.get(chave).push(conversa);
+    }
+
+    const consolidadas = [];
+
+    for (const grupo of grupos.values()) {
+        const ordenadas = [...grupo].sort(
+            (a, b) =>
+                obterMomentoConversa(b) -
+                obterMomentoConversa(a)
+        );
+
+        const conversasDiretas = ordenadas.filter(
+            (conversa) =>
+                !Number(conversa.veiculo_id)
+        );
+
+        const conversaCanonica =
+            conversasDiretas[0] ||
+            ordenadas[0];
+
+        const conversaCanonicaId = Number(
+            conversaCanonica.id
+        );
+
+        const idsAgrupados = ordenadas
+            .map((conversa) => Number(conversa.id))
+            .filter(
+                (id) =>
+                    Number.isInteger(id) &&
+                    id > 0
+            );
+
+        const totalNaoLidas = ordenadas.reduce(
+            (total, conversa) =>
+                total +
+                Number(
+                    conversa.total_nao_lidas ||
+                    0
+                ),
+            0
+        );
+
+        idsAgrupados.forEach((id) => {
+            novoMapaCanonico.set(
+                id,
+                conversaCanonicaId
+            );
+        });
+
+        consolidadas.push({
+            ...conversaCanonica,
+            id: conversaCanonicaId,
+            total_nao_lidas: totalNaoLidas,
+            tem_nova: totalNaoLidas > 0,
+            conversas_agrupadas: idsAgrupados
+        });
+    }
+
+    mapaConversaCanonica = novoMapaCanonico;
+
+    if (conversaAtivaId) {
+        conversaAtivaId =
+            mapaConversaCanonica.get(
+                Number(conversaAtivaId)
+            ) || Number(conversaAtivaId);
+    }
+
+    return consolidadas.sort(
+        (a, b) =>
+            obterMomentoConversa(b) -
+            obterMomentoConversa(a)
+    );
+}
+
 async function carregarResumoNaoLidas(
     silencioso = false
 ) {
@@ -390,12 +508,33 @@ async function carregarResumoNaoLidas(
             ? dados.conversas
             : [];
 
-        mapaNaoLidas = new Map(
-            resumos.map((item) => [
-                Number(item.conversa_id),
-                Number(item.total_nao_lidas) || 0
-            ])
-        );
+        const novoMapaNaoLidas = new Map();
+
+        resumos.forEach((item) => {
+            const conversaOriginalId = Number(
+                item.conversa_id
+            );
+
+            const conversaCanonicaId =
+                mapaConversaCanonica.get(
+                    conversaOriginalId
+                ) || conversaOriginalId;
+
+            const quantidade = Number(
+                item.total_nao_lidas
+            ) || 0;
+
+            novoMapaNaoLidas.set(
+                conversaCanonicaId,
+                (
+                    novoMapaNaoLidas.get(
+                        conversaCanonicaId
+                    ) || 0
+                ) + quantidade
+            );
+        });
+
+        mapaNaoLidas = novoMapaNaoLidas;
 
         totalNaoLidasGeral =
             Number(dados.total_nao_lidas) || 0;
@@ -446,10 +585,37 @@ async function marcarConversaComoLida(
     }
 
     try {
-        await requisitarApi(`/${id}/ler`, {
-            method: "POST",
-            body: JSON.stringify({})
-        });
+        const conversa = listaConversas.find(
+            (item) => Number(item.id) === id
+        );
+
+        const idsAgrupados =
+            Array.isArray(
+                conversa?.conversas_agrupadas
+            ) &&
+            conversa.conversas_agrupadas.length > 0
+                ? conversa.conversas_agrupadas
+                : [id];
+
+        await Promise.all(
+            idsAgrupados.map(
+                (conversaIdAgrupada) =>
+                    requisitarApi(
+                        `/${conversaIdAgrupada}/ler`,
+                        {
+                            method: "POST",
+                            body: JSON.stringify({})
+                        }
+                    )
+            )
+        );
+
+        idsAgrupados.forEach(
+            (conversaIdAgrupada) =>
+                mapaNaoLidas.delete(
+                    Number(conversaIdAgrupada)
+                )
+        );
 
         mapaNaoLidas.delete(id);
 
@@ -499,6 +665,11 @@ async function carregarConversas(silencioso = false) {
             : [];
 
         await carregarResumoNaoLidas(true);
+
+        listaConversas =
+            consolidarConversasPorUsuario(
+                listaConversas
+            );
 
         const total = $("totalConversas");
 
@@ -586,6 +757,9 @@ function renderizarListaSidebar(conversas) {
     container.innerHTML = conversas
         .map((conversa) => {
             const conversaId = Number(conversa.id);
+            const outroUsuarioId = Number(
+                conversa.outro_usuario_id
+            );
 
             const ativa =
                 conversaId === Number(conversaAtivaId)
@@ -616,20 +790,6 @@ function renderizarListaSidebar(conversas) {
                     minute: "2-digit"
                 });
 
-            const temVeiculo = Boolean(
-                conversa.veiculo_id
-            );
-
-            const referencia = conversa.veiculo_modelo
-                ? `${conversa.veiculo_marca || ""} ${conversa.veiculo_modelo}`.trim()
-                : temVeiculo
-                    ? "Veículo em negociação"
-                    : "Conversa direta";
-
-            const iconeReferencia = temVeiculo
-                ? "fa-car-side"
-                : "fa-user";
-
             const foto =
                 conversa.outro_usuario_foto ||
                 conversa.foto_perfil;
@@ -638,6 +798,7 @@ function renderizarListaSidebar(conversas) {
                 <div
                     class="conversa-item ${ativa} ${nova}"
                     data-id="${conversaId}"
+                    data-usuario-id="${outroUsuarioId}"
                     tabindex="0"
                     role="button"
                     aria-label="Abrir conversa com ${esc(nome)}"
@@ -660,9 +821,22 @@ function renderizarListaSidebar(conversas) {
                         <div class="conversa-linha">
                             <h4>${esc(nome)}</h4>
 
-                            <span class="conversa-hora">
-                                ${esc(hora)}
-                            </span>
+                            <div class="conversa-acoes">
+                                <span class="conversa-hora">
+                                    ${esc(hora)}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    class="btn-remover-conversa"
+                                    data-usuario-id="${outroUsuarioId}"
+                                    data-usuario-nome="${esc(nome)}"
+                                    title="Remover da lista"
+                                    aria-label="Remover conversa com ${esc(nome)}"
+                                >
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="conversa-linha">
@@ -689,8 +863,8 @@ function renderizarListaSidebar(conversas) {
                         </div>
 
                         <span class="conversa-veic">
-                            <i class="fa-solid ${iconeReferencia}"></i>
-                            ${esc(referencia)}
+                            <i class="fa-solid fa-user"></i>
+                            Conversa direta
                         </span>
                     </div>
                 </div>
@@ -699,8 +873,210 @@ function renderizarListaSidebar(conversas) {
         .join("");
 }
 
-async function abrirConversa(conversaId) {
+function fecharConversaAtual() {
+    conversaAtivaId = null;
+    assinaturaMensagens = "";
+    novasMensagensAbaixoCount = 0;
+
+    $("chatWrapper")?.classList.remove("em-conversa");
+
+    if ($("chatEmptyState")) {
+        $("chatEmptyState").hidden = false;
+    }
+
+    if ($("chatActiveBox")) {
+        $("chatActiveBox").hidden = true;
+    }
+
+    if ($("chatMessagesScroll")) {
+        $("chatMessagesScroll").innerHTML = "";
+    }
+
+    const input = $("inputMensagem");
+
+    if (input) {
+        input.value = "";
+        input.disabled = true;
+        input.style.height = "auto";
+    }
+
+    if ($("btnEnviarMensagem")) {
+        $("btnEnviarMensagem").disabled = true;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("conversa");
+    window.history.replaceState({}, "", url);
+}
+
+function abrirModalRemoverPessoa(usuarioId, nome) {
+    const id = Number(usuarioId);
+
+    if (!Number.isInteger(id) || id <= 0) return;
+
+    pessoaSelecionadaParaRemover = {
+        id,
+        nome: String(nome || "esta pessoa")
+    };
+
+    const modal = $("modalRemoverConversa");
+    const nomeElemento = $("nomePessoaRemover");
+
+    if (!modal) return;
+
+    if (nomeElemento) {
+        nomeElemento.textContent =
+            pessoaSelecionadaParaRemover.nome;
+    }
+
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    requestAnimationFrame(() => {
+        $("btnCancelarRemoverConversa")?.focus();
+    });
+}
+
+function fecharModalRemoverPessoa() {
+    const modal = $("modalRemoverConversa");
+
+    if (modal) {
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.body.style.overflow = "";
+    pessoaSelecionadaParaRemover = null;
+}
+
+async function removerPessoaDaLista(usuarioId) {
+    const id = Number(usuarioId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return false;
+    }
+
+    try {
+        const conversaRemovida = listaConversas.find(
+            (conversa) =>
+                Number(conversa.outro_usuario_id) === id
+        );
+
+        await requisitarApi(`/usuario/${id}`, {
+            method: "DELETE"
+        });
+
+        if (
+            conversaRemovida &&
+            Number(conversaRemovida.id) ===
+                Number(conversaAtivaId)
+        ) {
+            fecharConversaAtual();
+        }
+
+        listaConversas = listaConversas.filter(
+            (conversa) =>
+                Number(conversa.outro_usuario_id) !== id
+        );
+
+        const total = $("totalConversas");
+
+        if (total) {
+            total.textContent = listaConversas.length;
+        }
+
+        aplicarFiltrosEBusca();
+        await carregarResumoNaoLidas(true);
+
+        exibirToast("Conversa removida da lista.");
+        return true;
+    } catch (erro) {
+        console.error(
+            "Erro ao remover conversa:",
+            erro
+        );
+
+        exibirToast(
+            erro.message ||
+            "Não foi possível remover a conversa.",
+            "erro"
+        );
+
+        return false;
+    }
+}
+
+async function confirmarRemocaoPessoa() {
+    if (!pessoaSelecionadaParaRemover) return;
+
+    const pessoa = {
+        ...pessoaSelecionadaParaRemover
+    };
+
+    const botao =
+        $("btnConfirmarRemoverConversa");
+
+    if (botao) {
+        botao.disabled = true;
+        botao.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Removendo...
+        `;
+    }
+
+    const removeu =
+        await removerPessoaDaLista(pessoa.id);
+
+    if (botao) {
+        botao.disabled = false;
+        botao.innerHTML = `
+            <i class="fa-solid fa-user-minus"></i>
+            Remover da lista
+        `;
+    }
+
+    if (removeu) {
+        fecharModalRemoverPessoa();
+    }
+}
+
+function obterIdsAgrupadosDaConversa(conversaId) {
     const id = Number(conversaId);
+
+    const conversa = listaConversas.find(
+        (item) => Number(item.id) === id
+    );
+
+    if (
+        conversa &&
+        Array.isArray(conversa.conversas_agrupadas) &&
+        conversa.conversas_agrupadas.length > 0
+    ) {
+        return [
+            ...new Set(
+                conversa.conversas_agrupadas
+                    .map(Number)
+                    .filter(
+                        (valor) =>
+                            Number.isInteger(valor) &&
+                            valor > 0
+                    )
+            )
+        ];
+    }
+
+    return Number.isInteger(id) && id > 0
+        ? [id]
+        : [];
+}
+
+async function abrirConversa(conversaId) {
+    const idSolicitado = Number(conversaId);
+
+    const id =
+        mapaConversaCanonica.get(idSolicitado) ||
+        idSolicitado;
 
     if (!Number.isInteger(id) || id <= 0) {
         return;
@@ -745,9 +1121,11 @@ async function abrirConversa(conversaId) {
 
     if (conversa) {
         const nome =
-            conversa.outro_usuario_nome || "Usuário";
+            conversa.outro_usuario_nome ||
+            "Usuário";
 
-        const temVeiculo = Boolean(conversa.veiculo_id);
+        const temVeiculo =
+            Boolean(conversa.veiculo_id);
 
         const referencia = conversa.veiculo_modelo
             ? `${conversa.veiculo_marca || ""} ${conversa.veiculo_modelo}`.trim()
@@ -792,8 +1170,10 @@ async function abrirConversa(conversaId) {
     if (input) {
         input.value = "";
         input.style.height = "auto";
-        input.maxLength = MAX_CARACTERES_MENSAGEM;
-        input.placeholder = "Escreva sua mensagem...";
+        input.maxLength =
+            MAX_CARACTERES_MENSAGEM;
+        input.placeholder =
+            "Escreva sua mensagem...";
     }
 
     mostrarFeedback("");
@@ -808,26 +1188,95 @@ async function carregarMensagens(
     silencioso = false
 ) {
     const container = $("chatMessagesScroll");
+    const idCanonico = Number(conversaId);
 
-    if (!container || !conversaId) {
+    if (
+        !container ||
+        !Number.isInteger(idCanonico) ||
+        idCanonico <= 0
+    ) {
         return;
     }
 
     try {
-        const dados = await requisitarApi(
-            `/${conversaId}/mensagens`
+        const idsAgrupados =
+            obterIdsAgrupadosDaConversa(
+                idCanonico
+            );
+
+        const resultados = await Promise.all(
+            idsAgrupados.map(
+                async (idConversa) => {
+                    try {
+                        const dados =
+                            await requisitarApi(
+                                `/${idConversa}/mensagens`
+                            );
+
+                        return (
+                            Array.isArray(dados.mensagens)
+                                ? dados.mensagens
+                                : []
+                        ).map((mensagem) => ({
+                            ...mensagem,
+                            id: Number(mensagem.id),
+                            conversa_id:
+                                Number(
+                                    mensagem.conversa_id
+                                ) || idConversa
+                        }));
+                    } catch (erro) {
+                        console.error(
+                            `Erro ao carregar a conversa ${idConversa}:`,
+                            erro
+                        );
+
+                        return [];
+                    }
+                }
+            )
         );
 
         if (
             Number(conversaAtivaId) !==
-            Number(conversaId)
+            idCanonico
         ) {
             return;
         }
 
-        const mensagens = Array.isArray(dados.mensagens)
-            ? dados.mensagens
-            : [];
+        const mapaMensagens = new Map();
+
+        resultados
+            .flat()
+            .forEach((mensagem) => {
+                const chave =
+                    `${mensagem.conversa_id}:${mensagem.id}`;
+
+                if (!mapaMensagens.has(chave)) {
+                    mapaMensagens.set(
+                        chave,
+                        mensagem
+                    );
+                }
+            });
+
+        const mensagens = [
+            ...mapaMensagens.values()
+        ].sort((a, b) => {
+            const dataA = new Date(
+                a.criado_em || 0
+            ).getTime();
+
+            const dataB = new Date(
+                b.criado_em || 0
+            ).getTime();
+
+            if (dataA !== dataB) {
+                return dataA - dataB;
+            }
+
+            return Number(a.id) - Number(b.id);
+        });
 
         renderizarListaMensagens(
             mensagens,
@@ -859,30 +1308,42 @@ function ajustarLarguraBaloes() {
         return;
     }
 
-    const canvas = document.createElement("canvas");
-    const contexto = canvas.getContext("2d");
+    const canvas =
+        document.createElement("canvas");
+
+    const contexto =
+        canvas.getContext("2d");
 
     if (!contexto) return;
 
     const limitePercentual =
-        window.innerWidth <= 767 ? 0.84 : 0.68;
+        window.innerWidth <= 767
+            ? 0.84
+            : 0.68;
 
     const larguraMaxima =
-        container.clientWidth * limitePercentual;
+        container.clientWidth *
+        limitePercentual;
 
     container
         .querySelectorAll(".msg-bubble")
         .forEach((balao) => {
             const textoElemento =
-                balao.querySelector(".conteudo-texto");
+                balao.querySelector(
+                    ".conteudo-texto"
+                );
 
             const rodape =
-                balao.querySelector(".rodape-msg");
+                balao.querySelector(
+                    ".rodape-msg"
+                );
 
             if (!textoElemento) return;
 
             const estiloTexto =
-                window.getComputedStyle(textoElemento);
+                window.getComputedStyle(
+                    textoElemento
+                );
 
             contexto.font = [
                 estiloTexto.fontWeight || "400",
@@ -891,14 +1352,17 @@ function ajustarLarguraBaloes() {
             ].join(" ");
 
             const texto =
-                textoElemento.textContent.trim() || " ";
+                textoElemento.textContent.trim() ||
+                " ";
 
             const larguraTexto = Math.max(
-                ...texto.split("\n").map((linha) =>
-                    contexto.measureText(
-                        linha || " "
-                    ).width
-                )
+                ...texto
+                    .split("\n")
+                    .map((linha) =>
+                        contexto.measureText(
+                            linha || " "
+                        ).width
+                    )
             );
 
             const larguraHora =
@@ -909,12 +1373,16 @@ function ajustarLarguraBaloes() {
 
             const larguraLeitura =
                 rodape
-                    ?.querySelector(".status-leitura")
+                    ?.querySelector(
+                        ".status-leitura"
+                    )
                     ?.getBoundingClientRect()
                     .width || 0;
 
             const larguraRodape =
-                larguraHora + larguraLeitura + 8;
+                larguraHora +
+                larguraLeitura +
+                8;
 
             const larguraNecessaria =
                 Math.max(
@@ -923,7 +1391,10 @@ function ajustarLarguraBaloes() {
                 ) + 18;
 
             const larguraFinal = Math.min(
-                Math.max(larguraNecessaria, 58),
+                Math.max(
+                    larguraNecessaria,
+                    58
+                ),
                 larguraMaxima
             );
 
@@ -954,9 +1425,15 @@ function renderizarListaMensagens(
     const assinaturaAtual = mensagens
         .map((mensagem) => {
             const id = Number(mensagem.id);
-            const lida = mensagem.lida_em ? 1 : 0;
+            const conversaId = Number(
+                mensagem.conversa_id
+            );
 
-            return `${id}:${lida}`;
+            const lida = mensagem.lida_em
+                ? 1
+                : 0;
+
+            return `${conversaId}:${id}:${lida}`;
         })
         .join(",");
 
@@ -977,7 +1454,10 @@ function renderizarListaMensagens(
         return;
     }
 
-    if (assinaturaAtual === assinaturaMensagens) {
+    if (
+        assinaturaAtual ===
+        assinaturaMensagens
+    ) {
         ajustarLarguraBaloes();
         return;
     }
@@ -987,44 +1467,59 @@ function renderizarListaMensagens(
         container.scrollTop <=
         container.clientHeight + 100;
 
-    const quantidadeAnterior = assinaturaMensagens
-        ? assinaturaMensagens
-            .split(",")
-            .filter(Boolean)
-            .length
-        : 0;
+    const quantidadeAnterior =
+        assinaturaMensagens
+            ? assinaturaMensagens
+                .split(",")
+                .filter(Boolean)
+                .length
+            : 0;
 
     const elementos = mensagens
         .map((mensagem) => {
             const minha =
-                Number(mensagem.enviada_por_mim) === 1 ||
-                Number(mensagem.remetente_id) ===
-                Number(meuUsuarioId);
+                Number(
+                    mensagem.enviada_por_mim
+                ) === 1 ||
+                Number(
+                    mensagem.remetente_id
+                ) === Number(meuUsuarioId);
 
             const data = new Date(
                 mensagem.criado_em
             );
 
-            const hora = Number.isNaN(data.getTime())
+            const hora = Number.isNaN(
+                data.getTime()
+            )
                 ? "Agora"
-                : data.toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
+                : data.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
 
             return `
                 <div
                     class="msg-bubble ${
-                        minha ? "enviada" : "recebida"
+                        minha
+                            ? "enviada"
+                            : "recebida"
                     }"
-                    data-id="${Number(mensagem.id)}"
+                    data-id="${Number(
+                        mensagem.id
+                    )}"
                 >
                     <span class="conteudo-texto">${esc(
                         mensagem.texto
                     )}</span>
 
                     <span class="rodape-msg">
-                        <span class="hora">${esc(hora)}</span>
+                        <span class="hora">
+                            ${esc(hora)}
+                        </span>
 
                         ${
                             minha
@@ -1063,7 +1558,9 @@ function renderizarListaMensagens(
                                 mensagem.id
                             )}"
                             data-minha="${
-                                minha ? "true" : "false"
+                                minha
+                                    ? "true"
+                                    : "false"
                             }"
                             title="Opções"
                             aria-label="Opções da mensagem"
@@ -1100,7 +1597,8 @@ function renderizarListaMensagens(
     } else {
         novasMensagensAbaixoCount += Math.max(
             0,
-            mensagens.length - quantidadeAnterior
+            mensagens.length -
+            quantidadeAnterior
         );
     }
 
@@ -1121,7 +1619,10 @@ async function enviarMensagem(evento) {
 
     if (!texto) return;
 
-    if (texto.length > MAX_CARACTERES_MENSAGEM) {
+    if (
+        texto.length >
+        MAX_CARACTERES_MENSAGEM
+    ) {
         const aviso =
             `A mensagem pode ter no máximo ${MAX_CARACTERES_MENSAGEM} caracteres.`;
 
@@ -1141,7 +1642,9 @@ async function enviarMensagem(evento) {
             `/${conversaAtivaId}/mensagem`,
             {
                 method: "POST",
-                body: JSON.stringify({ texto })
+                body: JSON.stringify({
+                    texto
+                })
             }
         );
 
@@ -1162,12 +1665,14 @@ async function enviarMensagem(evento) {
         );
 
         mostrarFeedback(
-            erro.message || "Erro ao enviar mensagem.",
+            erro.message ||
+            "Erro ao enviar mensagem.",
             true
         );
 
         exibirToast(
-            erro.message || "Erro ao enviar mensagem.",
+            erro.message ||
+            "Erro ao enviar mensagem.",
             "erro"
         );
     } finally {
@@ -1179,7 +1684,8 @@ async function enviarMensagem(evento) {
 function atualizarBotaoBaixoScroll() {
     const botao = $("btnBaixo");
     const contador = $("baixoContador");
-    const container = $("chatMessagesScroll");
+    const container =
+        $("chatMessagesScroll");
 
     if (!botao || !container) {
         return;
@@ -1216,7 +1722,10 @@ function fecharModalDelecao() {
     mensagemSelecionadaId = null;
 }
 
-function abrirMenuExclusao(mensagemId, minha) {
+function abrirMenuExclusao(
+    mensagemId,
+    minha
+) {
     if (
         !Number.isInteger(mensagemId) ||
         mensagemId <= 0
@@ -1230,8 +1739,11 @@ function abrirMenuExclusao(mensagemId, minha) {
 
     if (!modal) return;
 
-    const botaoTodos = $("btnDeleteParaTodos");
-    const texto = $("modalDeleteTexto");
+    const botaoTodos =
+        $("btnDeleteParaTodos");
+
+    const texto =
+        $("modalDeleteTexto");
 
     if (botaoTodos) {
         botaoTodos.hidden = !minha;
@@ -1246,13 +1758,18 @@ function abrirMenuExclusao(mensagemId, minha) {
     modal.hidden = false;
 }
 
-async function apagarMensagem(mensagemId, tipo) {
+async function apagarMensagem(
+    mensagemId,
+    tipo
+) {
     try {
         await requisitarApi(
             `/mensagem/${mensagemId}`,
             {
                 method: "DELETE",
-                body: JSON.stringify({ tipo })
+                body: JSON.stringify({
+                    tipo
+                })
             }
         );
 
@@ -1277,7 +1794,8 @@ async function apagarMensagem(mensagemId, tipo) {
         );
 
         exibirToast(
-            erro.message || "Erro ao apagar mensagem.",
+            erro.message ||
+            "Erro ao apagar mensagem.",
             "erro"
         );
     }
@@ -1285,7 +1803,8 @@ async function apagarMensagem(mensagemId, tipo) {
 
 function inicializarPaineisAuxiliares() {
     const painelEmoji = $("emojiPanel");
-    const respostas = $("respostasRapidas");
+    const respostas =
+        $("respostasRapidas");
 
     if (painelEmoji) {
         painelEmoji.innerHTML = EMOJIS
@@ -1303,9 +1822,12 @@ function inicializarPaineisAuxiliares() {
             "click",
             (evento) => {
                 const botao =
-                    evento.target.closest("button");
+                    evento.target.closest(
+                        "button"
+                    );
 
-                const input = $("inputMensagem");
+                const input =
+                    $("inputMensagem");
 
                 if (
                     !botao ||
@@ -1328,27 +1850,32 @@ function inicializarPaineisAuxiliares() {
     }
 
     if (respostas) {
-        respostas.innerHTML = RESPOSTAS_RAPIDAS
-            .map((texto) => `
-                <button
-                    type="button"
-                    class="resposta-chip"
-                >
-                    ${esc(texto)}
-                </button>
-            `)
-            .join("");
+        respostas.innerHTML =
+            RESPOSTAS_RAPIDAS
+                .map((texto) => `
+                    <button
+                        type="button"
+                        class="resposta-chip"
+                    >
+                        ${esc(texto)}
+                    </button>
+                `)
+                .join("");
 
         respostas.addEventListener(
             "click",
             (evento) => {
-                const botao = evento.target.closest(
-                    ".resposta-chip"
-                );
+                const botao =
+                    evento.target.closest(
+                        ".resposta-chip"
+                    );
 
-                const input = $("inputMensagem");
+                const input =
+                    $("inputMensagem");
 
-                if (!botao || !input) return;
+                if (!botao || !input) {
+                    return;
+                }
 
                 input.value =
                     botao.textContent.trim();
@@ -1362,16 +1889,19 @@ function inicializarPaineisAuxiliares() {
         );
     }
 
-    $("btnEmoji")?.addEventListener("click", () => {
-        if (painelEmoji) {
-            painelEmoji.hidden =
-                !painelEmoji.hidden;
-        }
+    $("btnEmoji")?.addEventListener(
+        "click",
+        () => {
+            if (painelEmoji) {
+                painelEmoji.hidden =
+                    !painelEmoji.hidden;
+            }
 
-        if (respostas) {
-            respostas.hidden = true;
+            if (respostas) {
+                respostas.hidden = true;
+            }
         }
-    });
+    );
 
     $("btnRapidas")?.addEventListener(
         "click",
@@ -1389,7 +1919,8 @@ function inicializarPaineisAuxiliares() {
 }
 
 function estadoInicialBuscaContas() {
-    const lista = $("listaUsuariosBusca");
+    const lista =
+        $("listaUsuariosBusca");
 
     if (!lista) return;
 
@@ -1409,7 +1940,8 @@ function mostrarEstadoBuscaContas(
     icone = "fa-magnifying-glass",
     erro = false
 ) {
-    const lista = $("listaUsuariosBusca");
+    const lista =
+        $("listaUsuariosBusca");
 
     if (!lista) return;
 
@@ -1417,20 +1949,31 @@ function mostrarEstadoBuscaContas(
         <div class="resultado-contas-vazio ${
             erro ? "erro" : ""
         }">
-            <i class="fa-solid ${esc(icone)}"></i>
-            <span>${esc(mensagem)}</span>
+            <i class="fa-solid ${esc(
+                icone
+            )}"></i>
+
+            <span>
+                ${esc(mensagem)}
+            </span>
         </div>
     `;
 }
 
 function abrirModalNovaConversa() {
-    const modal = $("modalNovaConversa");
-    const input = $("inputBuscaUsuarios");
+    const modal =
+        $("modalNovaConversa");
+
+    const input =
+        $("inputBuscaUsuarios");
 
     if (!modal || !input) return;
 
     if (temporizadorBuscaUsuarios) {
-        clearTimeout(temporizadorBuscaUsuarios);
+        clearTimeout(
+            temporizadorBuscaUsuarios
+        );
+
         temporizadorBuscaUsuarios = null;
     }
 
@@ -1448,11 +1991,17 @@ function abrirModalNovaConversa() {
 }
 
 function fecharModalNovaConversa() {
-    const modal = $("modalNovaConversa");
-    const input = $("inputBuscaUsuarios");
+    const modal =
+        $("modalNovaConversa");
+
+    const input =
+        $("inputBuscaUsuarios");
 
     if (temporizadorBuscaUsuarios) {
-        clearTimeout(temporizadorBuscaUsuarios);
+        clearTimeout(
+            temporizadorBuscaUsuarios
+        );
+
         temporizadorBuscaUsuarios = null;
     }
 
@@ -1470,8 +2019,11 @@ function fecharModalNovaConversa() {
     estadoInicialBuscaContas();
 }
 
-function renderizarUsuariosEncontrados(usuarios) {
-    const lista = $("listaUsuariosBusca");
+function renderizarUsuariosEncontrados(
+    usuarios
+) {
+    const lista =
+        $("listaUsuariosBusca");
 
     if (!lista) return;
 
@@ -1483,12 +2035,15 @@ function renderizarUsuariosEncontrados(usuarios) {
             "Nenhuma conta encontrada.",
             "fa-user-slash"
         );
+
         return;
     }
 
     lista.innerHTML = usuarios
         .map((usuario) => {
-            const id = Number(usuario.id);
+            const id = Number(
+                usuario.id
+            );
 
             const nome = String(
                 usuario.nome ||
@@ -1498,37 +2053,53 @@ function renderizarUsuariosEncontrados(usuarios) {
             ).trim();
 
             const tipo =
-                String(usuario.tipo || "individual")
-                    .toLowerCase() === "empresa"
+                String(
+                    usuario.tipo ||
+                    "individual"
+                ).toLowerCase() ===
+                "empresa"
                     ? "Empresa"
                     : "Pessoa";
 
-            const iniciais = obterIniciais(nome);
+            const iniciais =
+                obterIniciais(nome);
 
-            const foto = usuario.foto_perfil
-                ? `
-                    <img
-                        src="${esc(usuario.foto_perfil)}"
-                        alt="Foto de ${esc(nome)}"
-                        loading="lazy"
-                    >
-                `
-                : esc(iniciais);
+            const foto =
+                usuario.foto_perfil
+                    ? `
+                        <img
+                            src="${esc(
+                                usuario.foto_perfil
+                            )}"
+                            alt="Foto de ${esc(
+                                nome
+                            )}"
+                            loading="lazy"
+                        >
+                    `
+                    : esc(iniciais);
 
             return `
                 <button
                     type="button"
                     class="resultado-conta"
                     data-usuario-id="${id}"
-                    aria-label="Iniciar conversa com ${esc(nome)}"
+                    aria-label="Iniciar conversa com ${esc(
+                        nome
+                    )}"
                 >
                     <span class="resultado-conta-avatar">
                         ${foto}
                     </span>
 
                     <span class="resultado-conta-info">
-                        <strong>${esc(nome)}</strong>
-                        <small>${esc(tipo)}</small>
+                        <strong>
+                            ${esc(nome)}
+                        </strong>
+
+                        <small>
+                            ${esc(tipo)}
+                        </small>
                     </span>
 
                     <i
@@ -1541,8 +2112,12 @@ function renderizarUsuariosEncontrados(usuarios) {
         .join("");
 }
 
-async function pesquisarUsuarios(termoInformado) {
-    const termo = String(termoInformado || "")
+async function pesquisarUsuarios(
+    termoInformado
+) {
+    const termo = String(
+        termoInformado || ""
+    )
         .replace(/\s+/g, " ")
         .trim();
 
@@ -1552,7 +2127,9 @@ async function pesquisarUsuarios(termoInformado) {
     }
 
     controleBuscaUsuarios?.abort();
-    controleBuscaUsuarios = new AbortController();
+
+    controleBuscaUsuarios =
+        new AbortController();
 
     mostrarEstadoBuscaContas(
         "Procurando contas...",
@@ -1563,12 +2140,16 @@ async function pesquisarUsuarios(termoInformado) {
         const token = obterToken();
 
         const resposta = await fetch(
-            `${API_URL}/usuarios/buscar?termo=${encodeURIComponent(termo)}`,
+            `${API_URL}/usuarios/buscar?termo=${encodeURIComponent(
+                termo
+            )}`,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`
+                    Authorization:
+                        `Bearer ${token}`
                 },
-                signal: controleBuscaUsuarios.signal
+                signal:
+                    controleBuscaUsuarios.signal
             }
         );
 
@@ -1589,7 +2170,8 @@ async function pesquisarUsuarios(termoInformado) {
             );
         }
 
-        const input = $("inputBuscaUsuarios");
+        const input =
+            $("inputBuscaUsuarios");
 
         const termoAtual = input
             ? input.value
@@ -1601,11 +2183,40 @@ async function pesquisarUsuarios(termoInformado) {
             return;
         }
 
+        const usuariosPermitidos =
+            Array.isArray(dados.usuarios)
+                ? dados.usuarios.filter(
+                    (usuario) => {
+                        const tipo = String(
+                            usuario.tipo || ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                        return (
+                            Number(
+                                usuario.id
+                            ) !==
+                                Number(
+                                    meuUsuarioId
+                                ) &&
+                            ![
+                                "admin",
+                                "super_admin",
+                                "administrador"
+                            ].includes(tipo)
+                        );
+                    }
+                )
+                : [];
+
         renderizarUsuariosEncontrados(
-            dados.usuarios
+            usuariosPermitidos
         );
     } catch (erro) {
-        if (erro.name === "AbortError") {
+        if (
+            erro.name === "AbortError"
+        ) {
             return;
         }
 
@@ -1627,11 +2238,14 @@ async function iniciarConversaDireta(
     usuarioId,
     botao
 ) {
-    const destinatarioId = Number(usuarioId);
+    const destinatarioId =
+        Number(usuarioId);
 
     if (
         iniciandoConversaDireta ||
-        !Number.isInteger(destinatarioId) ||
+        !Number.isInteger(
+            destinatarioId
+        ) ||
         destinatarioId <= 0
     ) {
         return;
@@ -1639,15 +2253,21 @@ async function iniciarConversaDireta(
 
     iniciandoConversaDireta = true;
 
-    const conteudoOriginal = botao?.innerHTML;
+    const conteudoOriginal =
+        botao?.innerHTML;
 
     if (botao) {
         botao.disabled = true;
 
         botao.innerHTML = `
             <span class="resultado-conta-info">
-                <strong>Abrindo conversa...</strong>
-                <small>Aguarde um momento</small>
+                <strong>
+                    Abrindo conversa...
+                </strong>
+
+                <small>
+                    Aguarde um momento
+                </small>
             </span>
 
             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -1655,22 +2275,68 @@ async function iniciarConversaDireta(
     }
 
     try {
-        const dados = await requisitarApi(
-            "/iniciar-direta",
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    destinatario_id: destinatarioId
-                })
-            }
-        );
+        const conversaExistente =
+            listaConversas.find(
+                (conversa) =>
+                    Number(
+                        conversa.outro_usuario_id
+                    ) === destinatarioId
+            );
+
+        if (conversaExistente) {
+            const conversaId =
+                Number(
+                    conversaExistente.id
+                );
+
+            fecharModalNovaConversa();
+
+            await abrirConversa(
+                conversaId
+            );
+
+            exibirToast(
+                "Conversa existente aberta."
+            );
+
+            const url = new URL(
+                window.location.href
+            );
+
+            url.searchParams.set(
+                "conversa",
+                String(conversaId)
+            );
+
+            window.history.replaceState(
+                {},
+                "",
+                url
+            );
+
+            return;
+        }
+
+        const dados =
+            await requisitarApi(
+                "/iniciar-direta",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        destinatario_id:
+                            destinatarioId
+                    })
+                }
+            );
 
         const conversaId = Number(
             dados.conversa_id
         );
 
         if (
-            !Number.isInteger(conversaId) ||
+            !Number.isInteger(
+                conversaId
+            ) ||
             conversaId <= 0
         ) {
             throw new Error(
@@ -1689,14 +2355,20 @@ async function iniciarConversaDireta(
                 : "Conversa aberta."
         );
 
-        const url = new URL(window.location.href);
+        const url = new URL(
+            window.location.href
+        );
 
         url.searchParams.set(
             "conversa",
             String(conversaId)
         );
 
-        window.history.replaceState({}, "", url);
+        window.history.replaceState(
+            {},
+            "",
+            url
+        );
     } catch (erro) {
         console.error(
             "Erro ao iniciar conversa:",
@@ -1709,8 +2381,13 @@ async function iniciarConversaDireta(
             "erro"
         );
 
-        if (botao && conteudoOriginal) {
-            botao.innerHTML = conteudoOriginal;
+        if (
+            botao &&
+            conteudoOriginal
+        ) {
+            botao.innerHTML =
+                conteudoOriginal;
+
             botao.disabled = false;
         }
     } finally {
@@ -1719,9 +2396,14 @@ async function iniciarConversaDireta(
 }
 
 function inicializarBuscaContas() {
-    const modal = $("modalNovaConversa");
-    const input = $("inputBuscaUsuarios");
-    const lista = $("listaUsuariosBusca");
+    const modal =
+        $("modalNovaConversa");
+
+    const input =
+        $("inputBuscaUsuarios");
+
+    const lista =
+        $("listaUsuariosBusca");
 
     $("btnNovaConversa")?.addEventListener(
         "click",
@@ -1733,93 +2415,152 @@ function inicializarBuscaContas() {
         fecharModalNovaConversa
     );
 
-    modal?.addEventListener("click", (evento) => {
-        if (evento.target === modal) {
-            fecharModalNovaConversa();
+    modal?.addEventListener(
+        "click",
+        (evento) => {
+            if (
+                evento.target === modal
+            ) {
+                fecharModalNovaConversa();
+            }
         }
-    });
+    );
 
-    input?.addEventListener("input", () => {
-        if (temporizadorBuscaUsuarios) {
-            clearTimeout(temporizadorBuscaUsuarios);
+    input?.addEventListener(
+        "input",
+        () => {
+            if (
+                temporizadorBuscaUsuarios
+            ) {
+                clearTimeout(
+                    temporizadorBuscaUsuarios
+                );
+            }
+
+            const termo = input.value;
+
+            if (
+                termo.trim().length < 2
+            ) {
+                controleBuscaUsuarios?.abort();
+                estadoInicialBuscaContas();
+                return;
+            }
+
+            temporizadorBuscaUsuarios =
+                setTimeout(
+                    () =>
+                        pesquisarUsuarios(
+                            termo
+                        ),
+                    TEMPO_ESPERA_BUSCA
+                );
         }
+    );
 
-        const termo = input.value;
+    lista?.addEventListener(
+        "click",
+        (evento) => {
+            const botao =
+                evento.target.closest(
+                    ".resultado-conta[data-usuario-id]"
+                );
 
-        if (termo.trim().length < 2) {
-            controleBuscaUsuarios?.abort();
-            estadoInicialBuscaContas();
-            return;
+            if (!botao) return;
+
+            iniciarConversaDireta(
+                botao.dataset.usuarioId,
+                botao
+            );
         }
-
-        temporizadorBuscaUsuarios = setTimeout(
-            () => pesquisarUsuarios(termo),
-            TEMPO_ESPERA_BUSCA
-        );
-    });
-
-    lista?.addEventListener("click", (evento) => {
-        const botao = evento.target.closest(
-            ".resultado-conta[data-usuario-id]"
-        );
-
-        if (!botao) return;
-
-        iniciarConversaDireta(
-            botao.dataset.usuarioId,
-            botao
-        );
-    });
+    );
 
     estadoInicialBuscaContas();
 }
 
 function inicializarEventosInterface() {
-    $("inputPesquisaConversa")?.addEventListener(
-        "input",
-        (evento) => {
-            termoBusca = evento.target.value;
-            aplicarFiltrosEBusca();
-        }
-    );
+    $("inputPesquisaConversa")
+        ?.addEventListener(
+            "input",
+            (evento) => {
+                termoBusca =
+                    evento.target.value;
+
+                aplicarFiltrosEBusca();
+            }
+        );
 
     document
         .querySelectorAll(".filtro")
         .forEach((botao) => {
-            botao.addEventListener("click", () => {
-                document
-                    .querySelectorAll(".filtro")
-                    .forEach((item) => {
-                        item.classList.remove("ativo");
-                        item.setAttribute(
-                            "aria-selected",
-                            "false"
+            botao.addEventListener(
+                "click",
+                () => {
+                    document
+                        .querySelectorAll(
+                            ".filtro"
+                        )
+                        .forEach(
+                            (item) => {
+                                item.classList.remove(
+                                    "ativo"
+                                );
+
+                                item.setAttribute(
+                                    "aria-selected",
+                                    "false"
+                                );
+                            }
                         );
-                    });
 
-                botao.classList.add("ativo");
+                    botao.classList.add(
+                        "ativo"
+                    );
 
-                botao.setAttribute(
-                    "aria-selected",
-                    "true"
-                );
+                    botao.setAttribute(
+                        "aria-selected",
+                        "true"
+                    );
 
-                filtroAtual =
-                    botao.dataset.filtro;
+                    filtroAtual =
+                        botao.dataset.filtro;
 
-                aplicarFiltrosEBusca();
-            });
+                    aplicarFiltrosEBusca();
+                }
+            );
         });
 
     $("conversasList")?.addEventListener(
         "click",
         (evento) => {
-            const item = evento.target.closest(
-                ".conversa-item"
-            );
+            const botaoRemover =
+                evento.target.closest(
+                    ".btn-remover-conversa"
+                );
+
+            if (botaoRemover) {
+                evento.preventDefault();
+                evento.stopPropagation();
+
+                abrirModalRemoverPessoa(
+                    botaoRemover.dataset
+                        .usuarioId,
+                    botaoRemover.dataset
+                        .usuarioNome
+                );
+
+                return;
+            }
+
+            const item =
+                evento.target.closest(
+                    ".conversa-item"
+                );
 
             if (item) {
-                abrirConversa(item.dataset.id);
+                abrirConversa(
+                    item.dataset.id
+                );
             }
         }
     );
@@ -1828,33 +2569,47 @@ function inicializarEventosInterface() {
         "keydown",
         (evento) => {
             if (
+                evento.target.closest(
+                    ".btn-remover-conversa"
+                )
+            ) {
+                return;
+            }
+
+            if (
                 evento.key !== "Enter" &&
                 evento.key !== " "
             ) {
                 return;
             }
 
-            const item = evento.target.closest(
-                ".conversa-item"
-            );
+            const item =
+                evento.target.closest(
+                    ".conversa-item"
+                );
 
             if (!item) return;
 
             evento.preventDefault();
-            abrirConversa(item.dataset.id);
+
+            abrirConversa(
+                item.dataset.id
+            );
         }
     );
 
     $("btnListaVoltar")?.addEventListener(
         "click",
         () => {
-            $("chatWrapper")?.classList.remove(
-                "em-conversa"
-            );
+            $("chatWrapper")
+                ?.classList.remove(
+                    "em-conversa"
+                );
         }
     );
 
-    const container = $("chatMessagesScroll");
+    const container =
+        $("chatMessagesScroll");
 
     container?.addEventListener(
         "scroll",
@@ -1864,15 +2619,20 @@ function inicializarEventosInterface() {
     container?.addEventListener(
         "click",
         (evento) => {
-            const botao = evento.target.closest(
-                ".btn-opcoes-msg"
-            );
+            const botao =
+                evento.target.closest(
+                    ".btn-opcoes-msg"
+                );
 
             if (!botao) return;
 
             abrirMenuExclusao(
-                Number(botao.dataset.mensagemId),
-                botao.dataset.minha === "true"
+                Number(
+                    botao.dataset
+                        .mensagemId
+                ),
+                botao.dataset.minha ===
+                    "true"
             );
         }
     );
@@ -1886,11 +2646,13 @@ function inicializarEventosInterface() {
                 container.scrollHeight;
 
             novasMensagensAbaixoCount = 0;
+
             atualizarBotaoBaixoScroll();
         }
     );
 
-    const input = $("inputMensagem");
+    const input =
+        $("inputMensagem");
 
     if (input) {
         input.maxLength =
@@ -1898,27 +2660,34 @@ function inicializarEventosInterface() {
 
         input.disabled = true;
 
-        input.addEventListener("input", () => {
-            input.style.height = "auto";
+        input.addEventListener(
+            "input",
+            () => {
+                input.style.height =
+                    "auto";
 
-            input.style.height =
-                `${Math.min(
-                    input.scrollHeight,
-                    130
-                )}px`;
+                input.style.height =
+                    `${Math.min(
+                        input.scrollHeight,
+                        130
+                    )}px`;
 
-            atualizarEstadoDoFormulario();
-        });
+                atualizarEstadoDoFormulario();
+            }
+        );
 
         input.addEventListener(
             "keydown",
             (evento) => {
                 if (
-                    evento.key === "Enter" &&
+                    evento.key ===
+                        "Enter" &&
                     !evento.shiftKey
                 ) {
                     evento.preventDefault();
-                    $("chatForm")?.requestSubmit();
+
+                    $("chatForm")
+                        ?.requestSubmit();
                 }
             }
         );
@@ -1941,49 +2710,90 @@ function inicializarEventosInterface() {
         }
     );
 
-    $("btnDeleteCancelar")?.addEventListener(
+    $("btnDeleteCancelar")
+        ?.addEventListener(
+            "click",
+            fecharModalDelecao
+        );
+
+    $("btnDeleteParaTodos")
+        ?.addEventListener(
+            "click",
+            async () => {
+                const id =
+                    mensagemSelecionadaId;
+
+                fecharModalDelecao();
+
+                if (id) {
+                    await apagarMensagem(
+                        id,
+                        "para_todos"
+                    );
+                }
+            }
+        );
+
+    $("btnDeleteParaMim")
+        ?.addEventListener(
+            "click",
+            async () => {
+                const id =
+                    mensagemSelecionadaId;
+
+                fecharModalDelecao();
+
+                if (id) {
+                    await apagarMensagem(
+                        id,
+                        "para_mim"
+                    );
+                }
+            }
+        );
+
+    const modalRemover =
+        $("modalRemoverConversa");
+
+    modalRemover?.addEventListener(
         "click",
-        fecharModalDelecao
-    );
-
-    $("btnDeleteParaTodos")?.addEventListener(
-        "click",
-        async () => {
-            const id = mensagemSelecionadaId;
-
-            fecharModalDelecao();
-
-            if (id) {
-                await apagarMensagem(
-                    id,
-                    "para_todos"
-                );
+        (evento) => {
+            if (
+                evento.target ===
+                modalRemover
+            ) {
+                fecharModalRemoverPessoa();
             }
         }
     );
 
-    $("btnDeleteParaMim")?.addEventListener(
-        "click",
-        async () => {
-            const id = mensagemSelecionadaId;
+    $("btnFecharRemoverConversa")
+        ?.addEventListener(
+            "click",
+            fecharModalRemoverPessoa
+        );
 
-            fecharModalDelecao();
+    $("btnCancelarRemoverConversa")
+        ?.addEventListener(
+            "click",
+            fecharModalRemoverPessoa
+        );
 
-            if (id) {
-                await apagarMensagem(
-                    id,
-                    "para_mim"
-                );
-            }
-        }
-    );
+    $("btnConfirmarRemoverConversa")
+        ?.addEventListener(
+            "click",
+            confirmarRemocaoPessoa
+        );
 
     document.addEventListener(
         "keydown",
         (evento) => {
-            if (evento.key === "Escape") {
+            if (
+                evento.key === "Escape"
+            ) {
                 fecharModalDelecao();
                 fecharModalNovaConversa();
+                fecharModalRemoverPessoa();
             }
         }
     );
@@ -1996,7 +2806,10 @@ document.addEventListener(
         const token = obterToken();
 
         if (!sessao || !token) {
-            window.location.replace(LOGIN_URL);
+            window.location.replace(
+                LOGIN_URL
+            );
+
             return;
         }
 
@@ -2007,10 +2820,15 @@ document.addEventListener(
         );
 
         if (
-            !Number.isInteger(meuUsuarioId) ||
+            !Number.isInteger(
+                meuUsuarioId
+            ) ||
             meuUsuarioId <= 0
         ) {
-            window.location.replace(LOGIN_URL);
+            window.location.replace(
+                LOGIN_URL
+            );
+
             return;
         }
 
@@ -2022,15 +2840,18 @@ document.addEventListener(
 
         await carregarConversas();
 
-        const parametros = new URLSearchParams(
-            window.location.search
-        );
+        const parametros =
+            new URLSearchParams(
+                window.location.search
+            );
 
         const conversaUrlId =
             parametros.get("conversa");
 
         if (conversaUrlId) {
-            await abrirConversa(conversaUrlId);
+            await abrirConversa(
+                conversaUrlId
+            );
         } else if (
             listaConversas.length > 0 &&
             window.innerWidth >= 768
@@ -2042,32 +2863,45 @@ document.addEventListener(
     }
 );
 
-window.addEventListener("resize", () => {
-    if (temporizadorAjusteBaloes) {
-        clearTimeout(
+window.addEventListener(
+    "resize",
+    () => {
+        if (
             temporizadorAjusteBaloes
-        );
+        ) {
+            clearTimeout(
+                temporizadorAjusteBaloes
+            );
+        }
+
+        temporizadorAjusteBaloes =
+            setTimeout(
+                ajustarLarguraBaloes,
+                120
+            );
     }
+);
 
-    temporizadorAjusteBaloes = setTimeout(
-        ajustarLarguraBaloes,
-        120
-    );
-});
-
-window.addEventListener("beforeunload", () => {
-    if (temporizadorAjusteBaloes) {
-        clearTimeout(
+window.addEventListener(
+    "beforeunload",
+    () => {
+        if (
             temporizadorAjusteBaloes
-        );
-    }
+        ) {
+            clearTimeout(
+                temporizadorAjusteBaloes
+            );
+        }
 
-    if (temporizadorBuscaUsuarios) {
-        clearTimeout(
+        if (
             temporizadorBuscaUsuarios
-        );
-    }
+        ) {
+            clearTimeout(
+                temporizadorBuscaUsuarios
+            );
+        }
 
-    controleBuscaUsuarios?.abort();
-    socketPrivado?.disconnect();
-});
+        controleBuscaUsuarios?.abort();
+        socketPrivado?.disconnect();
+    }
+);

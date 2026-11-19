@@ -2,145 +2,591 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <meta name="theme-color" content="#08090c">
+
     <title>Painel da Empresa | MotorFlex</title>
+
     <link rel="icon" href="/imagens/favicon.ico">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    <link rel="stylesheet" href="/css/painel-empresa.css">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+    >
+    <link
+        rel="stylesheet"
+        href="/css/painel-empresa.css"
+    >
 </head>
+
 <body>
+    <a class="skip-link" href="#conteudoPrincipal">
+        Ir para o conteúdo
+    </a>
 
-    <header class="header">
-        <a href="/pages/index.html" class="logo">Motor<span>Flex</span></a>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a
+                href="/pages/index.html"
+                class="logo"
+                aria-label="MotorFlex - página inicial"
+            >
+                Motor<span>Flex</span>
+            </a>
 
-        <nav class="nav-menu" aria-label="Navegação principal">
-            <a href="/pages/index.html">Inicio</a>
-            <a href="/pages/catalogo.html">Catálogo</a>
-            <a href="/pages/catalogo.html?tab=cadastrar">Anunciar Veículo</a>
+            <nav
+                class="nav-menu"
+                aria-label="Navegação principal"
+            >
+                <a href="/pages/index.html">
+                    Início
+                </a>
 
-            <div class="dropdown">
-                <button type="button" class="btn-config" id="btnConfig" aria-expanded="false" aria-haspopup="true" aria-controls="menuConfig">
-                    Configurações <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div class="dropdown-menu" id="menuConfig">
-                    <!-- Estes três só aparecem no celular (no desktop já estão no topo) -->
-                    <a href="/pages/index.html" class="so-mobile"><i class="fa-solid fa-house"></i> Home</a>
-                    <a href="/pages/catalogo.html" class="so-mobile"><i class="fa-solid fa-car-side"></i> Catálogo</a>
-                    <a href="/pages/catalogo.html?tab=cadastrar" class="so-mobile"><i class="fa-solid fa-plus"></i> Anunciar Veículo</a>
+                <a href="/pages/catalogo.html">
+                    Catálogo
+                </a>
 
-                    <a href="/pages/perfil.html"><i class="fa-solid fa-id-card"></i> Meus Dados</a>
-                    <a href="#" id="gatilhoSair" class="sair-item"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+                <a href="/pages/catalogo.html?tab=cadastrar">
+                    Anunciar veículo
+                </a>
+
+                <div class="dropdown">
+                    <button
+                        type="button"
+                        class="btn-config"
+                        id="btnConfig"
+                        aria-expanded="false"
+                        aria-haspopup="true"
+                        aria-controls="menuConfig"
+                    >
+                        <span>Minha conta</span>
+
+                        <i
+                            class="fa-solid fa-chevron-down"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
+
+                    <div
+                        class="dropdown-menu"
+                        id="menuConfig"
+                        role="menu"
+                    >
+                        <a
+                            href="/pages/index.html"
+                            class="so-mobile"
+                            role="menuitem"
+                        >
+                            <i
+                                class="fa-solid fa-house"
+                                aria-hidden="true"
+                            ></i>
+
+                            Início
+                        </a>
+
+                        <a
+                            href="/pages/catalogo.html"
+                            class="so-mobile"
+                            role="menuitem"
+                        >
+                            <i
+                                class="fa-solid fa-car-side"
+                                aria-hidden="true"
+                            ></i>
+
+                            Catálogo
+                        </a>
+
+                        <a
+                            href="/pages/catalogo.html?tab=cadastrar"
+                            class="so-mobile"
+                            role="menuitem"
+                        >
+                            <i
+                                class="fa-solid fa-plus"
+                                aria-hidden="true"
+                            ></i>
+
+                            Anunciar veículo
+                        </a>
+
+                        <a
+                            href="/pages/perfil.html"
+                            role="menuitem"
+                        >
+                            <i
+                                class="fa-solid fa-id-card"
+                                aria-hidden="true"
+                            ></i>
+
+                            Dados da empresa
+                        </a>
+
+                        <a
+                            href="#"
+                            id="gatilhoSair"
+                            class="sair-item"
+                            role="menuitem"
+                        >
+                            <i
+                                class="fa-solid fa-right-from-bracket"
+                                aria-hidden="true"
+                            ></i>
+
+                            Sair
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
+        </div>
     </header>
 
-    <main class="container">
+    <main
+        class="dashboard"
+        id="conteudoPrincipal"
+    >
+        <section
+            class="hero"
+            aria-labelledby="nomeEmpresa"
+        >
+            <div class="hero-profile">
+                <div
+                    class="avatar-wrapper"
+                    id="avatarWrapper"
+                >
+                    <div class="avatar">
+                        <span
+                            id="avatarIniciais"
+                            aria-hidden="true"
+                        >
+                            E
+                        </span>
 
-        <!-- Boas-vindas -->
-        <section class="boas-vindas">
-            <div class="avatar-wrapper" id="avatarWrapper">
-                <div class="avatar">
-                    <span id="avatarIniciais" aria-hidden="true">E</span>
-                    <img id="imgPerfil" alt="Foto da empresa" hidden>
+                        <img
+                            id="imgPerfil"
+                            alt="Foto da empresa"
+                            hidden
+                        >
+                    </div>
+
+                    <button
+                        type="button"
+                        id="btnTrocarFoto"
+                        class="btn-avatar btn-trocar"
+                        title="Alterar foto"
+                        aria-label="Alterar foto da empresa"
+                    >
+                        <i
+                            class="fa-solid fa-camera"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
+
+                    <input
+                        type="file"
+                        id="inputFotoPerfil"
+                        accept="image/png,image/jpeg,image/webp"
+                        hidden
+                    >
+
+                    <button
+                        type="button"
+                        id="btnRemoverFoto"
+                        class="btn-avatar btn-remover"
+                        title="Remover foto"
+                        aria-label="Remover foto da empresa"
+                        hidden
+                    >
+                        <i
+                            class="fa-solid fa-trash"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
                 </div>
 
-                <button type="button" id="btnTrocarFoto" class="btn-avatar btn-trocar" title="Alterar foto" aria-label="Alterar foto da empresa">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-                <input type="file" id="inputFotoPerfil" accept="image/png,image/jpeg,image/webp" hidden>
-                <button type="button" id="btnRemoverFoto" class="btn-avatar btn-remover" title="Remover foto" aria-label="Remover foto da empresa" hidden>
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+                <div class="hero-copy">
+                    <span class="eyebrow">
+                        <i
+                            class="fa-solid fa-building"
+                            aria-hidden="true"
+                        ></i>
+
+                        Painel da empresa
+                    </span>
+
+                    <h1 id="nomeEmpresa">
+                        Minha Empresa
+                    </h1>
+
+                    <p>
+                        Administre seus anúncios, negociações
+                        e resultados em um só lugar.
+                    </p>
+
+                    <span class="status-conta">
+                        <span
+                            class="status-dot"
+                            aria-hidden="true"
+                        ></span>
+
+                        Conta ativa
+                    </span>
+                </div>
             </div>
 
-            <div class="boas-vindas-info">
-                <p class="eyebrow"><i class="fa-solid fa-building"></i> Painel da empresa</p>
-                <h1 id="nomeEmpresa">Minha Empresa</h1>
-                <p class="sub">Gerencie seus anúncios, acompanhe seus favoritos e converse com clientes interessados.</p>
-                <span class="status-conta"><i class="fa-solid fa-circle"></i> Conta ativa</span>
+            <div
+                class="hero-actions"
+                aria-label="Ações principais"
+            >
+                <a
+                    href="/pages/catalogo.html?tab=cadastrar"
+                    class="btn-primary"
+                >
+                    <i
+                        class="fa-solid fa-plus"
+                        aria-hidden="true"
+                    ></i>
+
+                    Novo anúncio
+                </a>
+
+                <a
+                    href="/pages/mensagens.html"
+                    class="btn-secondary"
+                >
+                    <i
+                        class="fa-solid fa-comments"
+                        aria-hidden="true"
+                    ></i>
+
+                    Abrir conversas
+                </a>
             </div>
         </section>
 
-        <!-- Resumo -->
-        <section class="stats carregando" id="stats" aria-label="Resumo da conta">
-            <div class="stat">
-                <span class="stat-icone"><i class="fa-solid fa-car"></i></span>
-                <div><span class="stat-label">Veículos anunciados</span><strong id="totalVeiculos">–</strong></div>
-            </div>
-            <div class="stat">
-                <span class="stat-icone"><i class="fa-solid fa-comments"></i></span>
-                <div><span class="stat-label">Conversas</span><strong id="totalConversas">–</strong></div>
-            </div>
-            <div class="stat">
-                <span class="stat-icone"><i class="fa-solid fa-eye"></i></span>
-                <div><span class="stat-label">Visualizações</span><strong id="totalVisualizacoes">–</strong></div>
-            </div>
+        <section
+            class="stats carregando"
+            id="stats"
+            aria-label="Resumo da empresa"
+            aria-live="polite"
+        >
+            <article class="stat-card">
+                <span class="stat-icon">
+                    <i
+                        class="fa-solid fa-car-side"
+                        aria-hidden="true"
+                    ></i>
+                </span>
+
+                <div class="stat-content">
+                    <span class="stat-label">
+                        Veículos anunciados
+                    </span>
+
+                    <strong id="totalVeiculos">0</strong>
+
+                    <small>
+                        Anúncios vinculados à conta
+                    </small>
+                </div>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-icon">
+                    <i
+                        class="fa-solid fa-comments"
+                        aria-hidden="true"
+                    ></i>
+                </span>
+
+                <div class="stat-content">
+                    <span class="stat-label">
+                        Conversas
+                    </span>
+
+                    <strong id="totalConversas">0</strong>
+
+                    <small>
+                        Negociações iniciadas
+                    </small>
+                </div>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-icon">
+                    <i
+                        class="fa-solid fa-chart-line"
+                        aria-hidden="true"
+                    ></i>
+                </span>
+
+                <div class="stat-content">
+                    <span class="stat-label">
+                        Visualizações
+                    </span>
+
+                    <strong id="totalVisualizacoes">
+                        0
+                    </strong>
+
+                    <small>
+                        Alcance dos seus veículos
+                    </small>
+                </div>
+            </article>
         </section>
 
-        <!-- Atalhos (cada um abre em sua própria página) -->
-        <section class="atalhos" aria-label="Atalhos">
-            <a href="/pages/catalogo.html?tab=cadastrar" class="atalho">
-                <span class="atalho-icone"><i class="fa-solid fa-plus"></i></span>
+        <section
+            class="management"
+            aria-labelledby="tituloGestao"
+        >
+            <div class="section-heading">
                 <div>
-                    <h2>Anunciar veículo</h2>
-                    <p>Adicione um novo veículo ao catálogo da empresa.</p>
+                    <span class="section-kicker">
+                        Gerenciamento
+                    </span>
+
+                    <h2 id="tituloGestao">
+                        Acesse as ferramentas da empresa
+                    </h2>
                 </div>
-            </a>
-            <a href="/pages/meus-anuncios.html" class="atalho">
-                <span class="atalho-icone"><i class="fa-solid fa-car-side"></i></span>
-                <div>
-                    <h2>Meus anúncios</h2>
-                    <p>Veja, edite ou remova os veículos anunciados.</p>
-                </div>
-            </a>
-            <a href="/pages/favoritos.html" class="atalho">
-                <span class="atalho-icone"><i class="fa-solid fa-heart"></i></span>
-                <div>
-                    <h2>Meus favoritos</h2>
-                    <p>Veja os veículos que você salvou para conferir depois.</p>
-                </div>
-            </a>
-            <a href="/pages/mensagens.html" class="atalho">
-                <span class="atalho-icone"><i class="fa-solid fa-comments"></i></span>
-                <div>
-                    <h2>Conversas</h2>
-                    <p>Fale com clientes, receba propostas e agende visitas.</p>
-                </div>
-            </a>
+            </div>
+
+            <div class="action-grid">
+                <a
+                    href="/pages/meus-anuncios.html"
+                    class="action-card"
+                >
+                    <span class="action-icon">
+                        <i
+                            class="fa-solid fa-rectangle-list"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
+
+                    <span class="action-copy">
+                        <strong>Meus anúncios</strong>
+
+                        <small>
+                            Consulte, edite ou remova os
+                            veículos publicados.
+                        </small>
+                    </span>
+
+                    <span class="action-link">
+                        Acessar
+                    </span>
+                </a>
+
+                <a
+                    href="/pages/catalogo.html?tab=cadastrar"
+                    class="action-card featured"
+                >
+                    <span class="action-icon">
+                        <i
+                            class="fa-solid fa-car-on"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
+
+                    <span class="action-copy">
+                        <strong>Anunciar veículo</strong>
+
+                        <small>
+                            Cadastre um veículo com fotos,
+                            preço e detalhes.
+                        </small>
+                    </span>
+
+                    <span class="action-link">
+                        Cadastrar
+                    </span>
+                </a>
+
+                <a
+                    href="/pages/mensagens.html"
+                    class="action-card"
+                >
+                    <span class="action-icon">
+                        <i
+                            class="fa-solid fa-message"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
+
+                    <span class="action-copy">
+                        <strong>Central de conversas</strong>
+
+                        <small>
+                            Responda clientes e acompanhe
+                            negociações.
+                        </small>
+                    </span>
+
+                    <span class="action-link">
+                        Conversar
+                    </span>
+                </a>
+
+                <a
+                    href="/pages/favoritos.html"
+                    class="action-card"
+                >
+                    <span class="action-icon">
+                        <i
+                            class="fa-solid fa-heart"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
+
+                    <span class="action-copy">
+                        <strong>Favoritos</strong>
+
+                        <small>
+                            Reveja os veículos salvos pela
+                            sua conta.
+                        </small>
+                    </span>
+
+                    <span class="action-link">
+                        Visualizar
+                    </span>
+                </a>
+            </div>
         </section>
     </main>
 
-    <!-- Avisos -->
-    <div class="toast-area" id="toastArea" aria-live="polite"></div>
+    <div
+        class="toast-area"
+        id="toastArea"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
 
-    <!-- Confirmação genérica (saída, remover foto) -->
-    <div class="modal-overlay" id="modalConfirma" hidden>
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmaTitulo">
-            <div class="modal-icone"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3 id="confirmaTitulo">Confirmar</h3>
+    <div
+        class="modal-overlay"
+        id="modalConfirma"
+        aria-hidden="true"
+        hidden
+    >
+        <div
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmaTitulo"
+            aria-describedby="confirmaTexto"
+        >
+            <span class="modal-icon">
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                    aria-hidden="true"
+                ></i>
+            </span>
+
+            <h3 id="confirmaTitulo">
+                Confirmar ação
+            </h3>
+
             <p id="confirmaTexto"></p>
-            <div class="modal-botoes">
-                <button type="button" class="btn-modal btn-cinza" id="confirmaCancelar">Cancelar</button>
-                <button type="button" class="btn-modal btn-vermelho" id="confirmaOk">Confirmar</button>
+
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="btn-modal btn-neutral"
+                    id="confirmaCancelar"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-modal btn-danger"
+                    id="confirmaOk"
+                >
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Recorte de foto -->
-    <div class="modal-overlay" id="modalRecorte" hidden>
-        <div class="modal modal-recorte" role="dialog" aria-modal="true" aria-labelledby="recorteTitulo">
-            <h3 id="recorteTitulo">Ajustar foto da empresa</h3>
-            <div class="area-recorte">
-                <img id="imagemParaCortar" alt="Imagem para recortar">
+    <div
+        class="modal-overlay"
+        id="modalRecorte"
+        aria-hidden="true"
+        hidden
+    >
+        <div
+            class="modal modal-crop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recorteTitulo"
+        >
+            <div class="modal-heading">
+                <div>
+                    <span class="modal-label">
+                        Foto da empresa
+                    </span>
+
+                    <h3 id="recorteTitulo">
+                        Ajustar enquadramento
+                    </h3>
+                </div>
             </div>
-            <div class="modal-botoes">
-                <button type="button" class="btn-modal btn-cinza" id="btnCancelarRecorte">Cancelar</button>
-                <button type="button" class="btn-modal btn-vermelho" id="btnConfirmarRecorte">Cortar e enviar</button>
+
+            <div class="crop-area">
+                <img
+                    id="imagemParaCortar"
+                    alt="Imagem selecionada para recorte"
+                >
+            </div>
+
+            <p class="crop-help">
+                Arraste e amplie a imagem até obter
+                o enquadramento desejado.
+            </p>
+
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="btn-modal btn-neutral"
+                    id="btnCancelarRecorte"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-modal btn-danger"
+                    id="btnConfirmarRecorte"
+                >
+                    <i
+                        class="fa-solid fa-check"
+                        aria-hidden="true"
+                    ></i>
+
+                    Salvar foto
+                </button>
             </div>
         </div>
     </div>
