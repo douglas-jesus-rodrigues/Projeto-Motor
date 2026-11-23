@@ -1,111 +1,695 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="escuro">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#08080a">
-    <title>Moderação de Denúncias | MotorFlex Admin</title>
 
-    <!-- Previne o efeito de tela a piscar ao carregar o tema salvo -->
-    <script>try{document.documentElement.dataset.tema=localStorage.getItem("mf_admin_tema")||"escuro"}catch(e){}</script>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="icon" href="/imagens/favicon.ico">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome 6 (Padronizado com o ecossistema MotorFlex) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Lembre-se de confirmar se a pasta css está na raiz do seu projeto -->
-    <link rel="stylesheet" href="/css/moderacao.css">
+    <meta
+        name="theme-color"
+        content="#08080b"
+    >
+
+    <meta
+        name="description"
+        content="Central administrativa de moderação do MotorFlex."
+    >
+
+    <title>
+        Moderação | MotorFlex Admin
+    </title>
+
+    <script>
+        try {
+            document.documentElement.dataset.tema =
+                localStorage.getItem("mf_admin_tema") ||
+                "escuro";
+        } catch (_) {
+            document.documentElement.dataset.tema =
+                "escuro";
+        }
+    </script>
+
+    <link
+        rel="icon"
+        href="/imagens/favicon.ico"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/css/moderacao.css"
+    >
 </head>
-<body>
-    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-    <!-- Cabeçalho do Painel Admin -->
-    <header class="topbar">
-        <a class="brand" href="/pages/index.html" aria-label="MotorFlex - Início">
-            Motor<span>Flex</span><em>Admin</em>
+<body>
+    <a
+        class="skip-link"
+        href="#conteudo"
+    >
+        Pular para o conteúdo
+    </a>
+
+    <header
+        class="topbar"
+        id="topbar"
+    >
+        <a
+            class="brand"
+            href="/pages/index.html"
+            aria-label="MotorFlex — página inicial"
+        >
+            Motor<span>Flex</span>
+            <em>Admin</em>
         </a>
 
-        <nav class="nav" aria-label="Navegação principal">
-            <a href="/pages/painel-admin.html" class="nav-link"><i class="fa-solid fa-shield-halved"></i> <span>Painel</span></a>
-            <a href="/pages/usuarios.html" class="nav-link"><i class="fa-solid fa-users"></i> <span>Usuários</span></a>
-            <a href="/pages/moderacao.html" class="nav-link ativo" aria-current="page"><i class="fa-solid fa-circle-check"></i> <span>Moderação</span></a>
-            <a href="/pages/catalogo.html" class="nav-link"><i class="fa-solid fa-car"></i> <span>Catálogo</span></a>
+        <nav
+            class="nav"
+            aria-label="Navegação administrativa"
+        >
+            <a
+                href="/pages/painel-admin.html"
+                class="nav-link"
+            >
+                <i
+                    class="fa-solid fa-chart-pie"
+                    aria-hidden="true"
+                ></i>
+
+                <span>Painel</span>
+            </a>
+
+            <a
+                href="/pages/usuarios.html"
+                class="nav-link"
+            >
+                <i
+                    class="fa-solid fa-users"
+                    aria-hidden="true"
+                ></i>
+
+                <span>Usuários</span>
+            </a>
+
+            <a
+                href="/pages/moderacao.html"
+                class="nav-link ativo"
+                aria-current="page"
+            >
+                <i
+                    class="fa-solid fa-shield-halved"
+                    aria-hidden="true"
+                ></i>
+
+                <span>Moderação</span>
+            </a>
+
+            <a
+                href="/pages/catalogo.html"
+                class="nav-link"
+            >
+                <i
+                    class="fa-solid fa-car"
+                    aria-hidden="true"
+                ></i>
+
+                <span>Catálogo</span>
+            </a>
         </nav>
 
         <div class="topbar-acoes">
-            <button type="button" class="icone-btn" id="btnTema" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                <i class="fa-solid fa-moon tema-lua"></i>
-                <i class="fa-solid fa-sun tema-sol" style="display:none;"></i>
+            <button
+                type="button"
+                class="icone-btn"
+                id="btnTema"
+                aria-label="Alternar tema"
+                title="Alternar tema"
+            >
+                <i
+                    class="fa-solid fa-moon tema-lua"
+                    aria-hidden="true"
+                ></i>
+
+                <i
+                    class="fa-solid fa-sun tema-sol"
+                    aria-hidden="true"
+                ></i>
             </button>
 
             <div class="usuario-menu">
-                <button class="usuario-btn" id="btnConfig" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="menuConfig">
-                    <span class="av-mini" id="avatarMini">A</span>
-                    <span id="miniNome">Admin</span>
-                    <i class="fa-solid fa-chevron-down seta"></i>
+                <button
+                    class="usuario-btn"
+                    id="btnConfig"
+                    type="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                    aria-controls="menuConfig"
+                >
+                    <span
+                        class="av-mini"
+                        id="avatarMini"
+                    >
+                        A
+                    </span>
+
+                    <span id="miniNome">
+                        Admin
+                    </span>
+
+                    <i
+                        class="fa-solid fa-chevron-down seta"
+                        aria-hidden="true"
+                    ></i>
                 </button>
-                <div class="dropdown-menu" id="menuConfig" role="menu">
-                    <div class="dropdown-cab"><strong id="ddNome">Administrador</strong><small id="ddEmail"></small></div>
-                    <a href="/pages/perfil.html" role="menuitem"><i class="fa-solid fa-id-card"></i> Ver informações</a>
-                    <a href="/pages/index.html" role="menuitem" id="linkSite"><i class="fa-solid fa-house"></i> Ver o site</a>
-                    <a href="#" id="gatilhoSair" class="sair-item" role="menuitem"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
+
+                <div
+                    class="dropdown-menu"
+                    id="menuConfig"
+                    role="menu"
+                >
+                    <div class="dropdown-cab">
+                        <strong id="ddNome">
+                            Administrador
+                        </strong>
+
+                        <small id="ddEmail"></small>
+                    </div>
+
+                    <a
+                        href="/pages/perfil.html"
+                        role="menuitem"
+                    >
+                        <i
+                            class="fa-solid fa-id-card"
+                            aria-hidden="true"
+                        ></i>
+
+                        Minha conta
+                    </a>
+
+                    <a
+                        href="/pages/index.html"
+                        role="menuitem"
+                    >
+                        <i
+                            class="fa-solid fa-house"
+                            aria-hidden="true"
+                        ></i>
+
+                        Ver o site
+                    </a>
+
+                    <button
+                        type="button"
+                        id="gatilhoSair"
+                        class="dropdown-acao sair-item"
+                        role="menuitem"
+                    >
+                        <i
+                            class="fa-solid fa-right-from-bracket"
+                            aria-hidden="true"
+                        ></i>
+
+                        Sair
+                    </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Container Principal -->
-    <main class="container" id="conteudo" tabindex="-1">
-        
-        <section class="boas-vindas hero">
-            <div>
-                <p class="saudacao"><i class="fa-solid fa-triangle-exclamation"></i> Central de Moderação</p>
-                <h2>Denúncias de Anúncios</h2>
-                <p class="hero-sub">Examine os veículos reportados. Se a denúncia for procedente e violar as diretrizes, remova o anúncio da plataforma.</p>
+    <main
+        class="container"
+        id="conteudo"
+        tabindex="-1"
+    >
+        <section
+            class="hero"
+            aria-labelledby="tituloPagina"
+        >
+            <div class="hero-texto">
+                <p class="eyebrow">
+                    <i
+                        class="fa-solid fa-scale-balanced"
+                        aria-hidden="true"
+                    ></i>
+
+                    Central de confiança e segurança
+                </p>
+
+                <h1 id="tituloPagina">
+                    Moderação de denúncias
+                </h1>
+
+                <p>
+                    Revise denúncias, consulte as informações
+                    do anúncio e registre a decisão tomada
+                    pela equipe.
+                </p>
+            </div>
+
+            <div class="hero-acoes">
+                <span
+                    class="atualizado"
+                    id="atualizadoEm"
+                >
+                    Aguardando atualização
+                </span>
+
+                <button
+                    type="button"
+                    class="btn-atualizar"
+                    id="btnAtualizar"
+                >
+                    <i
+                        class="fa-solid fa-rotate"
+                        aria-hidden="true"
+                    ></i>
+
+                    Atualizar fila
+                </button>
             </div>
         </section>
 
-        <!-- Grid de Denúncias (Injetado dinamicamente via JS) -->
-        <section class="cards" id="listaDenuncias" aria-label="Lista de denúncias pendentes">
-            <!-- Skeleton Loader inicial -->
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
+        <section
+            class="metricas"
+            aria-label="Resumo da moderação"
+        >
+            <article class="metrica metrica-pendente">
+                <span>
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </span>
+
+                <div>
+                    <small>Pendentes</small>
+
+                    <strong id="totalPendentes">
+                        —
+                    </strong>
+                </div>
+            </article>
+
+            <article class="metrica metrica-hoje">
+                <span>
+                    <i class="fa-solid fa-calendar-check"></i>
+                </span>
+
+                <div>
+                    <small>Resolvidas hoje</small>
+
+                    <strong id="totalResolvidasHoje">
+                        —
+                    </strong>
+                </div>
+            </article>
+
+            <article class="metrica metrica-mantidos">
+                <span>
+                    <i class="fa-solid fa-shield-circle-check"></i>
+                </span>
+
+                <div>
+                    <small>Anúncios mantidos</small>
+
+                    <strong id="totalMantidos">
+                        —
+                    </strong>
+                </div>
+            </article>
+
+            <article class="metrica metrica-removidos">
+                <span>
+                    <i class="fa-solid fa-ban"></i>
+                </span>
+
+                <div>
+                    <small>Anúncios restringidos</small>
+
+                    <strong id="totalRemovidos">
+                        —
+                    </strong>
+                </div>
+            </article>
         </section>
 
-        <!-- Navegação da Paginação -->
-        <div class="paginacao" id="paginacaoContainer" style="display: none;">
-            <button type="button" id="btnPagAnterior" class="btn-pag" disabled>
-                <i class="fa-solid fa-chevron-left"></i> Anterior
-            </button>
-            <span id="infoPagina" class="info-pagina">Página 1</span>
-            <button type="button" id="btnPagProxima" class="btn-pag">
-                Próxima <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
+        <section
+            class="painel-fila"
+            aria-labelledby="tituloFila"
+        >
+            <div class="fila-cabecalho">
+                <div>
+                    <p class="secao-label">
+                        Fila de análise
+                    </p>
+
+                    <h2 id="tituloFila">
+                        Denúncias pendentes
+                    </h2>
+                </div>
+
+                <span
+                    class="resultado-contagem"
+                    id="resultadoContagem"
+                    aria-live="polite"
+                >
+                    Carregando…
+                </span>
+            </div>
+
+            <form
+                class="filtros"
+                id="formFiltros"
+                role="search"
+            >
+                <label
+                    class="campo-pesquisa"
+                    for="campoBusca"
+                >
+                    <i
+                        class="fa-solid fa-magnifying-glass"
+                        aria-hidden="true"
+                    ></i>
+
+                    <input
+                        id="campoBusca"
+                        name="busca"
+                        type="search"
+                        autocomplete="off"
+                        placeholder="Buscar por veículo ou código"
+                    >
+                </label>
+
+                <label
+                    class="campo-select"
+                    for="filtroMotivo"
+                >
+                    <span>Motivo</span>
+
+                    <select
+                        id="filtroMotivo"
+                        name="motivo"
+                    >
+                        <option value="">
+                            Todos
+                        </option>
+
+                        <option value="fraude">
+                            Possível fraude
+                        </option>
+
+                        <option value="conteudo_inadequado">
+                            Conteúdo inadequado
+                        </option>
+
+                        <option value="informacao_falsa">
+                            Informação incorreta
+                        </option>
+
+                        <option value="duplicado">
+                            Anúncio duplicado
+                        </option>
+
+                        <option value="outro">
+                            Outro motivo
+                        </option>
+                    </select>
+                </label>
+
+                <label
+                    class="campo-select"
+                    for="filtroOrdem"
+                >
+                    <span>Ordenar</span>
+
+                    <select
+                        id="filtroOrdem"
+                        name="ordem"
+                    >
+                        <option value="mais_antigas">
+                            Mais antigas
+                        </option>
+
+                        <option value="mais_recentes">
+                            Mais recentes
+                        </option>
+                    </select>
+                </label>
+
+                <button
+                    type="button"
+                    class="btn-limpar"
+                    id="btnLimparFiltros"
+                >
+                    Limpar
+                </button>
+            </form>
+
+            <div
+                class="aviso-erro"
+                id="avisoErro"
+                role="alert"
+                hidden
+            >
+                <i
+                    class="fa-solid fa-circle-exclamation"
+                    aria-hidden="true"
+                ></i>
+
+                <span id="avisoErroTexto">
+                    Não foi possível carregar.
+                </span>
+
+                <button
+                    type="button"
+                    id="btnTentar"
+                >
+                    Tentar novamente
+                </button>
+            </div>
+
+            <section
+                class="cards"
+                id="listaDenuncias"
+                aria-live="polite"
+                aria-busy="true"
+            >
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </section>
+
+            <nav
+                class="paginacao"
+                id="paginacaoContainer"
+                aria-label="Paginação"
+                hidden
+            >
+                <button
+                    type="button"
+                    id="btnPagAnterior"
+                    class="btn-pag"
+                >
+                    <i
+                        class="fa-solid fa-chevron-left"
+                        aria-hidden="true"
+                    ></i>
+
+                    Anterior
+                </button>
+
+                <span
+                    id="infoPagina"
+                    class="info-pagina"
+                >
+                    Página 1 de 1
+                </span>
+
+                <button
+                    type="button"
+                    id="btnPagProxima"
+                    class="btn-pag"
+                >
+                    Próxima
+
+                    <i
+                        class="fa-solid fa-chevron-right"
+                        aria-hidden="true"
+                    ></i>
+                </button>
+            </nav>
+        </section>
     </main>
 
-    <!-- Modal de Confirmação para Ações de Moderação -->
-    <div class="modal-overlay" id="modalAcaoModeracao" hidden>
-        <div class="modal-container" role="dialog" aria-modal="true">
-            <div class="modal-icone" id="iconeModalAcao"><i class="fa-solid fa-shield-cat"></i></div>
-            <h3 id="tituloModalAcao">Confirmar ação</h3>
-            <p id="textoModalAcao">Tem certeza que deseja prosseguir com esta ação?</p>
-            <div class="modal-botoes">
-                <button type="button" class="btn-modal btn-cancelar" id="btnCancelarAcao">Cancelar</button>
-                <button type="button" class="btn-modal btn-confirmar-sair" id="btnConfirmarAcao">Confirmar</button>
+    <div
+        class="modal-overlay"
+        id="modalAcaoModeracao"
+        hidden
+    >
+        <section
+            class="modal-container"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloModalAcao"
+            aria-describedby="textoModalAcao"
+        >
+            <button
+                type="button"
+                class="modal-fechar"
+                id="btnFecharModal"
+                aria-label="Fechar modal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div
+                class="modal-icone"
+                id="iconeModalAcao"
+            >
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
-        </div>
+
+            <p class="modal-eyebrow">
+                Decisão administrativa
+            </p>
+
+            <h3 id="tituloModalAcao">
+                Confirmar decisão
+            </h3>
+
+            <p id="textoModalAcao">
+                Revise a ação antes de continuar.
+            </p>
+
+            <dl
+                class="resumo-decisao"
+                id="resumoDecisao"
+            ></dl>
+
+            <label
+                class="campo-justificativa"
+                for="justificativaAcao"
+            >
+                <span>
+                    Justificativa obrigatória
+                </span>
+
+                <textarea
+                    id="justificativaAcao"
+                    maxlength="500"
+                    rows="4"
+                    placeholder="Descreva de forma objetiva o critério utilizado."
+                ></textarea>
+
+                <small>
+                    <span id="contadorJustificativa">
+                        0
+                    </span>/500 caracteres
+                </small>
+            </label>
+
+            <p
+                class="erro-modal"
+                id="erroModal"
+                role="alert"
+                hidden
+            ></p>
+
+            <div class="modal-botoes">
+                <button
+                    type="button"
+                    class="btn-modal btn-cancelar"
+                    id="btnCancelarAcao"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-modal btn-confirmar"
+                    id="btnConfirmarAcao"
+                    disabled
+                >
+                    Confirmar decisão
+                </button>
+            </div>
+        </section>
     </div>
 
-    <!-- Área de Toasts para Notificações Flutuantes -->
-    <div class="toast-area" id="toastArea" aria-live="polite"></div>
+    <div
+        class="modal-overlay"
+        id="modalSair"
+        hidden
+    >
+        <section
+            class="modal-container modal-menor"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloSair"
+        >
+            <div class="modal-icone perigo">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
 
-    <!-- Lembre-se de confirmar se a pasta js está na raiz do seu projeto -->
+            <h3 id="tituloSair">
+                Encerrar sessão?
+            </h3>
+
+            <p>
+                Você precisará entrar novamente para
+                acessar a administração.
+            </p>
+
+            <div class="modal-botoes">
+                <button
+                    type="button"
+                    class="btn-modal btn-cancelar"
+                    id="btnCancelarSair"
+                >
+                    Continuar conectado
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-modal btn-perigo"
+                    id="btnConfirmarSair"
+                >
+                    Sair
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <div
+        class="toast-area"
+        id="toastArea"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
     <script src="/js/moderacao.js"></script>
 </body>
+
 </html>
