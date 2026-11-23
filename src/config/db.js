@@ -77,10 +77,12 @@ const configuracaoPool = {
     database: DB_NAME,
 
     waitForConnections: true,
-    connectionLimit: Number(
-        process.env.DB_CONNECTION_LIMIT || 10
-    ),
-    queueLimit: 0,
+    connectionLimit: Math.max(
+    1,
+    Number(
+        process.env.DB_CONNECTION_LIMIT || 1
+    )
+),
 
     charset: "utf8mb4",
     timezone: "Z",

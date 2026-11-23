@@ -250,11 +250,12 @@ const configuracaoBancoSessao = {
         process.env.MYSQL_ADDON_DB ||
         "motorflex",
 
-    connectionLimit:
-        Number(
-            process.env
-                .DB_CONNECTION_LIMIT
-        ) || 10,
+        connectionLimit: Math.max(
+                                     1,
+    Number(
+        process.env.SESSION_DB_CONNECTION_LIMIT || 1
+    )
+),
 
     /*
      * Cria automaticamente a tabela
